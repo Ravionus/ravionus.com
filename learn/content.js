@@ -2518,6 +2518,306 @@ print(response.status_code)  # 201</code></pre>
       }
 
     ]
+  },
+
+  // ─────────────────────────────────────────────────────────
+  //  TOPIC 8: Cloud Computing Basics
+  // ─────────────────────────────────────────────────────────
+  {
+    id: "cloud-computing-basics",
+    title: "Cloud Computing Basics",
+    icon: "☁️",
+    color: "#0891b2",
+    description: "Demystify the cloud — understand what it is, the key service models (IaaS, PaaS, SaaS), deployment types, and the major providers powering the modern internet.",
+    difficulty: "Beginner",
+    estimatedTime: "30 min",
+    tags: ["Cloud", "DevOps", "Infrastructure"],
+    sections: [
+
+      // ── Lesson 1 ──────────────────────────────────────────
+      {
+        type: "lesson",
+        title: "What is Cloud Computing?",
+        content: `
+          <p>Before the cloud, if a company needed a server, they had to <strong>buy physical hardware</strong>, set it up in a data centre, hire staff to maintain it, and pay for electricity and cooling — whether they used it or not.</p>
+          <p><strong>Cloud computing</strong> flips this model. Instead of owning infrastructure, you <em>rent</em> it from a provider over the internet — paying only for what you use, scaling up or down in minutes.</p>
+          <div class="callout callout-info">
+            <strong>💡 Simple analogy:</strong> Cloud computing is like electricity from the grid. You don't build your own power plant — you plug in and pay for what you use. The cloud is the same idea, but for servers, storage, databases, and more.
+          </div>
+          <h3>The 5 Core Characteristics (NIST definition)</h3>
+          <ul>
+            <li>⚡ <strong>On-demand self-service</strong> — provision resources yourself, instantly, no human needed</li>
+            <li>🌍 <strong>Broad network access</strong> — accessible from anywhere via the internet</li>
+            <li>🏊 <strong>Resource pooling</strong> — many customers share the same physical infrastructure</li>
+            <li>📈 <strong>Rapid elasticity</strong> — scale up in seconds, scale down just as fast</li>
+            <li>📊 <strong>Measured service</strong> — usage is tracked and you're billed precisely for what you consume</li>
+          </ul>
+          <h3>Why It Matters for IT Professionals</h3>
+          <p>Today, virtually every company uses cloud services — from startups running entirely on AWS to enterprises with hybrid setups. Understanding cloud fundamentals is no longer optional; it's a baseline expectation for developers, sysadmins, and IT professionals of all kinds.</p>
+        `
+      },
+
+      // ── Lesson 2 ──────────────────────────────────────────
+      {
+        type: "lesson",
+        title: "IaaS, PaaS, and SaaS — The Three Service Models",
+        content: `
+          <p>Cloud services are grouped into three layers, each handling a different amount of the infrastructure for you. The higher you go, the less you manage.</p>
+          <div class="comparison-table">
+            <table>
+              <thead><tr><th></th><th>IaaS</th><th>PaaS</th><th>SaaS</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Stands for</strong></td><td>Infrastructure as a Service</td><td>Platform as a Service</td><td>Software as a Service</td></tr>
+                <tr><td><strong>You manage</strong></td><td>OS, runtime, apps, data</td><td>Apps and data only</td><td>Nothing — just use it</td></tr>
+                <tr><td><strong>Provider manages</strong></td><td>Hardware, networking, virtualisation</td><td>Everything below the app layer</td><td>Everything</td></tr>
+                <tr><td><strong>Examples</strong></td><td>AWS EC2, Azure VMs, Google Compute Engine</td><td>Heroku, Google App Engine, AWS Elastic Beanstalk</td><td>Gmail, Slack, Salesforce, Dropbox</td></tr>
+                <tr><td><strong>Best for</strong></td><td>Full control, custom setups</td><td>Developers who want to focus on code</td><td>End users, business tools</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout callout-tip">
+            <strong>🎯 Pizza analogy:</strong><br>
+            <strong>IaaS</strong> = oven and ingredients delivered. You cook everything yourself.<br>
+            <strong>PaaS</strong> = pizza dough and sauce provided. You add toppings and bake.<br>
+            <strong>SaaS</strong> = pizza delivered to your door, ready to eat.
+          </div>
+          <p>A fourth model worth knowing: <strong>FaaS (Function as a Service)</strong> — also called <em>serverless</em>. You deploy individual functions (small pieces of code) and the cloud runs them only when triggered, charging per execution. Examples: AWS Lambda, Google Cloud Functions.</p>
+        `
+      },
+
+      // ── Lesson 3 ──────────────────────────────────────────
+      {
+        type: "lesson",
+        title: "Deployment Models — Public, Private & Hybrid",
+        content: `
+          <p>Not all cloud is the same. Depending on security, compliance, and cost requirements, organisations choose different <strong>deployment models</strong>.</p>
+          <div class="comparison-table">
+            <table>
+              <thead><tr><th>Model</th><th>Who uses the infrastructure</th><th>Managed by</th><th>Best for</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Public Cloud</strong></td><td>Many organisations share it</td><td>The cloud provider (AWS, Azure, GCP)</td><td>Startups, scalable apps, cost efficiency</td></tr>
+                <tr><td><strong>Private Cloud</strong></td><td>A single organisation exclusively</td><td>The organisation itself or a managed provider</td><td>Banks, hospitals, high-security environments</td></tr>
+                <tr><td><strong>Hybrid Cloud</strong></td><td>Mix of both</td><td>Shared responsibility</td><td>Enterprises with existing on-prem + cloud workloads</td></tr>
+                <tr><td><strong>Multi-Cloud</strong></td><td>Multiple public providers simultaneously</td><td>The organisation</td><td>Avoiding vendor lock-in, best-of-breed services</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout callout-info">
+            <strong>💡 Real-world example:</strong> A bank might keep customer account data on a <strong>private cloud</strong> (for regulatory reasons) while running its public website and marketing tools on <strong>AWS</strong> (public cloud). That combination is a <strong>hybrid cloud</strong>.
+          </div>
+          <h3>On-Premises vs Cloud</h3>
+          <p><strong>On-premises</strong> (or "on-prem") means running your own servers in your own building. You own and control everything — but you also pay for everything, even when idle. Cloud removes that capital expenditure and replaces it with operational expenditure (pay as you go).</p>
+        `
+      },
+
+      // ── Quiz 1 ────────────────────────────────────────────
+      {
+        type: "quiz",
+        title: "⚡ Quick Check #1",
+        questions: [
+          {
+            q: "A developer wants to deploy their web app without worrying about managing servers, OS patches, or runtime environments. Which cloud model fits best?",
+            options: [
+              "IaaS — they get full control over the VM",
+              "PaaS — the platform handles infrastructure, they focus on code",
+              "SaaS — they use pre-built software",
+              "On-premises — they host it themselves"
+            ],
+            answer: 1,
+            explanation: "PaaS (Platform as a Service) is designed exactly for this. The developer pushes their code and the platform handles everything underneath — OS, runtime, scaling. Heroku and Google App Engine are classic examples."
+          },
+          {
+            q: "A hospital needs to keep patient records in a tightly controlled environment due to regulations, but wants to use public cloud for its staff email. What deployment model is this?",
+            options: [
+              "Public Cloud",
+              "Private Cloud",
+              "Hybrid Cloud",
+              "Multi-Cloud"
+            ],
+            answer: 2,
+            explanation: "Hybrid Cloud combines private infrastructure (for the sensitive regulated data) with public cloud services (for less sensitive workloads). This is very common in healthcare, finance, and government sectors."
+          },
+          {
+            q: "Which of these is the best example of SaaS?",
+            options: [
+              "AWS EC2 (virtual machines)",
+              "Google App Engine (app deployment platform)",
+              "Slack (team messaging tool)",
+              "AWS Lambda (serverless functions)"
+            ],
+            answer: 2,
+            explanation: "Slack is SaaS — you just open a browser or app and use it. No infrastructure, no deployment, no OS management. AWS EC2 is IaaS, Google App Engine is PaaS, and AWS Lambda is FaaS (serverless)."
+          }
+        ]
+      },
+
+      // ── Lesson 4 ──────────────────────────────────────────
+      {
+        type: "lesson",
+        title: "The Major Cloud Providers",
+        content: `
+          <p>Three providers dominate the cloud market and together account for the vast majority of global cloud infrastructure.</p>
+          <div class="comparison-table">
+            <table>
+              <thead><tr><th></th><th>AWS</th><th>Microsoft Azure</th><th>Google Cloud (GCP)</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Launched</strong></td><td>2006</td><td>2010</td><td>2011</td></tr>
+                <tr><td><strong>Market share</strong></td><td>~31% (largest)</td><td>~25% (second)</td><td>~11% (third)</td></tr>
+                <tr><td><strong>Known for</strong></td><td>Widest range of services, most mature</td><td>Deep Microsoft/enterprise integration</td><td>Data, AI/ML, Kubernetes (invented it)</td></tr>
+                <tr><td><strong>Compute</strong></td><td>EC2</td><td>Azure Virtual Machines</td><td>Compute Engine</td></tr>
+                <tr><td><strong>Object storage</strong></td><td>S3</td><td>Azure Blob Storage</td><td>Cloud Storage</td></tr>
+                <tr><td><strong>Serverless</strong></td><td>Lambda</td><td>Azure Functions</td><td>Cloud Functions</td></tr>
+                <tr><td><strong>Managed database</strong></td><td>RDS</td><td>Azure SQL Database</td><td>Cloud SQL</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout callout-tip">
+            <strong>🎯 Which should you learn first?</strong> AWS is the safest bet for job market demand — it has the most certifications, tutorials, and job listings. Azure is the best choice if you work in a Microsoft-heavy enterprise. GCP is worth learning if you're focused on data engineering or ML.
+          </div>
+          <p>Beyond the "Big Three", other notable providers include <strong>Oracle Cloud</strong>, <strong>IBM Cloud</strong>, <strong>Alibaba Cloud</strong> (dominant in Asia), and <strong>DigitalOcean</strong> (popular with developers for its simplicity).</p>
+        `
+      },
+
+      // ── Lesson 5 ──────────────────────────────────────────
+      {
+        type: "lesson",
+        title: "Key Cloud Concepts You'll Encounter",
+        content: `
+          <p>Cloud platforms come with their own vocabulary. Here are the essential concepts that come up constantly:</p>
+          <h3>🗺️ Regions &amp; Availability Zones</h3>
+          <p>Cloud providers divide the world into <strong>regions</strong> — geographic areas like "us-east-1" (N. Virginia) or "ap-south-1" (Mumbai). Each region contains multiple <strong>Availability Zones (AZs)</strong> — physically separate data centres within the same region. Running your app across multiple AZs means it keeps working even if one data centre goes down.</p>
+          <div class="callout callout-info">
+            <strong>💡 Why regions matter:</strong> Data residency laws (like GDPR in Europe) may require you to keep certain data within specific geographic regions. Always check compliance requirements before choosing a region.
+          </div>
+          <h3>📦 Virtual Machines vs Containers vs Serverless</h3>
+          <div class="comparison-table">
+            <table>
+              <thead><tr><th></th><th>Virtual Machines</th><th>Containers (Docker)</th><th>Serverless</th></tr></thead>
+              <tbody>
+                <tr><td><strong>What it is</strong></td><td>Full emulated computer with its own OS</td><td>Lightweight app package sharing the host OS</td><td>Individual functions triggered by events</td></tr>
+                <tr><td><strong>Startup time</strong></td><td>Minutes</td><td>Seconds</td><td>Milliseconds</td></tr>
+                <tr><td><strong>You manage</strong></td><td>OS, patches, runtime</td><td>App and dependencies</td><td>Just the code</td></tr>
+                <tr><td><strong>Best for</strong></td><td>Full control, legacy apps</td><td>Microservices, portability</td><td>Event-driven tasks, APIs</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>📈 Scalability — Scaling Up vs Scaling Out</h3>
+          <ul>
+            <li>⬆️ <strong>Vertical scaling (scale up)</strong> — give your server more CPU/RAM. Simple, but has limits and requires downtime.</li>
+            <li>➡️ <strong>Horizontal scaling (scale out)</strong> — add more servers. More complex but essentially unlimited and more resilient.</li>
+          </ul>
+          <div class="callout callout-tip">
+            <strong>💡 Auto-scaling</strong> — cloud platforms can automatically add or remove servers based on traffic. Your app handles a Black Friday traffic spike without you touching anything, then scales back down to save cost.
+          </div>
+          <h3>💾 Object Storage vs Block Storage</h3>
+          <p><strong>Object storage</strong> (like AWS S3) stores files as objects — great for images, videos, backups, and static websites. No file hierarchy, infinitely scalable. <strong>Block storage</strong> (like AWS EBS) works like a hard drive attached to a VM — used for databases and OS disks where you need low latency and random access.</p>
+        `
+      },
+
+      // ── Lesson 6 ──────────────────────────────────────────
+      {
+        type: "lesson",
+        title: "Cloud Economics & the Shared Responsibility Model",
+        content: `
+          <p>Two concepts that every IT professional must understand before working with cloud: <strong>how you're billed</strong> and <strong>who is responsible for what</strong>.</p>
+          <h3>💰 Cloud Pricing Models</h3>
+          <div class="comparison-table">
+            <table>
+              <thead><tr><th>Model</th><th>How it works</th><th>Best for</th></tr></thead>
+              <tbody>
+                <tr><td><strong>On-Demand</strong></td><td>Pay by the hour or second, no commitment</td><td>Unpredictable workloads, testing</td></tr>
+                <tr><td><strong>Reserved</strong></td><td>Commit to 1–3 years, get up to 72% discount</td><td>Stable, predictable workloads</td></tr>
+                <tr><td><strong>Spot / Preemptible</strong></td><td>Use spare capacity at massive discounts (up to 90%) — can be interrupted</td><td>Batch jobs, fault-tolerant workloads</td></tr>
+                <tr><td><strong>Free Tier</strong></td><td>Limited free usage every month</td><td>Learning, development, small projects</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout callout-info">
+            <strong>⚠️ Cloud bill shock is real.</strong> Forgetting to turn off a VM, accidentally leaving data transfer running, or misconfiguring auto-scaling can lead to surprise bills. Always set up <strong>billing alerts</strong> and <strong>budget limits</strong> — every provider offers these for free.
+          </div>
+          <h3>🔐 The Shared Responsibility Model</h3>
+          <p>Security in the cloud is a <strong>shared responsibility</strong> between you and the provider. A common misconception is that moving to the cloud means the provider handles all security. It doesn't.</p>
+          <div class="comparison-table">
+            <table>
+              <thead><tr><th>Cloud Provider is responsible for...</th><th>You are responsible for...</th></tr></thead>
+              <tbody>
+                <tr><td>Physical data centre security</td><td>Who has access to your cloud account (IAM)</td></tr>
+                <tr><td>Hardware and network infrastructure</td><td>Encrypting your data at rest and in transit</td></tr>
+                <tr><td>Virtualisation layer</td><td>Configuring firewalls and security groups correctly</td></tr>
+                <tr><td>Managed service security (e.g. S3 infrastructure)</td><td>Setting correct permissions on your S3 buckets</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout callout-tip">
+            <strong>🎯 Most cloud breaches aren't the provider's fault.</strong> They're caused by misconfigured permissions, weak passwords, or exposed API keys — all the customer's responsibility. Always follow the <strong>principle of least privilege</strong>: give every user and service only the minimum access they need.
+          </div>
+        `
+      },
+
+      // ── Quiz 2 ────────────────────────────────────────────
+      {
+        type: "quiz",
+        title: "🏆 Final Quiz — Cloud Computing Basics",
+        questions: [
+          {
+            q: "What is the main advantage of 'horizontal scaling' over 'vertical scaling'?",
+            options: [
+              "It's cheaper per server",
+              "It adds more CPU and RAM to one machine, making it more powerful",
+              "It adds more servers, making the system more resilient and essentially unlimited in scale",
+              "It's easier to configure and requires no code changes"
+            ],
+            answer: 2,
+            explanation: "Horizontal scaling (scaling out) adds more servers to distribute load, making the system more fault-tolerant and virtually unlimited in scale. Vertical scaling (scaling up) hits hardware limits and usually requires downtime."
+          },
+          {
+            q: "A company's S3 bucket was left publicly readable, exposing customer data. Whose responsibility was this misconfiguration?",
+            options: [
+              "AWS — they should have prevented the bucket from being public",
+              "The customer — configuring access permissions is the customer's responsibility",
+              "Both equally — AWS and the customer share 50/50 blame",
+              "Neither — S3 is always private by default so this couldn't happen"
+            ],
+            answer: 1,
+            explanation: "Under the Shared Responsibility Model, the cloud provider secures the infrastructure, but the customer is responsible for configuring access controls, permissions, and encryption. Misconfigured S3 buckets are one of the most common causes of cloud data breaches."
+          },
+          {
+            q: "You're running a batch data processing job overnight that can tolerate interruptions. Which pricing model saves the most money?",
+            options: [
+              "On-Demand — most flexible",
+              "Reserved — best long-term discount",
+              "Spot / Preemptible — uses spare capacity at up to 90% discount",
+              "Free Tier — always cheapest"
+            ],
+            answer: 2,
+            explanation: "Spot (AWS) or Preemptible (GCP) instances offer massive discounts by using spare cloud capacity. They can be interrupted with short notice, making them perfect for fault-tolerant batch jobs. Free Tier has usage limits and isn't meant for production workloads."
+          },
+          {
+            q: "What is an Availability Zone (AZ)?",
+            options: [
+              "A country where a cloud provider has offices",
+              "A physically separate data centre within a cloud region, used to provide fault tolerance",
+              "A virtual network zone that separates public and private resources",
+              "A geographic area like 'US East' or 'Europe West'"
+            ],
+            answer: 1,
+            explanation: "An Availability Zone is a physically separate (and independently powered) data centre within a cloud region. Deploying across multiple AZs means your app keeps running even if one data centre has an outage. The larger geographic area is called a Region."
+          },
+          {
+            q: "Google invented Kubernetes and is known for its strengths in data and AI/ML. Which cloud provider is this?",
+            options: [
+              "AWS (Amazon Web Services)",
+              "Microsoft Azure",
+              "Google Cloud Platform (GCP)",
+              "IBM Cloud"
+            ],
+            answer: 2,
+            explanation: "Google Cloud Platform created Kubernetes (now open-source and used everywhere) and is renowned for its expertise in data processing (BigQuery), AI/ML (Vertex AI), and networking. AWS leads in overall market share and service breadth, while Azure leads in enterprise Microsoft integration."
+          }
+        ]
+      }
+
+    ]
   }
 
   // ─────────────────────────────────────────────────────────
