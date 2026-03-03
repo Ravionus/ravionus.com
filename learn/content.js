@@ -2818,6 +2818,350 @@ print(response.status_code)  # 201</code></pre>
       }
 
     ]
+  },
+
+  // ─────────────────────────────────────────────────────────
+  //  TOPIC 9: Cybersecurity Fundamentals
+  // ─────────────────────────────────────────────────────────
+  {
+    id: "cybersecurity-fundamentals",
+    title: "Cybersecurity Fundamentals",
+    icon: "🔐",
+    color: "#dc2626",
+    description: "Learn how attackers think, how systems get compromised, and how to defend against the most common threats — essential knowledge for every IT professional.",
+    difficulty: "Beginner",
+    estimatedTime: "35 min",
+    tags: ["Security", "Networking", "Best Practices"],
+    sections: [
+
+      // ── Lesson 1 ──────────────────────────────────────────
+      {
+        type: "lesson",
+        title: "The CIA Triad — The Foundation of Security",
+        content: `
+          <p>Every security decision in IT traces back to three core goals. Together they form the <strong>CIA Triad</strong> — the most fundamental model in cybersecurity.</p>
+          <div class="comparison-table">
+            <table>
+              <thead><tr><th>Principle</th><th>Goal</th><th>Threat example</th><th>Defence example</th></tr></thead>
+              <tbody>
+                <tr><td>🔒 <strong>Confidentiality</strong></td><td>Only authorised people can access the data</td><td>A hacker steals a database of passwords</td><td>Encryption, access controls, MFA</td></tr>
+                <tr><td>✅ <strong>Integrity</strong></td><td>Data hasn't been tampered with or corrupted</td><td>An attacker modifies a financial transaction in transit</td><td>Hashing, digital signatures, audit logs</td></tr>
+                <tr><td>⚡ <strong>Availability</strong></td><td>Authorised users can access the system when needed</td><td>A DDoS attack takes down a company's website</td><td>Redundancy, backups, DDoS protection</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout callout-info">
+            <strong>💡 Real-world example:</strong> A ransomware attack hits all three. It destroys <strong>availability</strong> (you can't access your files), threatens <strong>confidentiality</strong> (attackers may exfiltrate data before encrypting), and damages <strong>integrity</strong> (files are encrypted and unreadable).
+          </div>
+          <h3>Authentication vs Authorisation</h3>
+          <p>Two terms that are often confused but are completely different:</p>
+          <ul>
+            <li>🪪 <strong>Authentication (AuthN)</strong> — verifying <em>who you are</em>. Logging in with a username and password.</li>
+            <li>🚪 <strong>Authorisation (AuthZ)</strong> — verifying <em>what you're allowed to do</em>. Checking if you have permission to access a file after you've logged in.</li>
+          </ul>
+          <div class="callout callout-tip">
+            <strong>🎯 Easy way to remember:</strong> Authentication = "Are you really you?" Authorisation = "OK, but are you allowed to be here?"
+          </div>
+        `
+      },
+
+      // ── Lesson 2 ──────────────────────────────────────────
+      {
+        type: "lesson",
+        title: "Common Attack Types",
+        content: `
+          <p>To defend systems, you need to understand how they're attacked. Here are the most common threats you'll encounter in the real world.</p>
+          <h3>🎣 Phishing</h3>
+          <p>The attacker impersonates a trusted entity (your bank, IT department, a colleague) via email, SMS, or phone to trick you into revealing credentials or clicking a malicious link. Phishing is responsible for the majority of data breaches — it exploits people, not technology.</p>
+          <ul>
+            <li><strong>Spear phishing</strong> — targeted at a specific individual, personalised to seem credible</li>
+            <li><strong>Whaling</strong> — spear phishing aimed at executives (the "big fish")</li>
+            <li><strong>Smishing</strong> — phishing via SMS text message</li>
+          </ul>
+          <h3>🦠 Malware</h3>
+          <p>Malicious software designed to damage, disrupt, or gain unauthorised access to a system.</p>
+          <div class="comparison-table">
+            <table>
+              <thead><tr><th>Type</th><th>What it does</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Virus</strong></td><td>Attaches to files and spreads when those files are opened</td></tr>
+                <tr><td><strong>Ransomware</strong></td><td>Encrypts your files and demands payment for the key</td></tr>
+                <tr><td><strong>Trojan</strong></td><td>Disguises itself as legitimate software, then attacks from inside</td></tr>
+                <tr><td><strong>Spyware</strong></td><td>Silently monitors your activity and sends data to the attacker</td></tr>
+                <tr><td><strong>Rootkit</strong></td><td>Hides deep in the OS, giving attackers persistent hidden access</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>👤 Man-in-the-Middle (MitM)</h3>
+          <p>The attacker secretly intercepts communication between two parties — reading or altering the data without either side knowing. Common on unsecured public Wi-Fi. Using HTTPS prevents this for web traffic.</p>
+          <h3>💥 Denial of Service (DoS) &amp; DDoS</h3>
+          <p>Flooding a server with so many requests it can't respond to legitimate users. A <strong>DDoS</strong> (Distributed DoS) uses thousands of compromised machines (a <em>botnet</em>) to amplify the attack to a scale that's very hard to defend against.</p>
+          <h3>💉 SQL Injection</h3>
+          <p>An attacker inserts malicious SQL code into an input field (like a login form) to manipulate the database — potentially dumping all user data or bypassing authentication entirely.</p>
+          <div class="code-block">
+            <div class="code-label">SQL Injection Example</div>
+            <pre><code>-- Normal query built from user input:
+SELECT * FROM users WHERE username = 'alice' AND password = 'pass123';
+
+-- Attacker enters: ' OR '1'='1
+SELECT * FROM users WHERE username = '' OR '1'='1' AND password = '';
+-- '1'='1' is always true → attacker bypasses login!</code></pre>
+          </div>
+        `
+      },
+
+      // ── Lesson 3 ──────────────────────────────────────────
+      {
+        type: "lesson",
+        title: "Passwords, Hashing & Multi-Factor Authentication",
+        content: `
+          <p>Weak credential management is one of the most exploited vulnerabilities. Here's how it works — and how to do it right.</p>
+          <h3>🔑 Why Passwords Should Never Be Stored in Plain Text</h3>
+          <p>If a database is breached and passwords are stored as plain text, every user account is instantly compromised. The solution is <strong>hashing</strong> — a one-way mathematical function that converts a password into a fixed-length string.</p>
+          <div class="code-block">
+            <div class="code-label">Hashing Example</div>
+            <pre><code>Plain text:  "mypassword123"
+SHA-256:     "9b8769a4a742959a2d0298c36fb70623f2a2d0898c36fb70623..."
+
+Plain text:  "mypassword124"   ← just one character different
+SHA-256:     "3f1abc82e..."     ← completely different hash</code></pre>
+          </div>
+          <p>You can't reverse a hash back to the original password. When you log in, your input is hashed and compared to the stored hash. The original password is never stored.</p>
+          <div class="callout callout-info">
+            <strong>💡 Salting:</strong> Attackers use pre-computed tables of hashes (called <em>rainbow tables</em>) to crack common passwords. Adding a random <strong>salt</strong> (a unique string appended to each password before hashing) makes these tables useless. Good password libraries like bcrypt do this automatically.
+          </div>
+          <h3>🔐 Multi-Factor Authentication (MFA)</h3>
+          <p>MFA requires users to provide two or more of the following before gaining access:</p>
+          <ul>
+            <li>🧠 <strong>Something you know</strong> — password or PIN</li>
+            <li>📱 <strong>Something you have</strong> — a phone (TOTP app), hardware key (YubiKey)</li>
+            <li>👁️ <strong>Something you are</strong> — fingerprint, face scan (biometrics)</li>
+          </ul>
+          <p>Even if an attacker steals your password, they still can't log in without the second factor. Enabling MFA is one of the single highest-impact security improvements any individual or organisation can make.</p>
+          <h3>🏋️ Password Best Practices</h3>
+          <ul>
+            <li>Use a <strong>password manager</strong> (1Password, Bitwarden) — never reuse passwords</li>
+            <li>Longer is stronger — a 16-character passphrase beats a complex 8-character password</li>
+            <li>Never use personal info (birthdays, pet names) — attackers use this in targeted attacks</li>
+            <li>Enable <strong>breach monitoring</strong> — services like HaveIBeenPwned alert you if your email appears in known breaches</li>
+          </ul>
+        `
+      },
+
+      // ── Quiz 1 ────────────────────────────────────────────
+      {
+        type: "quiz",
+        title: "⚡ Quick Check #1",
+        questions: [
+          {
+            q: "A ransomware attack encrypts all files on a company's servers, making them inaccessible. Which pillar of the CIA Triad is primarily violated?",
+            options: [
+              "Confidentiality — the data has been exposed",
+              "Integrity — the data has been altered",
+              "Availability — authorised users can no longer access the data",
+              "Authentication — user identities have been compromised"
+            ],
+            answer: 2,
+            explanation: "Ransomware primarily attacks Availability — the files still exist but are encrypted and inaccessible to the rightful owners. It may also threaten Confidentiality if the attackers exfiltrate data before encrypting it."
+          },
+          {
+            q: "An attacker sends an email pretending to be the CEO, asking an employee to urgently wire money to a new account. What type of attack is this?",
+            options: [
+              "SQL Injection",
+              "DDoS attack",
+              "Whaling (targeted spear phishing)",
+              "Man-in-the-Middle"
+            ],
+            answer: 2,
+            explanation: "This is whaling — a spear phishing attack specifically targeting or impersonating executives. It exploits urgency and authority rather than technical vulnerabilities. This type of attack (also called BEC — Business Email Compromise) costs organisations billions annually."
+          },
+          {
+            q: "Why is hashing passwords more secure than encrypting them?",
+            options: [
+              "Hashes are longer and harder to guess",
+              "Hashing is a one-way process — you cannot reverse a hash to get the original password",
+              "Encrypted passwords still get stolen in breaches",
+              "Hashing is faster, making login quicker"
+            ],
+            answer: 1,
+            explanation: "Hashing is one-way — you can't reverse it to recover the original password. Encryption is two-way — anyone with the key can decrypt it. If a database is stolen, encrypted passwords can be decrypted, but hashed passwords (especially with salting) cannot be reversed."
+          }
+        ]
+      },
+
+      // ── Lesson 4 ──────────────────────────────────────────
+      {
+        type: "lesson",
+        title: "Encryption — Keeping Data Secret",
+        content: `
+          <p><strong>Encryption</strong> transforms readable data (plaintext) into scrambled data (ciphertext) using a mathematical algorithm and a key. Only someone with the correct key can decrypt it back to readable form.</p>
+          <h3>🔑 Symmetric vs Asymmetric Encryption</h3>
+          <div class="comparison-table">
+            <table>
+              <thead><tr><th></th><th>Symmetric</th><th>Asymmetric</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Keys used</strong></td><td>One shared secret key for both encrypt &amp; decrypt</td><td>A key pair: public key (encrypt) + private key (decrypt)</td></tr>
+                <tr><td><strong>Speed</strong></td><td>Very fast</td><td>Slower</td></tr>
+                <tr><td><strong>Problem</strong></td><td>How do you securely share the key?</td><td>No key-sharing problem — public key can be given to anyone</td></tr>
+                <tr><td><strong>Common algorithms</strong></td><td>AES-256</td><td>RSA, ECC</td></tr>
+                <tr><td><strong>Used for</strong></td><td>Encrypting large data (files, databases)</td><td>TLS handshakes, digital signatures, SSH</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout callout-tip">
+            <strong>🎯 How HTTPS uses both:</strong> When you connect to a website over HTTPS, asymmetric encryption is used first to securely exchange a symmetric key. Then that symmetric key is used for the rest of the session (because it's much faster). This is called the <strong>TLS handshake</strong>.
+          </div>
+          <h3>🔏 Encryption at Rest vs In Transit</h3>
+          <ul>
+            <li>💾 <strong>At rest</strong> — data sitting in storage (a database, hard drive, S3 bucket) is encrypted so it's unreadable if the storage is stolen</li>
+            <li>🌐 <strong>In transit</strong> — data moving across a network is encrypted so it can't be intercepted (HTTPS, TLS, VPNs)</li>
+          </ul>
+          <div class="callout callout-info">
+            <strong>💡 End-to-end encryption (E2EE)</strong> means only the sender and receiver can read the message — not even the service provider. WhatsApp, Signal, and iMessage use E2EE. This is different from standard HTTPS, where the server can read the data.
+          </div>
+        `
+      },
+
+      // ── Lesson 5 ──────────────────────────────────────────
+      {
+        type: "lesson",
+        title: "Network Security Basics",
+        content: `
+          <p>Securing the network is a core part of any defence strategy. Here are the essential tools and concepts.</p>
+          <h3>🧱 Firewalls</h3>
+          <p>A firewall monitors and controls incoming and outgoing network traffic based on a set of rules. Think of it as a security guard at the door — it checks every packet and decides whether to allow or block it based on IP address, port, and protocol.</p>
+          <ul>
+            <li><strong>Network firewall</strong> — sits between your network and the internet (hardware or virtual)</li>
+            <li><strong>Host-based firewall</strong> — runs on an individual machine (Windows Defender Firewall, iptables on Linux)</li>
+            <li><strong>WAF (Web Application Firewall)</strong> — specifically protects web apps from attacks like SQL injection and XSS</li>
+          </ul>
+          <h3>🔍 IDS vs IPS</h3>
+          <div class="comparison-table">
+            <table>
+              <thead><tr><th></th><th>IDS (Intrusion Detection System)</th><th>IPS (Intrusion Prevention System)</th></tr></thead>
+              <tbody>
+                <tr><td><strong>What it does</strong></td><td>Monitors traffic and <em>alerts</em> when suspicious activity is detected</td><td>Monitors traffic and <em>automatically blocks</em> threats</td></tr>
+                <tr><td><strong>Action</strong></td><td>Passive — logs and notifies</td><td>Active — blocks in real time</td></tr>
+                <tr><td><strong>Risk</strong></td><td>Threat isn't stopped automatically</td><td>False positives can block legitimate traffic</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>🛡️ VPNs</h3>
+          <p>A <strong>VPN (Virtual Private Network)</strong> creates an encrypted tunnel between your device and a server, masking your traffic from anyone on the same network. Used by companies so remote workers can securely access internal systems as if they were in the office.</p>
+          <h3>🏘️ Network Segmentation &amp; the Principle of Least Privilege</h3>
+          <p><strong>Network segmentation</strong> divides a network into isolated zones. If an attacker breaches one zone (say, the guest Wi-Fi), they can't automatically access the internal corporate network. Combined with the <strong>principle of least privilege</strong> — giving every user and service only the minimum access they need — this drastically limits damage from breaches.</p>
+          <div class="callout callout-info">
+            <strong>💡 Zero Trust</strong> is a modern security model built on "never trust, always verify." Even users inside the corporate network must authenticate and be authorised for every resource they access. No one is implicitly trusted just because they're on the internal network.
+          </div>
+        `
+      },
+
+      // ── Lesson 6 ──────────────────────────────────────────
+      {
+        type: "lesson",
+        title: "Security Best Practices & Incident Response",
+        content: `
+          <p>Knowing the threats is only half the battle — here's how professionals actually defend systems and respond when things go wrong.</p>
+          <h3>🛡️ Defence in Depth</h3>
+          <p>Don't rely on a single security control. <strong>Defence in depth</strong> layers multiple controls so that if one fails, others catch the attacker. Like a castle with a moat, walls, guards, and a locked keep — not just a front door lock.</p>
+          <h3>🔄 Patch Management</h3>
+          <p>The majority of successful attacks exploit <strong>known vulnerabilities</strong> that already have patches available — the organisations just hadn't applied them. Keeping software, OSes, and firmware up to date is one of the most effective (and underrated) security controls.</p>
+          <div class="callout callout-info">
+            <strong>💡 The WannaCry ransomware attack (2017)</strong> infected 200,000+ machines across 150 countries — including the UK's NHS. The vulnerability it exploited had been patched by Microsoft two months earlier. Most victims simply hadn't updated Windows.
+          </div>
+          <h3>💾 Backups — The 3-2-1 Rule</h3>
+          <p>A reliable backup strategy is your last line of defence against ransomware and disasters:</p>
+          <ul>
+            <li>3️⃣ Keep <strong>3 copies</strong> of your data</li>
+            <li>2️⃣ Store on <strong>2 different media types</strong> (e.g. local drive + cloud)</li>
+            <li>1️⃣ Keep <strong>1 copy offsite</strong> (so a fire or flood doesn't destroy everything)</li>
+          </ul>
+          <h3>🚨 Incident Response — The 6 Phases</h3>
+          <p>When a breach happens, organisations follow a structured process:</p>
+          <div class="stages">
+            <div class="stage"><span class="stage-num">1</span><strong>Preparation</strong><br>Policies, tools, and training in place before an incident</div>
+            <div class="stage-arrow">→</div>
+            <div class="stage"><span class="stage-num">2</span><strong>Identification</strong><br>Detect and confirm that an incident has occurred</div>
+            <div class="stage-arrow">→</div>
+            <div class="stage"><span class="stage-num">3</span><strong>Containment</strong><br>Isolate affected systems to stop the spread</div>
+          </div>
+          <div class="stages" style="margin-top:0.5rem">
+            <div class="stage"><span class="stage-num">4</span><strong>Eradication</strong><br>Remove the threat (malware, attacker access)</div>
+            <div class="stage-arrow">→</div>
+            <div class="stage"><span class="stage-num">5</span><strong>Recovery</strong><br>Restore systems and verify they're clean</div>
+            <div class="stage-arrow">→</div>
+            <div class="stage"><span class="stage-num">6</span><strong>Lessons Learned</strong><br>Post-mortem: what happened and how to prevent recurrence</div>
+          </div>
+          <div class="callout callout-tip">
+            <strong>🎯 Certifications to consider:</strong> CompTIA Security+ is the most recognised entry-level cybersecurity cert. For cloud security: AWS Security Specialty or Microsoft SC-900. For ethical hacking: CEH or OSCP (advanced).
+          </div>
+        `
+      },
+
+      // ── Quiz 2 ────────────────────────────────────────────
+      {
+        type: "quiz",
+        title: "🏆 Final Quiz — Cybersecurity Fundamentals",
+        questions: [
+          {
+            q: "What is the difference between authentication and authorisation?",
+            options: [
+              "They are the same thing — both verify identity",
+              "Authentication verifies who you are; authorisation determines what you're allowed to do",
+              "Authorisation verifies who you are; authentication determines what you're allowed to do",
+              "Authentication applies to humans; authorisation applies to systems"
+            ],
+            answer: 1,
+            explanation: "Authentication (AuthN) confirms your identity — 'Are you really Ravi?' Authorisation (AuthZ) determines your permissions — 'OK Ravi, you can read this file but not delete it.' You always authenticate before being authorised."
+          },
+          {
+            q: "Which type of encryption uses a public key to encrypt and a private key to decrypt?",
+            options: [
+              "Symmetric encryption (e.g. AES-256)",
+              "Hashing (e.g. SHA-256)",
+              "Asymmetric encryption (e.g. RSA)",
+              "End-to-end encryption"
+            ],
+            answer: 2,
+            explanation: "Asymmetric encryption uses a key pair. Anyone can encrypt data using your public key, but only you can decrypt it with your private key. This solves the key-distribution problem of symmetric encryption and is used in TLS, SSH, and digital signatures."
+          },
+          {
+            q: "An attacker gains access to a company's guest Wi-Fi but cannot reach the internal HR system because it's on a separate network segment. What security principle prevented the lateral movement?",
+            options: [
+              "Encryption at rest",
+              "Multi-Factor Authentication",
+              "Network segmentation and least privilege",
+              "Patch management"
+            ],
+            answer: 2,
+            explanation: "Network segmentation isolates different parts of the network so a breach in one zone can't automatically spread to others. Combined with least privilege (only granting the minimum necessary access), it dramatically limits what an attacker can reach after an initial compromise."
+          },
+          {
+            q: "A company's servers were infected with ransomware on a Tuesday. Their last backup was from the previous Thursday and wasn't tested. What was their biggest backup failure?",
+            options: [
+              "They didn't follow the 3-2-1 backup rule",
+              "They backed up too infrequently AND never tested their backups",
+              "They stored backups on the same server that got infected",
+              "They used cloud storage instead of physical media"
+            ],
+            answer: 1,
+            explanation: "Two failures here: (1) backing up only once a week means losing days of data, and (2) never testing backups means you don't know if they actually work until disaster strikes — by which point it's too late. An untested backup is not a backup."
+          },
+          {
+            q: "What is 'Defence in Depth'?",
+            options: [
+              "Having one very strong firewall to block all threats",
+              "Layering multiple security controls so that if one fails, others still protect the system",
+              "Encrypting data at multiple levels of the OSI model",
+              "A strategy where the security team works in shifts 24/7"
+            ],
+            answer: 1,
+            explanation: "Defence in depth means never relying on a single control. You use firewalls, MFA, encryption, network segmentation, patch management, backups, and monitoring together — so an attacker who bypasses one layer still faces multiple others."
+          }
+        ]
+      }
+
+    ]
   }
 
   // ─────────────────────────────────────────────────────────
@@ -2825,3 +3169,4 @@ print(response.status_code)  # 201</code></pre>
   //  Just copy the structure above and fill in your content!
   // ─────────────────────────────────────────────────────────
 ];
+
