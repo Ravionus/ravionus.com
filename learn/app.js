@@ -1,10 +1,65 @@
 // =====================================================
 //  app.js  —  Ravionus Learn Platform Engine
 //  Handles: catalog page, topic reader, quiz engine,
-//  progress persistence via localStorage
+//  progress persistence via localStorage + Firebase
 // =====================================================
 
+import {
+    signInWithGoogle,
+    signOutUser,
+    onAuthChange,
+    loadProgressFromCloud,
+    syncProgressToCloud,
+    saveCompletion,
+    getCurrentUser
+} from './firebase.js';
+
+import { generateCertificate } from './certificate.js';
+
 const STORAGE_KEY = 'ravionus_learn_progress';
+let USER = null;
+
+// ────────────────────────────────────────────────────
+//  Auth & UI Sync
+// ────────────────────────────────────────────────────
+
+function initAuthUI() {
+    const signInBtn = document.getElementById('signInBtn');
+    const userChip = document.getElementById('userChip');
+    const userAvatar = document.getElementById('userAvatar');
+    const userNameEl = document.getElementById('userName');
+    const signOutBtn = document.getElementById('signOutBtn');
+
+    if (signInBtn) signInBtn.onclick = signInWithGoogle;
+    if (signOutBtn) signOutBtn.onclick = signOutUser;
+
+    onAuthChange(async (user) => {
+        USER = user;
+        if (user) {
+            // Logged In
+            if (signInBtn) signInBtn.classList.add('hidden');
+            if (userChip) userChip.classList.remove('hidden');
+            if (userAvatar) userAvatar.src = user.photoURL || '';
+            if (userNameEl) userNameEl.textContent = user.displayName?.split(' ')[0] || 'User';
+
+            // Sync: Cloud -> Local (on login)
+            const cloudProgress = await loadProgressFromCloud(user.uid);
+            if (cloudProgress) {
+                const local = loadProgress();
+                const merged = { ...local, ...cloudProgress };
+                saveProgress(merged, false); // don't sync back up yet
+
+                // Refresh UI if on catalog
+                if (document.getElementById('topicsGrid')) initCatalog();
+            }
+        } else {
+            // Logged Out
+            if (signInBtn) signInBtn.classList.remove('hidden');
+            if (userChip) userChip.classList.add('hidden');
+            USER = null;
+        }
+    });
+}
 
 // ────────────────────────────────────────────────────
 //  Progress Helpers
@@ -18,8 +73,11 @@ function loadProgress() {
     }
 }
 
-function saveProgress(data) {
+async function saveProgress(data, syncToCloud = true) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    if (syncToCloud && USER) {
+        await syncProgressToCloud(USER.uid, data);
+    }
 }
 
 function getTopicProgress(topicId) {
@@ -48,6 +106,15 @@ function markTopicFinished(topicId) {
     if (!all[topicId]) all[topicId] = { completedSections: [], quizScores: {}, finished: false };
     all[topicId].finished = true;
     saveProgress(all);
+
+    // If logged in, save completion record for certificate
+    if (USER) {
+        const topic = TOPICS.find(t => t.id === topicId);
+        const prog = all[topicId];
+        const total = Object.values(prog.quizScores).reduce((s, q) => s + q.score, 0);
+        const max = Object.values(prog.quizScores).reduce((s, q) => s + q.total, 0);
+        saveCompletion(USER.uid, topicId, topic.title, total, max);
+    }
 }
 
 // ────────────────────────────────────────────────────
@@ -114,7 +181,6 @@ function initCatalog() {
         </div>`;
 
             grid.appendChild(card);
-            // Animate in staggered
             card.style.opacity = '0';
             card.style.transform = 'translateY(12px)';
             requestAnimationFrame(() => {
@@ -124,7 +190,6 @@ function initCatalog() {
             });
         });
 
-        // Update hero stats
         const statsTopics = document.getElementById('statTopics');
         const statsLessons = document.getElementById('statLessons');
         const statsQuizzes = document.getElementById('statQuizzes');
@@ -135,7 +200,6 @@ function initCatalog() {
 
     renderCards();
 
-    // Search
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
@@ -159,7 +223,6 @@ function initTopicPage() {
     const topic = TOPICS.find(t => t.id === topicId);
     if (!topic) { window.location.href = './'; return; }
 
-    // Set page title & hero
     document.title = `${topic.title} — Ravionus Learn`;
     document.getElementById('topicIcon').textContent = topic.icon;
     document.getElementById('topicTitleEl').textContent = topic.title;
@@ -170,10 +233,8 @@ function initTopicPage() {
 
     const prog = getTopicProgress(topicId);
 
-    // Build sidebar steps
     buildSidebar(topic, prog);
 
-    // Find starting section (first incomplete, or 0)
     currentSectionIndex = 0;
     for (let i = 0; i < topic.sections.length; i++) {
         if (!prog.completedSections.includes(i)) {
@@ -181,7 +242,7 @@ function initTopicPage() {
             break;
         }
         if (i === topic.sections.length - 1) {
-            currentSectionIndex = i; // all done, show last
+            currentSectionIndex = i;
         }
     }
 
@@ -194,6 +255,7 @@ function initTopicPage() {
 
 function buildSidebar(topic, prog) {
     const container = document.getElementById('sectionSteps');
+    if (!container) return;
     container.innerHTML = '';
     topic.sections.forEach((section, i) => {
         const item = document.createElement('div');
@@ -208,9 +270,7 @@ function buildSidebar(topic, prog) {
       </span>`;
         if (isCompleted) {
             item.addEventListener('click', () => {
-                currentSectionIndex = i;
-                const topic = TOPICS.find(t => t.id === new URLSearchParams(window.location.search).get('id'));
-                showSection(topic, new URLSearchParams(window.location.search).get('id'), i);
+                showSection(topic, topic.id, i);
             });
         }
         container.appendChild(item);
@@ -241,11 +301,8 @@ function showSection(topic, topicId, index) {
     }
 }
 
-// ── Lesson Renderer ──────────────────────────────────
-
 function renderLesson(topic, topicId, section, index) {
     const contentArea = document.getElementById('contentArea');
-    const isLast = index === topic.sections.length - 1;
     const hasNext = index < topic.sections.length - 1;
 
     const card = document.createElement('div');
@@ -267,11 +324,9 @@ function renderLesson(topic, topicId, section, index) {
     contentArea.scrollTop = 0;
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    const continueBtn = document.getElementById('continueBtn');
-    continueBtn.addEventListener('click', () => {
+    document.getElementById('continueBtn').addEventListener('click', () => {
         markSectionComplete(topicId, index);
         const updatedProg = getTopicProgress(topicId);
-        updateSidebar(index, updatedProg);
         buildSidebar(topic, updatedProg);
         if (hasNext) {
             showSection(topic, topicId, index + 1);
@@ -287,8 +342,6 @@ function renderLesson(topic, topicId, section, index) {
     }
 }
 
-// ── Quiz Renderer ────────────────────────────────────
-
 function renderQuiz(topic, topicId, section, sectionIndex) {
     quizState = { current: 0, score: 0, answers: [] };
     showQuestion(topic, topicId, section, sectionIndex);
@@ -298,7 +351,7 @@ function showQuestion(topic, topicId, section, sectionIndex) {
     const contentArea = document.getElementById('contentArea');
     contentArea.innerHTML = '';
 
-    const { current, score } = quizState;
+    const { current } = quizState;
     const questions = section.questions;
     const q = questions[current];
     const isLastQ = current === questions.length - 1;
@@ -353,17 +406,14 @@ function showQuestion(topic, topicId, section, sectionIndex) {
             quizState.answers[current] = chosen;
             if (isCorrect) quizState.score++;
 
-            // Disable all options
             optionsGrid.querySelectorAll('.option-btn').forEach((b, i) => {
                 b.disabled = true;
                 if (i === correct) b.classList.add('correct');
                 if (i === chosen && !isCorrect) b.classList.add('wrong');
             });
 
-            // Show explanation
             explanationBox.innerHTML = `<strong>${isCorrect ? '✅ Correct!' : '❌ Not quite!'}</strong> ${q.explanation}`;
             explanationBox.className = `explanation-box show ${isCorrect ? 'good' : 'bad'}`;
-
             nextBtn.style.display = 'inline-flex';
         });
     });
@@ -373,11 +423,9 @@ function showQuestion(topic, topicId, section, sectionIndex) {
             quizState.current++;
             showQuestion(topic, topicId, section, sectionIndex);
         } else {
-            // Finished quiz
             saveQuizScore(topicId, sectionIndex, quizState.score, questions.length);
             markSectionComplete(topicId, sectionIndex);
-            const updatedProg = getTopicProgress(topicId);
-            buildSidebar(topic, updatedProg);
+            buildSidebar(topic, getTopicProgress(topicId));
             showQuizScore(topic, topicId, section, sectionIndex, quizState.score, questions.length);
         }
     });
@@ -388,16 +436,11 @@ function showQuizScore(topic, topicId, section, sectionIndex, score, total) {
     contentArea.innerHTML = '';
 
     const pct = Math.round((score / total) * 100);
-    const isLast = sectionIndex === topic.sections.length - 1;
     const hasNext = sectionIndex < topic.sections.length - 1;
 
     let circleClass = pct >= 80 ? 'excellent' : pct >= 50 ? 'good' : 'poor';
     let message = pct >= 80 ? '🎉 Excellent work!' : pct >= 50 ? '👍 Good effort!' : '💪 Keep practising!';
-    let sub = pct >= 80
-        ? 'You have a solid understanding of this section.'
-        : pct >= 50
-            ? 'Review the lesson and try again to boost your score.'
-            : 'Go back through the lesson — the concepts will click!';
+    let sub = pct >= 80 ? 'You have a solid understanding.' : pct >= 50 ? 'Review and try again!' : 'Go back through the lesson!';
 
     const card = document.createElement('div');
     card.className = 'section-card';
@@ -422,31 +465,19 @@ function showQuizScore(topic, topicId, section, sectionIndex, score, total) {
     </div>`;
 
     contentArea.appendChild(card);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-
-    document.getElementById('retryQuizBtn')?.addEventListener('click', () => {
-        renderQuiz(topic, topicId, section, sectionIndex);
-    });
-
-    document.getElementById('nextSectionBtn')?.addEventListener('click', () => {
-        showSection(topic, topicId, sectionIndex + 1);
-    });
-
+    document.getElementById('retryQuizBtn')?.addEventListener('click', () => renderQuiz(topic, topicId, section, sectionIndex));
+    document.getElementById('nextSectionBtn')?.addEventListener('click', () => showSection(topic, topicId, sectionIndex + 1));
     document.getElementById('finishBtn')?.addEventListener('click', () => {
         markTopicFinished(topicId);
         showCompletionScreen(topic, getTopicProgress(topicId));
     });
 }
 
-// ── Completion Screen ────────────────────────────────
+// ── Completion Screen & Certificate ─────────────────
 
 function showCompletionScreen(topic, prog) {
     const contentArea = document.getElementById('contentArea');
     contentArea.innerHTML = '';
-    document.querySelectorAll('.step-item').forEach(item => {
-        item.classList.add('completed');
-        item.classList.remove('active');
-    });
 
     const quizCount = topic.sections.filter(s => s.type === 'quiz').length;
     const totalPoints = Object.values(prog.quizScores || {}).reduce((s, q) => s + q.score, 0);
@@ -457,7 +488,7 @@ function showCompletionScreen(topic, prog) {
     screen.innerHTML = `
     <span class="completion-icon">🏆</span>
     <div class="completion-title">Topic Complete!</div>
-    <p class="completion-sub">You've finished <strong>${topic.title}</strong>. Great work building your knowledge!</p>
+    <p class="completion-sub">You've finished <strong>${topic.title}</strong>. Great work!</p>
     <div class="completion-stats">
       <div class="comp-stat">
         <div class="comp-stat-val">${topic.sections.filter(s => s.type === 'lesson').length}</div>
@@ -473,9 +504,52 @@ function showCompletionScreen(topic, prog) {
         <div class="comp-stat-lbl">Quiz Score</div>
       </div>` : ''}
     </div>
-    <a href="./" class="btn btn-primary" style="margin:0 auto">← Back to All Topics</a>`;
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:24px">
+        <button class="btn btn-primary" id="certBtn">🎓 Get Certificate</button>
+        <a href="./" class="btn btn-secondary">← Back to Topics</a>
+    </div>
+    ${!USER ? `<p style="font-size:0.8rem;color:var(--text-muted)">Tip: Sign in with Google to get a verified certificate with your name.</p>` : ''}
+    `;
 
     contentArea.appendChild(screen);
+
+    document.getElementById('certBtn').onclick = () => {
+        showCertModal(topic.title, `${totalPoints}/${maxPoints}`);
+    };
+}
+
+function showCertModal(topicTitle, totalPoints) {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+    <div class="modal-content">
+        <span class="modal-icon">📜</span>
+        <h2 class="modal-title">Course Certificate</h2>
+        <p class="modal-desc">Enter the name you'd like to appear on your certificate for <strong>${topicTitle}</strong>.</p>
+        <input type="text" id="certNameInput" class="modal-input" placeholder="Your Full Name" value="${USER?.displayName || ''}">
+        <div class="modal-actions">
+            <button class="btn btn-secondary" id="cancelModal">Cancel</button>
+            <button class="btn btn-primary" id="downloadCert">Download PDF</button>
+        </div>
+    </div>`;
+
+    document.body.appendChild(overlay);
+    const input = document.getElementById('certNameInput');
+    input.focus();
+
+    document.getElementById('cancelModal').onclick = () => overlay.remove();
+    document.getElementById('downloadCert').onclick = () => {
+        const name = input.value.trim();
+        if (!name) { alert('Please enter your name'); return; }
+
+        const date = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+        const certId = USER ? `${USER.uid.slice(0, 6)}-${Date.now()}` : `GUEST-${Date.now()}`;
+
+        generateCertificate(name, topicTitle, date, certId);
+        overlay.remove();
+    };
+
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
 }
 
 // ────────────────────────────────────────────────────
@@ -483,6 +557,7 @@ function showCompletionScreen(topic, prog) {
 // ────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
+    initAuthUI();
     if (document.getElementById('topicsGrid')) {
         initCatalog();
     }
