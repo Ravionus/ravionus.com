@@ -2136,6 +2136,388 @@ CREATE INDEX idx_orders_user_date ON orders(user_id, created_at);</code></pre>
         ]
       }
     ]
+  },
+
+  // ─────────────────────────────────────────────────────────
+  //  TOPIC 7: REST APIs & HTTP
+  // ─────────────────────────────────────────────────────────
+  {
+    id: "rest-apis-http",
+    title: "REST APIs & HTTP",
+    icon: "🌐",
+    color: "#0369a1",
+    description: "Understand how the web communicates — learn HTTP methods, status codes, request/response structure, and how to design and consume REST APIs like a professional.",
+    difficulty: "Beginner",
+    estimatedTime: "30 min",
+    tags: ["Web", "Backend", "Networking"],
+    sections: [
+
+      // ── Lesson 1 ──────────────────────────────────────────
+      {
+        type: "lesson",
+        title: "What is HTTP?",
+        content: `
+          <p>Every time you open a website, your browser is having a conversation with a server. That conversation follows a strict set of rules called <strong>HTTP</strong> — HyperText Transfer Protocol.</p>
+          <p>Think of it like ordering at a restaurant:</p>
+          <ul>
+            <li>🧑 <strong>You (the client)</strong> look at the menu and place an order</li>
+            <li>🍽️ <strong>The waiter (HTTP)</strong> carries your request to the kitchen</li>
+            <li>👨‍🍳 <strong>The kitchen (the server)</strong> prepares your food and sends it back</li>
+          </ul>
+          <div class="callout callout-info">
+            <strong>💡 HTTP is stateless.</strong> Each request is completely independent — the server doesn't remember previous requests. It's like the waiter has no memory. Every order has to be complete and self-contained.
+          </div>
+          <h3>HTTP vs HTTPS</h3>
+          <div class="comparison-table">
+            <table>
+              <thead><tr><th>HTTP</th><th>HTTPS</th></tr></thead>
+              <tbody>
+                <tr><td>Plain text — anyone can read the data in transit</td><td>Encrypted — data is scrambled during transfer</td></tr>
+                <tr><td>Port 80</td><td>Port 443</td></tr>
+                <tr><td>Fine for public, non-sensitive content</td><td>Required for logins, payments, personal data</td></tr>
+                <tr><td><code>http://example.com</code></td><td><code>https://example.com</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>The <strong>S</strong> in HTTPS stands for <em>Secure</em>. It uses a protocol called TLS to encrypt the connection. Modern browsers mark plain HTTP sites as "Not Secure" — always use HTTPS in production.</p>
+        `
+      },
+
+      // ── Lesson 2 ──────────────────────────────────────────
+      {
+        type: "lesson",
+        title: "HTTP Methods — The Verbs of the Web",
+        content: `
+          <p>Every HTTP request includes a <strong>method</strong> (also called a verb) that describes what action you want to perform. There are 5 you'll use constantly:</p>
+          <div class="comparison-table">
+            <table>
+              <thead><tr><th>Method</th><th>Action</th><th>Real-world example</th></tr></thead>
+              <tbody>
+                <tr><td><strong>GET</strong></td><td>Read / fetch data</td><td>Load a user's profile page</td></tr>
+                <tr><td><strong>POST</strong></td><td>Create new data</td><td>Submit a registration form</td></tr>
+                <tr><td><strong>PUT</strong></td><td>Replace existing data</td><td>Update your entire profile</td></tr>
+                <tr><td><strong>PATCH</strong></td><td>Partially update data</td><td>Change only your email address</td></tr>
+                <tr><td><strong>DELETE</strong></td><td>Remove data</td><td>Delete a post</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout callout-tip">
+            <strong>🎯 PUT vs PATCH:</strong> PUT replaces the <em>entire</em> resource. If you PUT a user object and forget to include the phone number, it gets wiped. PATCH only updates the fields you send — safer for partial edits.
+          </div>
+          <h3>Safe vs Unsafe Methods</h3>
+          <p><strong>Safe methods</strong> (GET) don't change anything on the server — they're read-only. <strong>Unsafe methods</strong> (POST, PUT, PATCH, DELETE) modify data. This distinction matters for caching, browser behaviour, and API design.</p>
+          <div class="callout callout-info">
+            <strong>💡 Idempotency:</strong> A method is <em>idempotent</em> if calling it multiple times gives the same result as calling it once. GET, PUT, and DELETE are idempotent. POST is not — clicking "Submit Order" twice will create two orders!
+          </div>
+        `
+      },
+
+      // ── Lesson 3 ──────────────────────────────────────────
+      {
+        type: "lesson",
+        title: "Anatomy of an HTTP Request & Response",
+        content: `
+          <p>Every HTTP interaction has two parts: the <strong>request</strong> (client → server) and the <strong>response</strong> (server → client). Let's break both down.</p>
+          <h3>📤 The Request</h3>
+          <div class="code-block">
+            <div class="code-label">HTTP Request</div>
+            <pre><code>POST /api/users HTTP/1.1
+Host: api.example.com
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9...
+
+{
+  "name": "Ravi Kumar",
+  "email": "ravi@example.com"
+}</code></pre>
+          </div>
+          <p>A request has three parts:</p>
+          <ul>
+            <li>📋 <strong>Request line</strong> — method, path, and HTTP version (<code>POST /api/users HTTP/1.1</code>)</li>
+            <li>🏷️ <strong>Headers</strong> — metadata like content type, auth tokens, caching rules</li>
+            <li>📦 <strong>Body</strong> — the data you're sending (only for POST, PUT, PATCH)</li>
+          </ul>
+          <h3>📥 The Response</h3>
+          <div class="code-block">
+            <div class="code-label">HTTP Response</div>
+            <pre><code>HTTP/1.1 201 Created
+Content-Type: application/json
+Location: /api/users/42
+
+{
+  "id": 42,
+  "name": "Ravi Kumar",
+  "email": "ravi@example.com",
+  "createdAt": "2025-06-01T10:30:00Z"
+}</code></pre>
+          </div>
+          <p>A response has:</p>
+          <ul>
+            <li>📋 <strong>Status line</strong> — HTTP version + status code + message (<code>201 Created</code>)</li>
+            <li>🏷️ <strong>Headers</strong> — info about the response (content type, length, etc.)</li>
+            <li>📦 <strong>Body</strong> — the returned data (often JSON)</li>
+          </ul>
+          <div class="callout callout-tip">
+            <strong>💡 Common Headers to know:</strong><br>
+            <code>Content-Type: application/json</code> — tells the receiver what format the body is in<br>
+            <code>Authorization: Bearer &lt;token&gt;</code> — proves who you are<br>
+            <code>Accept: application/json</code> — tells the server what format you want back
+          </div>
+        `
+      },
+
+      // ── Quiz 1 ────────────────────────────────────────────
+      {
+        type: "quiz",
+        title: "⚡ Quick Check #1",
+        questions: [
+          {
+            q: "Which HTTP method should you use to fetch a list of products from an API?",
+            options: [
+              "POST",
+              "DELETE",
+              "GET",
+              "PATCH"
+            ],
+            answer: 2,
+            explanation: "GET is the correct method for reading/fetching data. It's safe (no side effects) and idempotent. POST creates, DELETE removes, and PATCH partially updates."
+          },
+          {
+            q: "What is the key difference between PUT and PATCH?",
+            options: [
+              "PUT is for creating, PATCH is for deleting",
+              "PUT replaces the entire resource; PATCH only updates specified fields",
+              "PATCH is faster than PUT",
+              "There is no difference — they're interchangeable"
+            ],
+            answer: 1,
+            explanation: "PUT replaces the entire resource with the data you send. If you omit fields, they get wiped. PATCH applies only the changes you specify, leaving other fields untouched."
+          },
+          {
+            q: "What does 'HTTP is stateless' mean?",
+            options: [
+              "HTTP doesn't support state management features",
+              "The server remembers all previous requests from a client",
+              "Each request is independent — the server has no memory of prior requests",
+              "HTTP can only be used in the USA"
+            ],
+            answer: 2,
+            explanation: "Stateless means each HTTP request is self-contained. The server treats every request as brand new. This is why authentication tokens need to be sent with every request."
+          }
+        ]
+      },
+
+      // ── Lesson 4 ──────────────────────────────────────────
+      {
+        type: "lesson",
+        title: "HTTP Status Codes",
+        content: `
+          <p>When a server responds, it always includes a <strong>3-digit status code</strong> that instantly tells you whether your request worked — and if not, why.</p>
+          <p>Status codes are grouped into 5 families:</p>
+          <div class="comparison-table">
+            <table>
+              <thead><tr><th>Range</th><th>Category</th><th>Meaning</th></tr></thead>
+              <tbody>
+                <tr><td><strong>1xx</strong></td><td>Informational</td><td>Request received, processing continues</td></tr>
+                <tr><td><strong>2xx</strong></td><td>✅ Success</td><td>Everything worked</td></tr>
+                <tr><td><strong>3xx</strong></td><td>↩️ Redirection</td><td>The resource has moved</td></tr>
+                <tr><td><strong>4xx</strong></td><td>❌ Client Error</td><td>You made a mistake in the request</td></tr>
+                <tr><td><strong>5xx</strong></td><td>💥 Server Error</td><td>The server crashed or failed</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>The Codes Every Developer Knows</h3>
+          <div class="comparison-table">
+            <table>
+              <thead><tr><th>Code</th><th>Name</th><th>When you'll see it</th></tr></thead>
+              <tbody>
+                <tr><td><strong>200</strong></td><td>OK</td><td>Standard success — data returned</td></tr>
+                <tr><td><strong>201</strong></td><td>Created</td><td>New resource successfully created (POST)</td></tr>
+                <tr><td><strong>204</strong></td><td>No Content</td><td>Success, but no body to return (DELETE)</td></tr>
+                <tr><td><strong>301</strong></td><td>Moved Permanently</td><td>URL has changed forever — update your link</td></tr>
+                <tr><td><strong>400</strong></td><td>Bad Request</td><td>Malformed request or invalid data sent</td></tr>
+                <tr><td><strong>401</strong></td><td>Unauthorized</td><td>Not logged in — send a valid token</td></tr>
+                <tr><td><strong>403</strong></td><td>Forbidden</td><td>Logged in, but you don't have permission</td></tr>
+                <tr><td><strong>404</strong></td><td>Not Found</td><td>Resource doesn't exist at that URL</td></tr>
+                <tr><td><strong>422</strong></td><td>Unprocessable Entity</td><td>Data format is right but values are invalid</td></tr>
+                <tr><td><strong>429</strong></td><td>Too Many Requests</td><td>You've been rate-limited — slow down!</td></tr>
+                <tr><td><strong>500</strong></td><td>Internal Server Error</td><td>Something crashed on the server</td></tr>
+                <tr><td><strong>503</strong></td><td>Service Unavailable</td><td>Server is down or overloaded</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout callout-tip">
+            <strong>🎯 401 vs 403:</strong> 401 means "who are you?" (unauthenticated). 403 means "I know who you are, but you can't do this" (unauthorised). Classic interview question!
+          </div>
+        `
+      },
+
+      // ── Lesson 5 ──────────────────────────────────────────
+      {
+        type: "lesson",
+        title: "What is a REST API?",
+        content: `
+          <p>An <strong>API</strong> (Application Programming Interface) is a way for two programs to talk to each other. A <strong>REST API</strong> is an API that follows a specific set of design principles using HTTP.</p>
+          <p><strong>REST</strong> stands for <em>Representational State Transfer</em> — don't worry about the full name. What matters are the principles:</p>
+          <ul>
+            <li>🔗 <strong>Resources</strong> — everything is a "resource" (a user, a post, an order) with its own URL</li>
+            <li>📡 <strong>Stateless</strong> — each request carries all the information the server needs</li>
+            <li>🔀 <strong>Standard methods</strong> — use HTTP verbs (GET, POST, PUT, DELETE) to act on resources</li>
+            <li>📦 <strong>Representations</strong> — resources are sent as data (usually JSON)</li>
+          </ul>
+          <h3>What a RESTful URL looks like</h3>
+          <div class="code-block">
+            <div class="code-label">REST API Examples</div>
+            <pre><code>GET    /api/users           → Get all users
+GET    /api/users/42        → Get user with ID 42
+POST   /api/users           → Create a new user
+PUT    /api/users/42        → Replace user 42
+PATCH  /api/users/42        → Partially update user 42
+DELETE /api/users/42        → Delete user 42
+
+GET    /api/users/42/orders → Get all orders for user 42
+GET    /api/orders/7        → Get order 7 directly</code></pre>
+          </div>
+          <div class="callout callout-info">
+            <strong>💡 URL design tips:</strong> Use <strong>nouns</strong>, not verbs, in URLs. The verb is already the HTTP method. <code>/api/getUser</code> is bad REST. <code>GET /api/users/42</code> is good REST.
+          </div>
+          <h3>REST vs Other Styles</h3>
+          <p>REST is not the only way to build APIs. <strong>GraphQL</strong> (used by Facebook/Meta) lets clients request exactly the fields they need. <strong>gRPC</strong> (used by Google) is ultra-fast for internal services. But REST remains the most common and the best starting point.</p>
+        `
+      },
+
+      // ── Lesson 6 ──────────────────────────────────────────
+      {
+        type: "lesson",
+        title: "Calling APIs in Practice",
+        content: `
+          <p>Let's look at how you actually <em>call</em> a REST API — both from the terminal and from code.</p>
+          <h3>🖥️ Using curl (Command Line)</h3>
+          <div class="code-block">
+            <div class="code-label">Terminal</div>
+            <pre><code># GET request
+curl https://api.example.com/users
+
+# POST with JSON body
+curl -X POST https://api.example.com/users \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer YOUR_TOKEN" \\
+  -d '{"name": "Priya", "email": "priya@example.com"}'
+
+# DELETE
+curl -X DELETE https://api.example.com/users/42 \\
+  -H "Authorization: Bearer YOUR_TOKEN"</code></pre>
+          </div>
+          <h3>🟨 Using JavaScript (fetch)</h3>
+          <div class="code-block">
+            <div class="code-label">JavaScript</div>
+            <pre><code>// GET request
+const response = await fetch('https://api.example.com/users/42');
+const user = await response.json();
+console.log(user.name);
+
+// POST request
+const response = await fetch('https://api.example.com/users', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer YOUR_TOKEN'
+  },
+  body: JSON.stringify({ name: 'Priya', email: 'priya@example.com' })
+});
+
+if (response.status === 201) {
+  const newUser = await response.json();
+  console.log('Created:', newUser.id);
+}</code></pre>
+          </div>
+          <h3>🐍 Using Python (requests library)</h3>
+          <div class="code-block">
+            <div class="code-label">Python</div>
+            <pre><code>import requests
+
+# GET
+response = requests.get('https://api.example.com/users/42')
+user = response.json()
+
+# POST
+response = requests.post(
+    'https://api.example.com/users',
+    json={'name': 'Priya', 'email': 'priya@example.com'},
+    headers={'Authorization': 'Bearer YOUR_TOKEN'}
+)
+print(response.status_code)  # 201</code></pre>
+          </div>
+          <div class="callout callout-tip">
+            <strong>💡 Use Postman or Insomnia</strong> to test APIs visually before writing code. These free tools let you build requests with a UI, inspect responses, and save collections of API calls for your team.
+          </div>
+        `
+      },
+
+      // ── Quiz 2 ────────────────────────────────────────────
+      {
+        type: "quiz",
+        title: "🏆 Final Quiz — REST APIs & HTTP",
+        questions: [
+          {
+            q: "A user tries to access a resource they don't have permission for, but they ARE logged in. Which status code should the server return?",
+            options: [
+              "401 Unauthorized",
+              "404 Not Found",
+              "403 Forbidden",
+              "400 Bad Request"
+            ],
+            answer: 2,
+            explanation: "403 Forbidden means the server knows who you are (you're authenticated) but you don't have permission for this action. 401 Unauthorized means the server doesn't know who you are — you haven't authenticated yet."
+          },
+          {
+            q: "Which of these is a well-designed RESTful endpoint for deleting a blog post with ID 5?",
+            options: [
+              "GET /api/deletePost?id=5",
+              "POST /api/posts/delete/5",
+              "DELETE /api/posts/5",
+              "REMOVE /api/posts/5"
+            ],
+            answer: 2,
+            explanation: "REST uses HTTP methods as the verb and nouns in the URL. DELETE /api/posts/5 is correct. Using 'delete' in the URL path or using GET for destructive actions are anti-patterns."
+          },
+          {
+            q: "You POST to create a new resource and it succeeds. What is the most appropriate HTTP status code to return?",
+            options: [
+              "200 OK",
+              "204 No Content",
+              "201 Created",
+              "202 Accepted"
+            ],
+            answer: 2,
+            explanation: "201 Created is the correct status for a successful POST that creates a new resource. 200 OK is for general success (often GET), and 204 No Content is for success with no response body (often DELETE)."
+          },
+          {
+            q: "What does it mean for an API endpoint to be 'idempotent'?",
+            options: [
+              "It returns the same data every time regardless of input",
+              "Calling it multiple times produces the same result as calling it once",
+              "It can be called without authentication",
+              "It works on all browsers and devices"
+            ],
+            answer: 1,
+            explanation: "Idempotency means repeated identical requests produce the same outcome. GET, PUT, and DELETE are idempotent. POST is not — submitting the same order twice will create two orders."
+          },
+          {
+            q: "Which header tells the server that the request body is in JSON format?",
+            options: [
+              "Accept: application/json",
+              "Authorization: Bearer token",
+              "Content-Type: application/json",
+              "Format: json"
+            ],
+            answer: 2,
+            explanation: "Content-Type: application/json tells the server what format the request BODY is in. The Accept header tells the server what format you want the RESPONSE in. Both are important but serve different purposes."
+          }
+        ]
+      }
+
+    ]
   }
 
   // ─────────────────────────────────────────────────────────
