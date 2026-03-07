@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ravionus</title>
-    <meta name="description" content="Ravionus — interactive bite-sized learning tools and developer resources.">
+    <title>Playgrounds — Ravionus</title>
+    <meta name="description" content="Interactive developer playgrounds and tools — experiment with code concepts right in your browser.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -109,7 +109,7 @@
         .hero {
             max-width: 720px;
             margin: 0 auto;
-            padding: 100px 24px 80px;
+            padding: 100px 24px 60px;
             text-align: center;
         }
 
@@ -146,42 +146,6 @@
             line-height: 1.7;
             max-width: 540px;
             margin: 0 auto 40px;
-        }
-
-        .hero-cta {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 12px 28px;
-            border-radius: 10px;
-            font-size: .95rem;
-            font-weight: 600;
-            text-decoration: none;
-            transition: transform .18s, opacity .18s;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            opacity: .9;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #7c3aed, #0e7490);
-            color: #fff;
-            box-shadow: 0 4px 24px rgba(168, 85, 247, .25);
-        }
-
-        .btn-ghost {
-            border: 1px solid var(--border);
-            color: var(--text);
-            background: var(--surface);
         }
 
         /* ── Cards ── */
@@ -308,55 +272,130 @@
     <!-- Hero -->
     <section class="hero">
         <div class="eyebrow">
-            <span>🚀</span> Developer tools &amp; learning
+            <span>🧪</span> Interactive Playgrounds
         </div>
         <h1>
-            Build. Learn.<br>
-            <span class="gradient-text">Level up.</span>
+            Experiment.<br>
+            <span class="gradient-text">Build. Test.</span>
         </h1>
         <p>
-            Ravionus is a collection of interactive tools and bite-sized courses designed to help developers grow faster
-            and smarter.
+            Hands-on developer tools and sandboxes. Learn by doing, experiment safely, and level up your coding skills.
         </p>
-        <div class="hero-cta">
-            <a href="./learn/" class="btn btn-primary">Start Learning →</a>
-            <a href="#explore" class="btn btn-ghost">Explore</a>
-        </div>
     </section>
 
-    <!-- Explore section -->
-    <div id="explore" class="section">
-        <div class="section-label">Explore</div>
-        <div class="section-title">What's on Ravionus</div>
+    <!-- Playgrounds section -->
+    <div class="section">
+        <div class="section-label">Coming Soon</div>
+        <div class="section-title">Developer Playgrounds & Tools</div>
         <div class="cards">
 
-            <a href="./learn/" class="card">
-                <div class="card-icon">📚</div>
-                <div class="card-title">Ravionus Learn</div>
-                <div class="card-desc">
-                    Bite-sized interactive lessons on Git, JavaScript, and more — with instant quizzes built right in.
-                    Learn by doing, not just reading.
-                </div>
-                <div class="card-badge">Live ✓</div>
-            </a>
-
             <div class="card" style="cursor:default; opacity:.6;">
-                <div class="card-icon">🛠️</div>
-                <div class="card-title">Dev Tools</div>
+                <div class="card-icon">🧪</div>
+                <div class="card-title">JavaScript REPL</div>
                 <div class="card-desc">
-                    Handy utilities for everyday developer workflows. More coming soon.
+                    Interactive JavaScript console with live execution and code visualization.
                 </div>
                 <div class="card-badge">Coming Soon</div>
             </div>
 
-            <a href="./playgrounds.html" class="card">
-                <div class="card-icon">🧪</div>
-                <div class="card-title">Playgrounds</div>
+            <div class="card" style="cursor:default; opacity:.6;">
+                <div class="card-icon">🎯</div>
+                <div class="card-title">Regex Tester</div>
                 <div class="card-desc">
-                    Interactive sandboxes to experiment with code concepts right in your browser.
+                    Test and learn regular expressions with real-time matching and explanations.
                 </div>
                 <div class="card-badge">Coming Soon</div>
-            </a>
+            </div>
+
+            <div class="card" style="cursor:default; opacity:.6;">
+                <div class="card-icon">🎨</div>
+                <div class="card-title">CSS Layout Playground</div>
+                <div class="card-desc">
+                    Experiment with CSS Grid and Flexbox layouts visually.
+                </div>
+                <div class="card-badge">Coming Soon</div>
+            </div>
+
+            <div class="card" style="cursor:default; opacity:.6;">
+                <div class="card-icon">🔗</div>
+                <div class="card-title">API Request Builder</div>
+                <div class="card-desc">
+                    Build and test HTTP requests with a visual interface.
+                </div>
+                <div class="card-badge">Coming Soon</div>
+            </div>
+
+            <div class="card" style="cursor:default; opacity:.6;">
+                <div class="card-icon">📊</div>
+                <div class="card-title">JSON Explorer</div>
+                <div class="card-desc">
+                    Parse, validate, and navigate JSON data structures.
+                </div>
+                <div class="card-badge">Coming Soon</div>
+            </div>
+
+            <div class="card" style="cursor:default; opacity:.6;">
+                <div class="card-icon">🔀</div>
+                <div class="card-title">Git Simulator</div>
+                <div class="card-desc">
+                    Practice Git commands in a safe, virtual environment.
+                </div>
+                <div class="card-badge">Coming Soon</div>
+            </div>
+
+            <div class="card" style="cursor:default; opacity:.6;">
+                <div class="card-icon">🖍️</div>
+                <div class="card-title">Color Palette Generator</div>
+                <div class="card-desc">
+                    Create beautiful color schemes with accessibility checking.
+                </div>
+                <div class="card-badge">Coming Soon</div>
+            </div>
+
+            <div class="card" style="cursor:default; opacity:.6;">
+                <div class="card-icon">📝</div>
+                <div class="card-title">Markdown Preview</div>
+                <div class="card-desc">
+                    Live preview and edit markdown with GitHub-style rendering.
+                </div>
+                <div class="card-badge">Coming Soon</div>
+            </div>
+
+            <div class="card" style="cursor:default; opacity:.6;">
+                <div class="card-icon">🔧</div>
+                <div class="card-title">Code Formatter</div>
+                <div class="card-desc">
+                    Beautify and format code in multiple programming languages.
+                </div>
+                <div class="card-badge">Coming Soon</div>
+            </div>
+
+            <div class="card" style="cursor:default; opacity:.6;">
+                <div class="card-icon">🔐</div>
+                <div class="card-title">Password Generator</div>
+                <div class="card-desc">
+                    Generate secure passwords with customizable complexity.
+                </div>
+                <div class="card-badge">Coming Soon</div>
+            </div>
+
+            <div class="card" style="cursor:default; opacity:.6;">
+                <div class="card-icon">📅</div>
+                <div class="card-title">Date/Time Utilities</div>
+                <div class="card-desc">
+                    Convert timezones, calculate dates, and format timestamps.
+                </div>
+                <div class="card-badge">Coming Soon</div>
+            </div>
+
+            <div class="card" style="cursor:default; opacity:.6;">
+                <div class="card-icon">🔢</div>
+                <div class="card-title">Base Converter</div>
+                <div class="card-desc">
+                    Convert numbers between binary, decimal, hex, and octal.
+                </div>
+                <div class="card-badge">Coming Soon</div>
+            </div>
 
         </div>
     </div>
