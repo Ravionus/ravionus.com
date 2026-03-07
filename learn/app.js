@@ -8,6 +8,7 @@ import {
     signInWithGoogle,
     signOutUser,
     onAuthChange,
+    handleAuthRedirect,
     loadProgressFromCloud,
     syncProgressToCloud,
     saveCompletion,
@@ -558,7 +559,8 @@ function showCertModal(topicTitle, totalPoints) {
 // ────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
-    initAuthUI();   // register onAuthStateChanged FIRST
+    handleAuthRedirect();  // Handle Firebase redirect result FIRST
+    initAuthUI();   // register onAuthStateChanged
     if (document.getElementById('topicsGrid')) {
         initCatalog();
     }
