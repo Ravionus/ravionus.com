@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Playgrounds — Ravionus</title>
-    <meta name="description" content="Interactive developer playgrounds and tools — experiment with code concepts right in your browser.">
+    <title>Developer Tools — Ravionus</title>
+    <meta name="description" content="Developer utility tools for data conversion, formatting, generation, and more.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -189,6 +189,8 @@
             transition: border-color .2s, transform .2s, box-shadow .2s;
             position: relative;
             overflow: hidden;
+            cursor: default;
+            opacity: .6;
         }
 
         .card::before {
@@ -265,7 +267,7 @@
             <div class="nav-links">
                 <a href="../learn/" class="nav-link primary">✨ Learn</a>
                 <a href="../tools/" class="nav-link">🛠️ Dev Tools</a>
-                <a href="./" class="nav-link">🧪 Playgrounds</a>
+                <a href="../playground/" class="nav-link">🧪 Playgrounds</a>
             </div>
         </div>
     </nav>
@@ -273,127 +275,208 @@
     <!-- Hero -->
     <section class="hero">
         <div class="eyebrow">
-            <span>🧪</span> Interactive Playgrounds
+            <span>🔧</span> Developer Tools
         </div>
         <h1>
-            Experiment.<br>
-            <span class="gradient-text">Build. Test.</span>
+            Quick Access.<br>
+            <span class="gradient-text">Instant Results.</span>
         </h1>
         <p>
-            Hands-on developer tools and sandboxes. Learn by doing, experiment safely, and level up your coding skills.
+            Essential utilities for data conversion, formatting, generation, and more. No sign-up, no server calls—everything runs in your browser.
         </p>
     </section>
 
-    <!-- Playgrounds section -->
+    <!-- Tools section -->
     <div class="section">
         <div class="section-label">Coming Soon</div>
-        <div class="section-title">Interactive Playgrounds</div>
+        <div class="section-title">Data & Conversion Tools</div>
         <div class="cards">
 
-            <div class="card" style="cursor:default; opacity:.6;">
-                <div class="card-icon">🧪</div>
-                <div class="card-title">JavaScript REPL</div>
+            <div class="card">
+                <div class="card-icon">📄</div>
+                <div class="card-title">JSON Formatter</div>
                 <div class="card-desc">
-                    Interactive JavaScript console with live execution and code visualization.
+                    Parse, validate, and pretty-print JSON with error detection.
                 </div>
                 <div class="card-badge">Coming Soon</div>
             </div>
 
-            <div class="card" style="cursor:default; opacity:.6;">
+            <div class="card">
+                <div class="card-icon">🔗</div>
+                <div class="card-title">URL Encoder/Decoder</div>
+                <div class="card-desc">
+                    Encode and decode URLs with special character handling.
+                </div>
+                <div class="card-badge">Coming Soon</div>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">🔐</div>
+                <div class="card-title">Base64 Encoder/Decoder</div>
+                <div class="card-desc">
+                    Convert text and files to and from Base64 encoding.
+                </div>
+                <div class="card-badge">Coming Soon</div>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">📊</div>
+                <div class="card-title">CSV ↔ JSON Converter</div>
+                <div class="card-desc">
+                    Convert between CSV and JSON formats easily.
+                </div>
+                <div class="card-badge">Coming Soon</div>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">✅</div>
+                <div class="card-title">YAML Validator</div>
+                <div class="card-desc">
+                    Validate YAML syntax and detect formatting errors.
+                </div>
+                <div class="card-badge">Coming Soon</div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Code Tools section -->
+    <div class="section">
+        <div class="section-label">Coming Soon</div>
+        <div class="section-title">Code Tools</div>
+        <div class="cards">
+
+            <div class="card">
                 <div class="card-icon">🎯</div>
                 <div class="card-title">Regex Tester</div>
                 <div class="card-desc">
-                    Test and learn regular expressions with real-time matching and explanations.
+                    Test regular expressions with live matching and explanations.
                 </div>
                 <div class="card-badge">Coming Soon</div>
             </div>
 
-            <div class="card" style="cursor:default; opacity:.6;">
-                <div class="card-icon">🎨</div>
-                <div class="card-title">CSS Layout Playground</div>
-                <div class="card-desc">
-                    Experiment with CSS Grid and Flexbox layouts visually.
-                </div>
-                <div class="card-badge">Coming Soon</div>
-            </div>
-
-            <div class="card" style="cursor:default; opacity:.6;">
-                <div class="card-icon">🔗</div>
-                <div class="card-title">API Request Builder</div>
-                <div class="card-desc">
-                    Build and test HTTP requests with a visual interface.
-                </div>
-                <div class="card-badge">Coming Soon</div>
-            </div>
-
-            <div class="card" style="cursor:default; opacity:.6;">
-                <div class="card-icon">📊</div>
-                <div class="card-title">JSON Explorer</div>
-                <div class="card-desc">
-                    Parse, validate, and navigate JSON data structures.
-                </div>
-                <div class="card-badge">Coming Soon</div>
-            </div>
-
-            <div class="card" style="cursor:default; opacity:.6;">
-                <div class="card-icon">🔀</div>
-                <div class="card-title">Git Simulator</div>
-                <div class="card-desc">
-                    Practice Git commands in a safe, virtual environment.
-                </div>
-                <div class="card-badge">Coming Soon</div>
-            </div>
-
-            <div class="card" style="cursor:default; opacity:.6;">
-                <div class="card-icon">🖍️</div>
-                <div class="card-title">Color Palette Generator</div>
-                <div class="card-desc">
-                    Create beautiful color schemes with accessibility checking.
-                </div>
-                <div class="card-badge">Coming Soon</div>
-            </div>
-
-            <div class="card" style="cursor:default; opacity:.6;">
+            <div class="card">
                 <div class="card-icon">📝</div>
-                <div class="card-title">Markdown Preview</div>
-                <div class="card-desc">
-                    Live preview and edit markdown with GitHub-style rendering.
-                </div>
-                <div class="card-badge">Coming Soon</div>
-            </div>
-
-            <div class="card" style="cursor:default; opacity:.6;">
-                <div class="card-icon">🔧</div>
                 <div class="card-title">Code Formatter</div>
                 <div class="card-desc">
-                    Beautify and format code in multiple programming languages.
+                    Format JavaScript, HTML, CSS, JSON, and more.
                 </div>
                 <div class="card-badge">Coming Soon</div>
             </div>
 
-            <div class="card" style="cursor:default; opacity:.6;">
-                <div class="card-icon">🔐</div>
+            <div class="card">
+                <div class="card-icon">📖</div>
+                <div class="card-title">Markdown Preview</div>
+                <div class="card-desc">
+                    Live preview markdown with GitHub-style rendering.
+                </div>
+                <div class="card-badge">Coming Soon</div>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">📦</div>
+                <div class="card-title">Minifier</div>
+                <div class="card-desc">
+                    Minify JavaScript, CSS, HTML, and JSON for production.
+                </div>
+                <div class="card-badge">Coming Soon</div>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">🌈</div>
+                <div class="card-title">Syntax Highlighter</div>
+                <div class="card-desc">
+                    Highlight code in multiple programming languages.
+                </div>
+                <div class="card-badge">Coming Soon</div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Generators section -->
+    <div class="section">
+        <div class="section-label">Coming Soon</div>
+        <div class="section-title">Generators & Utilities</div>
+        <div class="cards">
+
+            <div class="card">
+                <div class="card-icon">🆔</div>
+                <div class="card-title">UUID/GUID Generator</div>
+                <div class="card-desc">
+                    Generate unique identifiers in various formats.
+                </div>
+                <div class="card-badge">Coming Soon</div>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">📱</div>
+                <div class="card-title">QR Code Generator</div>
+                <div class="card-desc">
+                    Create QR codes from text or URLs instantly.
+                </div>
+                <div class="card-badge">Coming Soon</div>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">🔑</div>
                 <div class="card-title">Password Generator</div>
                 <div class="card-desc">
-                    Generate secure passwords with customizable complexity.
+                    Generate secure passwords with custom parameters.
                 </div>
                 <div class="card-badge">Coming Soon</div>
             </div>
 
-            <div class="card" style="cursor:default; opacity:.6;">
-                <div class="card-icon">📅</div>
-                <div class="card-title">Date/Time Utilities</div>
+            <div class="card">
+                <div class="card-icon">🔒</div>
+                <div class="card-title">Hash Generator</div>
                 <div class="card-desc">
-                    Convert timezones, calculate dates, and format timestamps.
+                    Create MD5, SHA1, SHA256 hashes for text.
                 </div>
                 <div class="card-badge">Coming Soon</div>
             </div>
 
-            <div class="card" style="cursor:default; opacity:.6;">
-                <div class="card-icon">🔢</div>
-                <div class="card-title">Base Converter</div>
+            <div class="card">
+                <div class="card-icon">📄</div>
+                <div class="card-title">Lorem Ipsum Generator</div>
                 <div class="card-desc">
-                    Convert numbers between binary, decimal, hex, and octal.
+                    Generate placeholder text for design mockups.
+                </div>
+                <div class="card-badge">Coming Soon</div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Text Tools section -->
+    <div class="section">
+        <div class="section-label">Coming Soon</div>
+        <div class="section-title">Text & Comparison Tools</div>
+        <div class="cards">
+
+            <div class="card">
+                <div class="card-icon">🔤</div>
+                <div class="card-title">Case Converter</div>
+                <div class="card-desc">
+                    Convert text between UPPERCASE, lowercase, camelCase, and more.
+                </div>
+                <div class="card-badge">Coming Soon</div>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">🔀</div>
+                <div class="card-title">Diff Checker</div>
+                <div class="card-desc">
+                    Compare two texts and see differences side-by-side.
+                </div>
+                <div class="card-badge">Coming Soon</div>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">🎨</div>
+                <div class="card-title">Color Converter</div>
+                <div class="card-desc">
+                    Convert colors between HEX, RGB, and HSL formats.
                 </div>
                 <div class="card-badge">Coming Soon</div>
             </div>
