@@ -63,9 +63,18 @@ export async function handleAuthRedirect() {
         const result = await getRedirectResult(auth);
         if (result?.user) {
             console.log('✅ Signed in via redirect:', result.user.displayName);
+            // The onAuthStateChanged listener will handle the UI updates
+        } else {
+            console.log('ℹ️ No redirect result (normal page load)');
         }
     } catch (err) {
         console.error('❌ Redirect result error:', err.code, err.message);
+        // Show user-friendly error message
+        if (err.code === 'auth/redirect-uri-mismatch') {
+            alert('Authentication failed: Redirect URI not configured in Firebase Console. Please add https://ravionus.com/learn/index.html and https://ravionus.com/learn/topic.html to Authorized redirect URIs.');
+        } else {
+            alert(`Sign-in failed: ${err.message}`);
+        }
     }
 }
 
