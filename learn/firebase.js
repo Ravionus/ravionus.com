@@ -8,7 +8,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebas
 import {
     getAuth,
     GoogleAuthProvider,
-    signInWithPopup,
+    signInWithRedirect,
+    getRedirectResult,
     signOut as firebaseSignOut,
     onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
@@ -40,9 +41,22 @@ const db = getFirestore(app);
 export async function signInWithGoogle() {
     const provider = new GoogleAuthProvider();
     try {
-        await signInWithPopup(auth, provider);
+        await signInWithRedirect(auth, provider);
+        console.log('🔄 Redirecting to Google login...');
     } catch (err) {
         console.error('Sign-in error:', err);
+        alert(`Sign-in failed: ${err.message}`);
+    }
+}
+
+export async function handleAuthRedirect() {
+    try {
+        const result = await getRedirectResult(auth);
+        if (result?.user) {
+            console.log('✅ Signed in:', result.user.displayName);
+        }
+    } catch (err) {
+        console.error('Redirect result error:', err);
     }
 }
 

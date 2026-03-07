@@ -8,6 +8,7 @@ import {
     signInWithGoogle,
     signOutUser,
     onAuthChange,
+    handleAuthRedirect,
     loadProgressFromCloud,
     syncProgressToCloud,
     saveCompletion,
@@ -34,6 +35,7 @@ function initAuthUI() {
     if (signOutBtn) signOutBtn.onclick = signOutUser;
 
     onAuthChange(async (user) => {
+        console.log('🔄 onAuthChange fired. User =', user ? user.displayName : 'null');
         USER = user;
         if (user) {
             // Logged In
@@ -557,6 +559,7 @@ function showCertModal(topicTitle, totalPoints) {
 // ────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
+    handleAuthRedirect();  // Handle Firebase redirect result FIRST
     initAuthUI();
     if (document.getElementById('topicsGrid')) {
         initCatalog();
