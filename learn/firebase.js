@@ -38,27 +38,38 @@ const db = getFirestore(app);
 
 // ── Auth ──────────────────────────────────────────────
 
+/**
+ * Initiate Google Sign-In via redirect.
+ * User will be redirected to Google login, then back to the app.
+ */
 export async function signInWithGoogle() {
     const provider = new GoogleAuthProvider();
     try {
         await signInWithRedirect(auth, provider);
+        // Page will redirect to Google, then back to here
         console.log('🔄 Redirecting to Google login...');
     } catch (err) {
-        console.error('Sign-in error:', err);
+        console.error('❌ Sign-in error:', err.code, err.message);
         alert(`Sign-in failed: ${err.message}`);
     }
 }
 
+/**
+ * Handle the redirect result after returning from Google login.
+ * Called on page load to complete the auth flow.
+ */
 export async function handleAuthRedirect() {
     try {
         const result = await getRedirectResult(auth);
         if (result?.user) {
-            console.log('✅ Signed in:', result.user.displayName);
+            console.log('✅ Signed in via redirect:', result.user.displayName);
         }
     } catch (err) {
-        console.error('Redirect result error:', err);
+        console.error('❌ Redirect result error:', err.code, err.message);
     }
 }
+
+
 
 export async function signOutUser() {
     await firebaseSignOut(auth);

@@ -560,7 +560,7 @@ function showCertModal(topicTitle, totalPoints) {
 
 document.addEventListener('DOMContentLoaded', () => {
     handleAuthRedirect();  // Handle Firebase redirect result FIRST
-    initAuthUI();
+    initAuthUI();   // register onAuthStateChanged
     if (document.getElementById('topicsGrid')) {
         initCatalog();
     }

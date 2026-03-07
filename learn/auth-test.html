@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Firebase Auth Test Minimal</title>
+</head>
+<body>
+    <h1>Minimal Auth Test</h1>
+    <button id="loginBtn">Login with Google Popup</button>
+    <div id="output" style="margin-top: 20px; font-family: monospace; white-space: pre-wrap; border: 1px solid #ccc; padding: 10px; min-height: 50px;"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDKB1gnAIgVeLHV4Vbs2i8veSntpJ9wLLE",
+            authDomain: "ravionus-f5574.firebaseapp.com",
+            projectId: "ravionus-f5574",
+            storageBucket: "ravionus-f5574.firebasestorage.app",
+            messagingSenderId: "701541143903",
+            appId: "1:701541143903:web:177af6cbf4cd17927552ea",
+            measurementId: "G-MD9EM8X8BK"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+        
+        provider.setCustomParameters({
+            prompt: 'select_account'
+        });
+
+        const output = document.getElementById('output');
+        const log = (msg) => {
+            console.log(msg);
+            output.textContent += msg + '\n';
+        };
+
+        log("App initialized. Waiting for action...");
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                log(`[Auth State] User is LOGGED IN: ${user.email} (${user.uid})`);
+            } else {
+                log(`[Auth State] User is LOGGED OUT`);
+            }
+        });
+
+        document.getElementById('loginBtn').addEventListener('click', async () => {
+            log("\n--- Starting signInWithPopup ---");
+            try {
+                const result = await signInWithPopup(auth, provider);
+                log(`✓ Success! Logged in as: ${result.user.email}`);
+            } catch (error) {
+                log(`❌ Error: ${error.code}`);
+                log(`Message: ${error.message}`);
+                if (error.customData) {
+                    log(`Custom Data: ${JSON.stringify(error.customData)}`);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
