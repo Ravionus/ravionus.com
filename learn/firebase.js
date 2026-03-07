@@ -40,11 +40,15 @@ const db = getFirestore(app);
 export async function signInWithGoogle() {
     const provider = new GoogleAuthProvider();
     try {
-        await signInWithPopup(auth, provider);
+        const result = await signInWithPopup(auth, provider);
+        console.log('✅ Signed in via popup:', result.user.displayName);
     } catch (err) {
-        console.error('Sign-in error:', err);
+        console.error('❌ Sign-in error:', err.code, err.message);
+        alert(`Sign-in failed: ${err.message}`);
     }
 }
+
+
 
 export async function signOutUser() {
     await firebaseSignOut(auth);

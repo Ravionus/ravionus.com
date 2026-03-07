@@ -34,6 +34,7 @@ function initAuthUI() {
     if (signOutBtn) signOutBtn.onclick = signOutUser;
 
     onAuthChange(async (user) => {
+        console.log('🔄 onAuthChange fired. User =', user ? user.displayName : 'null');
         USER = user;
         if (user) {
             // Logged In
@@ -557,7 +558,7 @@ function showCertModal(topicTitle, totalPoints) {
 // ────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
-    initAuthUI();
+    initAuthUI();   // register onAuthStateChanged FIRST
     if (document.getElementById('topicsGrid')) {
         initCatalog();
     }
