@@ -55,7 +55,7 @@ function initAuthUI() {
             const cloudProgress = await loadProgressFromCloud(user.uid);
             if (cloudProgress) {
                 const local = loadProgress();
-                const merged = { ...local, ...cloudProgress };
+                const merged = deepMergeProgress(local, cloudProgress);
                 saveProgress(merged, false); // don't sync back up yet
 
                 // Refresh UI if on catalog
@@ -68,6 +68,7 @@ function initAuthUI() {
             USER = null;
             localStorage.removeItem(STORAGE_KEY);
             if (document.getElementById('topicsGrid')) initCatalog();
+            if (document.getElementById('topicTitleEl')) initTopicPage();
         }
     });
 }
@@ -75,6 +76,26 @@ function initAuthUI() {
 // ────────────────────────────────────────────────────
 //  Progress Helpers
 // ────────────────────────────────────────────────────
+
+// Deep-merges guest/local progress with cloud progress at section level.
+// Union of completedSections, merged quizScores, finished=true if either is true.
+function deepMergeProgress(local, cloud) {
+    const result = { ...local };
+    for (const topicId of Object.keys(cloud)) {
+        if (!result[topicId]) {
+            result[topicId] = cloud[topicId];
+        } else {
+            const l = result[topicId];
+            const c = cloud[topicId];
+            result[topicId] = {
+                completedSections: [...new Set([...(l.completedSections || []), ...(c.completedSections || [])])],
+                quizScores: { ...(l.quizScores || {}), ...(c.quizScores || {}) },
+                finished: l.finished || c.finished
+            };
+        }
+    }
+    return result;
+}
 
 function loadProgress() {
     try {
@@ -548,6 +569,7 @@ function showCertModal(topicTitle, totalPoints) {
         <h2 class="modal-title">Course Certificate</h2>
         <p class="modal-desc">Enter the name you'd like to appear on your certificate for <strong id="_certTopicName"></strong>.</p>
         <input type="text" id="certNameInput" class="modal-input" placeholder="Your Full Name">
+        <p id="certNameError" style="color:#ef4444;font-size:0.8rem;margin:4px 0 0;display:none">Please enter your name.</p>
         <div class="modal-actions">
             <button class="btn btn-secondary" id="cancelModal">Cancel</button>
             <button class="btn btn-primary" id="downloadCert">Download PDF</button>
@@ -562,9 +584,14 @@ function showCertModal(topicTitle, totalPoints) {
     input.focus();
 
     document.getElementById('cancelModal').onclick = () => overlay.remove();
+    input.addEventListener('input', () => { document.getElementById('certNameError').style.display = 'none'; });
     document.getElementById('downloadCert').onclick = () => {
         const name = input.value.trim();
-        if (!name) { alert('Please enter your name'); return; }
+        if (!name) {
+            document.getElementById('certNameError').style.display = 'block';
+            input.focus();
+            return;
+        }
 
         const date = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
         const certId = USER ? `${USER.uid.slice(0, 6)}-${Date.now()}` : `GUEST-${Date.now()}`;
@@ -575,10 +602,6 @@ function showCertModal(topicTitle, totalPoints) {
 
     overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
 }
-
-// ────────────────────────────────────────────────────
-//  Boot
-// ────────────────────────────────────────────────────
 
 // ────────────────────────────────────────────────────
 //  Boot
