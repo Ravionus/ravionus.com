@@ -30,6 +30,14 @@ jobs:
         run: npx playwright test
         working-directory: tests
 
+      # If any tests are still failing after Playwright's own retries,
+      # re-run only those failed tests one more time so we can confirm
+      # whether it's a genuine failure or a one-off environment issue.
+      - name: Re-run failed tests
+        if: failure()
+        run: npx playwright test --last-failed
+        working-directory: tests
+
       - name: Upload report on failure
         uses: actions/upload-artifact@v4
         if: failure()

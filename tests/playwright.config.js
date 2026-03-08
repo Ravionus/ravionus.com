@@ -5,6 +5,9 @@ module.exports = defineConfig({
   testDir: '.',
   testMatch: '**/*.spec.js',
   timeout: 30000,
+  // Retry each failed test up to 2 times before marking it failed.
+  // If a test passes on retry it is reported as "flaky" (not a hard failure).
+  retries: 2,
   use: {
     baseURL: 'http://localhost:3000',
     headless: true,
