@@ -25,20 +25,66 @@ concurrency:
   group: pages
   cancel-in-progress: false
 
+# ── Test tier strategy ────────────────────────────────────────────────────────
+#
+#  Tier            | When it runs                         | Job(s)
+#  ---------------------------------------------------------------------------
+#  Pre-deploy      | Every push to main, before deploy    | ALL three test jobs
+#  Path-triggered  | When relevant source files change    | Only the affected job
+#  Both            | Pre-deploy AND on relevant change    | (all tests in that job)
+#
+#  On push to main  → all three test jobs always run → gates deploy
+#  On feature branch / PR:
+#    learn/**                         → test_learn only
+#    tools/json/**                    → test_json only
+#    playground/markdown/**           → test_markdown only
+#    Unchanged areas are skipped for faster CI feedback.
+# ─────────────────────────────────────────────────────────────────────────────
+
 jobs:
 
-  # ── Job 1: Run all tests ────────────────────────────────────────────────────
-  test:
-    name: Test
+  # ── Job 0: Detect which source areas changed ──────────────────────────────
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      learn:    ${{ steps.filter.outputs.learn }}
+      json:     ${{ steps.filter.outputs.json }}
+      markdown: ${{ steps.filter.outputs.markdown }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            learn:
+              - 'learn/**'
+              - 'tests/catalog.spec.js'
+              - 'tests/topic.spec.js'
+            json:
+              - 'tools/json/**'
+              - 'tests/json.spec.js'
+            markdown:
+              - 'playground/markdown/**'
+              - 'tests/markdown.spec.js'
+
+  # ── Job 1: Learn — catalog + topic tests ─────────────────────────────────
+  # Runs when:  learn/** or its spec files change
+  #             OR every push to main (pre-deploy gate)
+  test_learn:
+    name: "Test › Learn (catalog + topic)"
+    needs: changes
+    if: >-
+      needs.changes.outputs.learn == 'true' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
 
@@ -50,33 +96,110 @@ jobs:
         run: npx playwright install --with-deps chromium
         working-directory: tests
 
-      - name: Run tests
-        run: npx playwright test
-        working-directory: tests
-
-      # If tests still fail after Playwright's own retries, re-run them once
-      # more to distinguish genuine failures from one-off flakiness.
-      - name: Re-run failed tests
-        if: failure()
-        run: npx playwright test --last-failed
+      - name: Run learn tests
+        run: npx playwright test catalog.spec.js topic.spec.js
         working-directory: tests
 
       - name: Upload report on failure
         uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: playwright-report
+          name: learn-report
           path: tests/playwright-report/
           retention-days: 7
 
-  # ── Job 2: Deploy to GitHub Pages ───────────────────────────────────────────
-  # Only runs when:
-  #   1. The test job passed  (needs: test)
-  #   2. This is a push to main, not a PR  (if: condition)
+  # ── Job 2: JSON Formatter tests ───────────────────────────────────────────
+  # Runs when:  tools/json/** or tests/json.spec.js changes
+  #             OR every push to main (pre-deploy gate)
+  test_json:
+    name: "Test › JSON Formatter"
+    needs: changes
+    if: >-
+      needs.changes.outputs.json == 'true' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install test dependencies
+        run: npm install
+        working-directory: tests
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+        working-directory: tests
+
+      - name: Run JSON Formatter tests
+        run: npx playwright test json.spec.js
+        working-directory: tests
+
+      - name: Upload report on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: json-report
+          path: tests/playwright-report/
+          retention-days: 7
+
+  # ── Job 3: Markdown Preview tests ─────────────────────────────────────────
+  # Runs when:  playground/markdown/** or tests/markdown.spec.js changes
+  #             OR every push to main (pre-deploy gate)
+  test_markdown:
+    name: "Test › Markdown Preview"
+    needs: changes
+    if: >-
+      needs.changes.outputs.markdown == 'true' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install test dependencies
+        run: npm install
+        working-directory: tests
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+        working-directory: tests
+
+      - name: Run Markdown Preview tests
+        run: npx playwright test markdown.spec.js
+        working-directory: tests
+
+      - name: Upload report on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: markdown-report
+          path: tests/playwright-report/
+          retention-days: 7
+
+  # ── Job 4: Deploy to GitHub Pages ─────────────────────────────────────────
+  # Only runs on pushes to main.
+  # Requires ALL three test jobs to have PASSED or been SKIPPED.
+  # On main, no jobs are skipped (all run as pre-deploy gate), so all must pass.
   deploy:
     name: Deploy
-    needs: test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [test_learn, test_json, test_markdown]
+    if: >-
+      always() &&
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      (needs.test_learn.result    == 'success' || needs.test_learn.result    == 'skipped') &&
+      (needs.test_json.result     == 'success' || needs.test_json.result     == 'skipped') &&
+      (needs.test_markdown.result == 'success' || needs.test_markdown.result == 'skipped')
     runs-on: ubuntu-latest
     environment:
       name: github-pages
