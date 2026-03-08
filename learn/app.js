@@ -4,6 +4,8 @@
 //  progress persistence via localStorage + Firebase
 // =====================================================
 
+console.log('📦 app.js: Starting module load...');
+
 import {
     signInWithGoogle,
     signOutUser,
@@ -15,7 +17,11 @@ import {
     getCurrentUser
 } from './firebase.js';
 
+console.log('📦 app.js: firebase.js imported');
+
 import { generateCertificate } from './certificate.js';
+
+console.log('📦 app.js: certificate.js imported');
 
 const STORAGE_KEY = 'ravionus_learn_progress';
 let USER = null;
@@ -562,13 +568,37 @@ function showCertModal(topicTitle, totalPoints) {
 //  Boot
 // ────────────────────────────────────────────────────
 
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('📄 DOMContentLoaded at', new Date().toISOString());\n    handleAuthRedirect();  // Handle Firebase redirect result FIRST
+// ────────────────────────────────────────────────────
+//  Boot
+// ────────────────────────────────────────────────────
+
+console.log('🔧 app.js module loaded');
+
+function performInit() {
+    console.log('⚙️ performInit() executing');
+    console.log('   TOPICS:', TOPICS?.length, 'topics');
+    console.log('   DOM ready:', document.readyState);
+    
+    handleAuthRedirect();  // Handle Firebase redirect result FIRST
     initAuthUI();   // register onAuthStateChanged
+    
     if (document.getElementById('topicsGrid')) {
+        console.log('   ✅ Calling initCatalog()...');
         initCatalog();
     }
+    
     if (document.getElementById('topicTitleEl')) {
+        console.log('   ✅ Calling initTopicPage()...');
         initTopicPage();
     }
-});
+}
+
+// Use requestIdleCallback if available, otherwise wait for DOM ready
+if (document.readyState === 'loading') {
+    console.log('⏳ Waiting for DOMContentLoaded...');
+    document.addEventListener('DOMContentLoaded', performInit, { once: true });
+} else {
+    console.log('✅ DOM already ready, initializing now');
+    performInit();
+}
+
