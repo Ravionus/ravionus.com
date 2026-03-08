@@ -99,8 +99,11 @@ export async function signOutUser() {
     console.log('🚪 signOutUser() called at', new Date().toISOString());
     try {
         await firebaseSignOut(auth);
-        console.log('✅ signOut completed successfully');\n    } catch (err) {
-        console.error('❌ Sign-out error:', err.code, err.message);\n    }\n}
+        console.log('✅ signOut completed successfully');
+    } catch (err) {
+        console.error('❌ Sign-out error:', err.code, err.message);
+    }
+}
 
 export function onAuthChange(callback) {
     onAuthStateChanged(auth, callback);
