@@ -1,11 +1,25 @@
-name: CI
+name: CI / CD
 
 on:
   push:
   pull_request:
 
+# Permissions required by the GitHub Pages deploy action
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one deployment at a time; don't cancel an in-progress deploy
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
 jobs:
+
+  # ── Job 1: Run all tests ────────────────────────────────────────────────────
   test:
+    name: Test
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -30,9 +44,8 @@ jobs:
         run: npx playwright test
         working-directory: tests
 
-      # If any tests are still failing after Playwright's own retries,
-      # re-run only those failed tests one more time so we can confirm
-      # whether it's a genuine failure or a one-off environment issue.
+      # If tests still fail after Playwright's own retries, re-run them once
+      # more to distinguish genuine failures from one-off flakiness.
       - name: Re-run failed tests
         if: failure()
         run: npx playwright test --last-failed
@@ -45,3 +58,33 @@ jobs:
           name: playwright-report
           path: tests/playwright-report/
           retention-days: 7
+
+  # ── Job 2: Deploy to GitHub Pages ───────────────────────────────────────────
+  # Only runs when:
+  #   1. The test job passed  (needs: test)
+  #   2. This is a push to main, not a PR  (if: condition)
+  deploy:
+    name: Deploy
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload site artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Deploy the entire repo root (index.html, learn/, tools/, etc.)
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
