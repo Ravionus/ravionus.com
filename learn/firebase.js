@@ -8,8 +8,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebas
 import {
     getAuth,
     GoogleAuthProvider,
-    signInWithRedirect,
-    getRedirectResult,
+    signInWithPopup,
     signOut as firebaseSignOut,
     onAuthStateChanged,
     browserSessionPersistence,
@@ -78,39 +77,25 @@ function showAuthError(message) {
 export async function signInWithGoogle() {
     const provider = new GoogleAuthProvider();
     try {
-        // Wait for persistence to be configured before redirecting.
-        // Without this await the redirect can race against setPersistence
-        // and Firebase returns auth/internal-error on the way back.
         await persistenceReady;
-        await signInWithRedirect(auth, provider);
+        await signInWithPopup(auth, provider);
+        // onAuthStateChanged fires automatically after popup resolves
     } catch (err) {
         console.error('Sign-in error:', err.code, err.message);
-        showAuthError('Sign-in failed. Please try again.');
+        if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+            showAuthError('Sign-in failed. Please try again.');
+        }
     }
 }
+
+// No-op kept so app.js import doesn't break — popup flow needs no redirect handling
+export async function handleAuthRedirect() {}
 
 /**
  * Handle the redirect result after returning from Google login.
  * Called on page load to complete the auth flow.
  */
-export async function handleAuthRedirect() {
-    try {
-        const result = await getRedirectResult(auth);
-        if (result?.user) {
-            console.log('✅ Signed in via redirect successfully');
-            // The onAuthStateChanged listener will handle the UI updates
-        }
-    } catch (err) {
-        console.error('Auth redirect error:', err.code, err.message);
-        if (err.code === 'auth/internal-error') {
-            showAuthError('Sign-in was interrupted. Please try again.');
-        } else if (err.code === 'auth/redirect-uri-mismatch') {
-            showAuthError('Sign-in configuration error. Please contact support.');
-        } else {
-            showAuthError('Sign-in failed. Please try again.');
-        }
-    }
-}
+export async function handleAuthRedirect() {}
 
 
 
