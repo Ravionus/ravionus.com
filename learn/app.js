@@ -62,10 +62,12 @@ function initAuthUI() {
                 if (document.getElementById('topicsGrid')) initCatalog();
             }
         } else {
-            // Logged Out
+            // Logged Out — clear local progress so it isn't visible to other users on the same device
             if (signInBtn) signInBtn.classList.remove('hidden');
             if (userChip) userChip.classList.add('hidden');
             USER = null;
+            localStorage.removeItem(STORAGE_KEY);
+            if (document.getElementById('topicsGrid')) initCatalog();
         }
     });
 }
