@@ -35,7 +35,11 @@ function initAuthUI() {
     if (signOutBtn) signOutBtn.onclick = signOutUser;
 
     onAuthChange(async (user) => {
-        console.log('🔄 onAuthChange fired. User =', user ? user.displayName : 'null');
+        console.log('🔄 onAuthChange fired at', new Date().toISOString());
+        console.log('   User =', user ? user.displayName : 'null');
+        if (user) {
+            console.log('   Full user object:', { uid: user.uid, email: user.email, displayName: user.displayName });
+        }
         USER = user;
         if (user) {
             // Logged In
@@ -559,7 +563,7 @@ function showCertModal(topicTitle, totalPoints) {
 // ────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
-    handleAuthRedirect();  // Handle Firebase redirect result FIRST
+    console.log('📄 DOMContentLoaded at', new Date().toISOString());\n    handleAuthRedirect();  // Handle Firebase redirect result FIRST
     initAuthUI();   // register onAuthStateChanged
     if (document.getElementById('topicsGrid')) {
         initCatalog();

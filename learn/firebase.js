@@ -11,7 +11,9 @@ import {
     signInWithRedirect,
     getRedirectResult,
     signOut as firebaseSignOut,
-    onAuthStateChanged
+    onAuthStateChanged,
+    browserSessionPersistence,
+    setPersistence
 } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
 import {
     getFirestore,
@@ -36,6 +38,12 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// ── Configure persistence: session-only (clears on browser close) ─
+console.log('🔐 Setting Firebase persistence to browserSessionPersistence');
+setPersistence(auth, browserSessionPersistence).catch((err) => {
+    console.error('⚠️ Failed to set persistence:', err.code, err.message);
+});
+
 // ── Auth ──────────────────────────────────────────────
 
 /**
@@ -43,13 +51,16 @@ const db = getFirestore(app);
  * User will be redirected to Google login, then back to the app.
  */
 export async function signInWithGoogle() {
+    console.log('🔐 signInWithGoogle() called at', new Date().toISOString());
     const provider = new GoogleAuthProvider();
     try {
+        console.log('📍 Calling signInWithRedirect with auth:', auth);
         await signInWithRedirect(auth, provider);
         // Page will redirect to Google, then back to here
         console.log('🔄 Redirecting to Google login...');
     } catch (err) {
         console.error('❌ Sign-in error:', err.code, err.message);
+        console.error('Full error:', err);
         alert(`Sign-in failed: ${err.message}`);
     }
 }
@@ -59,16 +70,21 @@ export async function signInWithGoogle() {
  * Called on page load to complete the auth flow.
  */
 export async function handleAuthRedirect() {
+    console.log('🔄 handleAuthRedirect() called at', new Date().toISOString());
     try {
+        console.log('📍 Calling getRedirectResult with auth:', auth);
         const result = await getRedirectResult(auth);
+        console.log('📦 getRedirectResult returned:', result);
         if (result?.user) {
             console.log('✅ Signed in via redirect:', result.user.displayName);
+            console.log('User object:', { uid: result.user.uid, email: result.user.email, displayName: result.user.displayName });
             // The onAuthStateChanged listener will handle the UI updates
         } else {
             console.log('ℹ️ No redirect result (normal page load)');
         }
     } catch (err) {
         console.error('❌ Redirect result error:', err.code, err.message);
+        console.error('Full error object:', err);
         // Show user-friendly error message
         if (err.code === 'auth/redirect-uri-mismatch') {
             alert('Authentication failed: Redirect URI not configured in Firebase Console. Please add https://ravionus.com/learn/index.html and https://ravionus.com/learn/topic.html to Authorized redirect URIs.');
@@ -81,8 +97,11 @@ export async function handleAuthRedirect() {
 
 
 export async function signOutUser() {
-    await firebaseSignOut(auth);
-}
+    console.log('🚪 signOutUser() called at', new Date().toISOString());
+    try {
+        await firebaseSignOut(auth);
+        console.log('✅ signOut completed successfully');\n    } catch (err) {
+        console.error('❌ Sign-out error:', err.code, err.message);\n    }\n}
 
 export function onAuthChange(callback) {
     onAuthStateChanged(auth, callback);
