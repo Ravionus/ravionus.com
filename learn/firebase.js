@@ -76,8 +76,7 @@ export async function handleAuthRedirect() {
         const result = await getRedirectResult(auth);
         console.log('📦 getRedirectResult returned:', result);
         if (result?.user) {
-            console.log('✅ Signed in via redirect:', result.user.displayName);
-            console.log('User object:', { uid: result.user.uid, email: result.user.email, displayName: result.user.displayName });
+            console.log('✅ Signed in via redirect successfully');
             // The onAuthStateChanged listener will handle the UI updates
         } else {
             console.log('ℹ️ No redirect result (normal page load)');

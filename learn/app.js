@@ -43,9 +43,6 @@ function initAuthUI() {
     onAuthChange(async (user) => {
         console.log('🔄 onAuthChange fired at', new Date().toISOString());
         console.log('   User =', user ? user.displayName : 'null');
-        if (user) {
-            console.log('   Full user object:', { uid: user.uid, email: user.email, displayName: user.displayName });
-        }
         USER = user;
         if (user) {
             // Logged In
@@ -149,11 +146,21 @@ function initCatalog() {
         );
 
         if (filtered.length === 0) {
-            grid.innerHTML = `
-        <div class="empty-state" style="grid-column:1/-1">
-          <div class="empty-icon">🔍</div>
-          <p>No topics match "<strong>${filter}</strong>". Try a different search.</p>
-        </div>`;
+            // Build empty state without interpolating user input into innerHTML (XSS prevention)
+            const emptyDiv = document.createElement('div');
+            emptyDiv.className = 'empty-state';
+            emptyDiv.style.cssText = 'grid-column:1/-1';
+            const iconDiv = document.createElement('div');
+            iconDiv.className = 'empty-icon';
+            iconDiv.textContent = '🔍';
+            const msg = document.createElement('p');
+            msg.append('No topics match "');
+            const strong = document.createElement('strong');
+            strong.textContent = filter;
+            msg.append(strong);
+            msg.append('". Try a different search.');
+            emptyDiv.append(iconDiv, msg);
+            grid.appendChild(emptyDiv);
             return;
         }
 
@@ -537,8 +544,8 @@ function showCertModal(topicTitle, totalPoints) {
     <div class="modal-content">
         <span class="modal-icon">📜</span>
         <h2 class="modal-title">Course Certificate</h2>
-        <p class="modal-desc">Enter the name you'd like to appear on your certificate for <strong>${topicTitle}</strong>.</p>
-        <input type="text" id="certNameInput" class="modal-input" placeholder="Your Full Name" value="${USER?.displayName || ''}">
+        <p class="modal-desc">Enter the name you'd like to appear on your certificate for <strong id="_certTopicName"></strong>.</p>
+        <input type="text" id="certNameInput" class="modal-input" placeholder="Your Full Name">
         <div class="modal-actions">
             <button class="btn btn-secondary" id="cancelModal">Cancel</button>
             <button class="btn btn-primary" id="downloadCert">Download PDF</button>
@@ -546,7 +553,10 @@ function showCertModal(topicTitle, totalPoints) {
     </div>`;
 
     document.body.appendChild(overlay);
+    // Set values via DOM properties, never via innerHTML interpolation (XSS prevention)
+    document.getElementById('_certTopicName').textContent = topicTitle;
     const input = document.getElementById('certNameInput');
+    input.value = USER?.displayName || '';
     input.focus();
 
     document.getElementById('cancelModal').onclick = () => overlay.remove();
