@@ -91,12 +91,6 @@ export async function signInWithGoogle() {
 // No-op kept so app.js import doesn't break — popup flow needs no redirect handling
 export async function handleAuthRedirect() {}
 
-/**
- * Handle the redirect result after returning from Google login.
- * Called on page load to complete the auth flow.
- */
-export async function handleAuthRedirect() {}
-
 
 
 export async function signOutUser() {
