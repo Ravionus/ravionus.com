@@ -79,11 +79,16 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
+      - name: Prepare site files
+        run: |
+          mkdir _site
+          cp -r index.html CNAME learn tools playground _site/ 2>/dev/null || true
+          [ -f README.md ] && cp README.md _site/ || true
+
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Deploy the entire repo root (index.html, learn/, tools/, etc.)
-          path: '.'
+          path: '_site'
 
       - name: Deploy to GitHub Pages
         id: deployment
