@@ -39,10 +39,35 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 // ── Configure persistence: session-only (clears on browser close) ─
-console.log('🔐 Setting Firebase persistence to browserSessionPersistence');
-setPersistence(auth, browserSessionPersistence).catch((err) => {
+// Store as a promise so signInWithGoogle can await it before redirecting.
+const persistenceReady = setPersistence(auth, browserSessionPersistence).catch((err) => {
     console.error('⚠️ Failed to set persistence:', err.code, err.message);
 });
+
+// ── Auth error display ────────────────────────────────
+// Shows a dismissible banner instead of a blocking alert().
+function showAuthError(message) {
+    // Remove any existing banner
+    document.getElementById('_authErrorBanner')?.remove();
+    const banner = document.createElement('div');
+    banner.id = '_authErrorBanner';
+    banner.style.cssText = [
+        'position:fixed', 'top:70px', 'left:50%', 'transform:translateX(-50%)',
+        'background:#3b0764', 'color:#f0abfc', 'border:1px solid #7c3aed',
+        'padding:12px 20px', 'border-radius:10px', 'font-size:0.9rem',
+        'z-index:9999', 'max-width:90vw', 'text-align:center',
+        'box-shadow:0 4px 24px rgba(0,0,0,0.5)'
+    ].join(';');
+    banner.textContent = message;
+    const close = document.createElement('button');
+    close.textContent = '✕';
+    close.style.cssText = 'margin-left:12px;background:none;border:none;color:inherit;cursor:pointer;font-size:1rem;';
+    close.onclick = () => banner.remove();
+    banner.appendChild(close);
+    document.body.appendChild(banner);
+    // Auto-dismiss after 8 seconds
+    setTimeout(() => banner.remove(), 8000);
+}
 
 // ── Auth ──────────────────────────────────────────────
 
@@ -51,17 +76,16 @@ setPersistence(auth, browserSessionPersistence).catch((err) => {
  * User will be redirected to Google login, then back to the app.
  */
 export async function signInWithGoogle() {
-    console.log('🔐 signInWithGoogle() called at', new Date().toISOString());
     const provider = new GoogleAuthProvider();
     try {
-        console.log('📍 Calling signInWithRedirect with auth:', auth);
+        // Wait for persistence to be configured before redirecting.
+        // Without this await the redirect can race against setPersistence
+        // and Firebase returns auth/internal-error on the way back.
+        await persistenceReady;
         await signInWithRedirect(auth, provider);
-        // Page will redirect to Google, then back to here
-        console.log('🔄 Redirecting to Google login...');
     } catch (err) {
-        console.error('❌ Sign-in error:', err.code, err.message);
-        console.error('Full error:', err);
-        alert(`Sign-in failed: ${err.message}`);
+        console.error('Sign-in error:', err.code, err.message);
+        showAuthError('Sign-in failed. Please try again.');
     }
 }
 
@@ -70,25 +94,20 @@ export async function signInWithGoogle() {
  * Called on page load to complete the auth flow.
  */
 export async function handleAuthRedirect() {
-    console.log('🔄 handleAuthRedirect() called at', new Date().toISOString());
     try {
-        console.log('📍 Calling getRedirectResult with auth:', auth);
         const result = await getRedirectResult(auth);
-        console.log('📦 getRedirectResult returned:', result);
         if (result?.user) {
             console.log('✅ Signed in via redirect successfully');
             // The onAuthStateChanged listener will handle the UI updates
-        } else {
-            console.log('ℹ️ No redirect result (normal page load)');
         }
     } catch (err) {
-        console.error('❌ Redirect result error:', err.code, err.message);
-        console.error('Full error object:', err);
-        // Show user-friendly error message
-        if (err.code === 'auth/redirect-uri-mismatch') {
-            alert('Authentication failed: Redirect URI not configured in Firebase Console. Please add https://ravionus.com/learn/index.html and https://ravionus.com/learn/topic.html to Authorized redirect URIs.');
+        console.error('Auth redirect error:', err.code, err.message);
+        if (err.code === 'auth/internal-error') {
+            showAuthError('Sign-in was interrupted. Please try again.');
+        } else if (err.code === 'auth/redirect-uri-mismatch') {
+            showAuthError('Sign-in configuration error. Please contact support.');
         } else {
-            alert(`Sign-in failed: ${err.message}`);
+            showAuthError('Sign-in failed. Please try again.');
         }
     }
 }
