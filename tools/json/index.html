@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Formatter — Ravionus Dev Tools</title>
+    <meta name="description" content="Format, validate, and minify JSON instantly in your browser. No server, no sign-up.">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none';">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0a0f;
+            --surface: #12121a;
+            --surface2: #0e0e16;
+            --border: #1e1e2e;
+            --border2: #2a2a3e;
+            --text: #e2e2f0;
+            --muted: #7878a0;
+            --purple: #a855f7;
+            --cyan: #22d3ee;
+            --green: #22c55e;
+            --red: #ef4444;
+            --yellow: #eab308;
+            --accent-g: linear-gradient(135deg, #a855f7, #22d3ee);
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+        }
+
+        html, body { height: 100%; overflow: hidden; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Nav ── */
+        nav {
+            border-bottom: 1px solid var(--border);
+            background: rgba(10,10,15,.95);
+            backdrop-filter: blur(12px);
+            flex-shrink: 0;
+        }
+        .nav-inner {
+            padding: 0 20px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .nav-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+        .nav-logo {
+            font-size: 1.1rem; font-weight: 800;
+            text-decoration: none;
+            background: var(--accent-g);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -.5px; flex-shrink: 0;
+        }
+        .nav-sep { color: var(--border2); flex-shrink: 0; }
+        .nav-breadcrumb { font-size: .82rem; color: var(--muted); }
+        .nav-breadcrumb a { color: var(--muted); text-decoration: none; }
+        .nav-breadcrumb a:hover { color: var(--text); }
+        .nav-breadcrumb .current { color: var(--text); font-weight: 600; }
+        .nav-links { display: flex; gap: 4px; flex-shrink: 0; }
+        .nav-link {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 5px 10px; border-radius: 7px;
+            font-size: .8rem; font-weight: 500; text-decoration: none;
+            color: var(--muted); transition: color .15s, background .15s; white-space: nowrap;
+        }
+        .nav-link:hover { color: var(--text); background: var(--surface); }
+
+        /* ── Toolbar ── */
+        .toolbar {
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+            padding: 6px 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            flex-shrink: 0;
+            flex-wrap: wrap;
+        }
+        .tb-group { display: flex; align-items: center; gap: 3px; }
+        .tb-sep { width: 1px; height: 20px; background: var(--border2); margin: 0 4px; }
+        .tb-btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            gap: 5px; height: 28px; padding: 0 10px;
+            border-radius: 6px; border: none;
+            background: transparent; color: var(--muted);
+            font-size: .78rem; font-weight: 600; cursor: pointer;
+            transition: color .12s, background .12s;
+            font-family: inherit; white-space: nowrap;
+        }
+        .tb-btn:hover { color: var(--text); background: var(--border); }
+        .tb-btn.primary { background: rgba(168,85,247,.15); color: var(--purple); border: 1px solid rgba(168,85,247,.3); }
+        .tb-btn.primary:hover { background: rgba(168,85,247,.25); color: #c084fc; }
+        .tb-btn.success { background: rgba(34,197,94,.12); color: var(--green); border: 1px solid rgba(34,197,94,.25); }
+        .tb-btn.success:hover { background: rgba(34,197,94,.22); }
+        .tb-btn.danger:hover { color: var(--red); background: rgba(239,68,68,.1); }
+
+        .indent-select {
+            height: 28px; padding: 0 8px;
+            background: var(--surface2); border: 1px solid var(--border2);
+            color: var(--text); border-radius: 6px;
+            font-size: .78rem; font-family: inherit; cursor: pointer;
+        }
+        .indent-select:focus { outline: 1px solid var(--purple); }
+
+        .tb-right { margin-left: auto; display: flex; align-items: center; gap: 5px; }
+
+        /* ── Error banner ── */
+        .error-banner {
+            background: rgba(239,68,68,.1);
+            border-bottom: 1px solid rgba(239,68,68,.25);
+            color: var(--red);
+            padding: 6px 18px;
+            font-size: .8rem;
+            font-family: var(--font-mono);
+            display: none;
+            flex-shrink: 0;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .error-banner.visible { display: block; }
+
+        /* ── Valid banner ── */
+        .valid-banner {
+            background: rgba(34,197,94,.08);
+            border-bottom: 1px solid rgba(34,197,94,.2);
+            color: var(--green);
+            padding: 5px 18px;
+            font-size: .78rem;
+            display: none;
+            flex-shrink: 0;
+            align-items: center;
+            gap: 6px;
+        }
+        .valid-banner.visible { display: flex; }
+
+        /* ── Layout ── */
+        .editor-layout {
+            flex: 1; display: flex; overflow: hidden; min-height: 0;
+        }
+        .pane {
+            flex: 1; display: flex; flex-direction: column;
+            min-width: 0; overflow: hidden;
+        }
+        .pane-header {
+            padding: 5px 16px;
+            background: var(--surface2);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            font-size: .7rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: .08em; color: var(--muted); flex-shrink: 0;
+        }
+        .pane-header-actions { display: flex; gap: 4px; }
+        .ph-btn {
+            height: 20px; padding: 0 7px; border-radius: 4px; border: none;
+            background: transparent; color: var(--muted);
+            font-size: .68rem; font-weight: 600; cursor: pointer;
+            transition: color .12s, background .12s; font-family: inherit;
+        }
+        .ph-btn:hover { color: var(--text); background: var(--border); }
+        .pane-divider { width: 1px; background: var(--border); flex-shrink: 0; }
+        .editor-wrap { flex: 1; overflow: hidden; position: relative; }
+
+        textarea {
+            width: 100%; height: 100%;
+            background: var(--bg); color: var(--text);
+            border: none; outline: none; resize: none;
+            padding: 18px 20px;
+            font-family: var(--font-mono); font-size: .85rem; line-height: 1.7;
+            tab-size: 2; overflow-y: auto;
+        }
+        textarea::selection { background: rgba(168,85,247,.22); }
+        textarea.has-error { background: #0f0808; }
+        textarea[readonly] { color: #b0cce0; cursor: text; }
+
+        /* ── Tree view ── */
+        .tree-scroll {
+            flex: 1; overflow-y: auto;
+            background: var(--bg); padding: 18px 20px;
+            font-family: var(--font-mono); font-size: .83rem; line-height: 1.7;
+        }
+        .tree-placeholder {
+            color: var(--muted); font-size: .85rem;
+            padding: 60px 20px; text-align: center;
+        }
+
+        /* JSON syntax colours */
+        .j-key    { color: #a78bfa; }        /* purple */
+        .j-str    { color: #86efac; }        /* green */
+        .j-num    { color: #7dd3fc; }        /* sky blue */
+        .j-bool   { color: #fb923c; }        /* orange */
+        .j-null   { color: var(--muted); }
+        .j-brace  { color: #e2e2f0; }
+        .j-line   { display: block; }
+        .j-indent { display: inline-block; }
+        .j-toggle {
+            cursor: pointer; user-select: none;
+            color: var(--muted); margin-right: 4px;
+            font-size: .75rem;
+        }
+        .j-toggle:hover { color: var(--text); }
+        .j-collapsible > .j-children { }
+        .j-collapsible.collapsed > .j-children { display: none; }
+        .j-collapsible.collapsed > .j-preview { display: inline; }
+        .j-preview { display: none; color: var(--muted); font-size: .8rem; }
+
+        /* ── Status bar ── */
+        .status-bar {
+            border-top: 1px solid var(--border);
+            background: var(--surface2);
+            padding: 4px 18px;
+            display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+            font-size: .72rem; color: var(--muted); flex-shrink: 0;
+        }
+        .stat-item { display: flex; align-items: center; gap: 4px; }
+        .stat-val { color: var(--text); font-weight: 600; }
+        .stat-ok { color: var(--green); font-weight: 600; }
+        .stat-err { color: var(--red); font-weight: 600; }
+
+        /* ── Toast ── */
+        #toast {
+            position: fixed; bottom: 20px; right: 20px;
+            background: var(--surface); border: 1px solid var(--border2);
+            border-radius: 9px; padding: 9px 16px;
+            font-size: .82rem; color: var(--text);
+            box-shadow: 0 4px 24px rgba(0,0,0,.5);
+            transform: translateY(50px); opacity: 0;
+            transition: transform .22s ease, opacity .22s ease;
+            pointer-events: none; z-index: 500;
+        }
+        #toast.show { transform: translateY(0); opacity: 1; }
+
+        /* ── Mobile tabs ── */
+        .mobile-tabs { display: none; flex-shrink: 0; border-bottom: 1px solid var(--border); background: var(--surface); }
+        .mob-tab {
+            flex: 1; padding: 9px; border: none; background: transparent;
+            color: var(--muted); font-size: .85rem; font-weight: 600;
+            cursor: pointer; border-bottom: 2px solid transparent;
+            transition: color .15s, border-color .15s; font-family: inherit;
+        }
+        .mob-tab.active { color: var(--purple); border-bottom-color: var(--purple); }
+
+        @media (max-width: 700px) {
+            .mobile-tabs { display: flex; }
+            .pane-header { display: none; }
+            .pane-divider { display: none; }
+            .pane { display: none; }
+            .pane.mob-visible { display: flex; }
+            .nav-links { display: none; }
+            .tb-right { margin-left: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+    <div class="nav-inner">
+        <div class="nav-left">
+            <a href="/" class="nav-logo">Ravionus</a>
+            <span class="nav-sep">/</span>
+            <span class="nav-breadcrumb">
+                <a href="../">Dev Tools</a> / <span class="current">JSON Formatter</span>
+            </span>
+        </div>
+        <div class="nav-links">
+            <a href="../../learn/" class="nav-link">✨ Learn</a>
+            <a href="../../tools/" class="nav-link">🛠️ Tools</a>
+            <a href="../../playground/" class="nav-link">🧪 Playgrounds</a>
+        </div>
+    </div>
+</nav>
+
+<!-- Toolbar -->
+<div class="toolbar">
+    <div class="tb-group">
+        <button class="tb-btn primary" id="btnFormat">⚡ Format</button>
+        <button class="tb-btn" id="btnMinify">⬜ Minify</button>
+        <button class="tb-btn success" id="btnValidate">✓ Validate</button>
+    </div>
+    <div class="tb-sep"></div>
+    <div class="tb-group">
+        <label style="font-size:.75rem;color:var(--muted);white-space:nowrap">Indent:</label>
+        <select class="indent-select" id="indentSelect">
+            <option value="2" selected>2 spaces</option>
+            <option value="4">4 spaces</option>
+            <option value="tab">Tab</option>
+        </select>
+    </div>
+    <div class="tb-sep"></div>
+    <div class="tb-group">
+        <button class="tb-btn" id="btnSample">📋 Sample</button>
+        <button class="tb-btn" id="btnSortKeys">⇅ Sort Keys</button>
+    </div>
+    <div class="tb-right">
+        <button class="tb-btn" id="btnDownload">⬇ Download</button>
+        <button class="tb-btn danger" id="btnClear">✕ Clear</button>
+    </div>
+</div>
+
+<!-- Error / valid banners -->
+<div class="error-banner" id="errorBanner"></div>
+<div class="valid-banner" id="validBanner">✓ Valid JSON</div>
+
+<!-- Mobile tabs -->
+<div class="mobile-tabs">
+    <button class="mob-tab active" id="tabInput">📥 Input</button>
+    <button class="mob-tab" id="tabTree">🌳 Tree</button>
+    <button class="mob-tab" id="tabOutput">📤 Output</button>
+</div>
+
+<!-- Split layout -->
+<div class="editor-layout">
+
+    <!-- Input pane -->
+    <div class="pane mob-visible" id="paneInput">
+        <div class="pane-header">
+            <span>Input JSON</span>
+            <div class="pane-header-actions">
+                <button class="ph-btn" id="btnPasteInput" title="Paste from clipboard">Paste</button>
+                <button class="ph-btn" id="btnCopyInput">Copy</button>
+            </div>
+        </div>
+        <div class="editor-wrap">
+            <textarea id="inputArea" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"
+                placeholder='Paste your JSON here and click ⚡ Format …&#10;&#10;Or click "📋 Sample" for an example.'></textarea>
+        </div>
+    </div>
+
+    <div class="pane-divider"></div>
+
+    <!-- Tree pane -->
+    <div class="pane mob-visible" id="paneTree">
+        <div class="pane-header">
+            <span>Tree View</span>
+            <div class="pane-header-actions">
+                <button class="ph-btn" id="btnExpandAll">Expand</button>
+                <button class="ph-btn" id="btnCollapseAll">Collapse</button>
+            </div>
+        </div>
+        <div class="tree-scroll" id="treeView">
+            <div class="tree-placeholder" id="treePlaceholder">Tree view appears after formatting valid JSON</div>
+        </div>
+    </div>
+
+    <div class="pane-divider"></div>
+
+    <!-- Output pane -->
+    <div class="pane mob-visible" id="paneOutput">
+        <div class="pane-header">
+            <span>Formatted Output</span>
+            <div class="pane-header-actions">
+                <button class="ph-btn" id="btnCopyOutput">Copy</button>
+            </div>
+        </div>
+        <div class="editor-wrap">
+            <textarea id="outputArea" readonly spellcheck="false" placeholder="Formatted JSON appears here…"></textarea>
+        </div>
+    </div>
+
+</div>
+
+<!-- Status bar -->
+<div class="status-bar">
+    <span class="stat-item">Status: <span id="statStatus" class="stat-val">—</span></span>
+    <span class="stat-item">Keys: <span class="stat-val" id="statKeys">—</span></span>
+    <span class="stat-item">Depth: <span class="stat-val" id="statDepth">—</span></span>
+    <span class="stat-item">Size: <span class="stat-val" id="statSize">—</span></span>
+    <span class="stat-item">Lines: <span class="stat-val" id="statLines">—</span></span>
+</div>
+
+<div id="toast"></div>
+
+<script>
+'use strict';
+
+const STORAGE_KEY = 'ravionus_tool_json';
+
+// DOM
+const inputArea  = document.getElementById('inputArea');
+const outputArea = document.getElementById('outputArea');
+const treeView   = document.getElementById('treeView');
+const treePlaceholder = document.getElementById('treePlaceholder');
+const errorBanner = document.getElementById('errorBanner');
+const validBanner = document.getElementById('validBanner');
+const indentSelect = document.getElementById('indentSelect');
+const toast = document.getElementById('toast');
+
+// ── Toast ──────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+// ── Clipboard helpers ──────────────────────────────────────
+async function copyText(text, label) {
+    if (!text) { showToast('⚠️ Nothing to copy'); return; }
+    try {
+        await navigator.clipboard.writeText(text);
+        showToast(`✓ ${label} copied`);
+    } catch {
+        showToast('⚠️ Copy failed — use Ctrl+C manually');
+    }
+}
+
+// ── Indent value ───────────────────────────────────────────
+function getIndent() {
+    const v = indentSelect.value;
+    if (v === 'tab') return '\t';
+    return parseInt(v, 10);
+}
+
+// ── Parse helper ──────────────────────────────────────────
+function tryParse(raw) {
+    try {
+        return { ok: true, value: JSON.parse(raw) };
+    } catch (e) {
+        return { ok: false, error: e.message };
+    }
+}
+
+// ── Stats ──────────────────────────────────────────────────
+function countKeys(obj, depth = 0) {
+    let keys = 0, maxDepth = depth;
+    if (obj !== null && typeof obj === 'object') {
+        for (const k of Object.keys(obj)) {
+            keys++;
+            const child = countKeys(obj[k], depth + 1);
+            keys += child.keys;
+            if (child.depth > maxDepth) maxDepth = child.depth;
+        }
+    } else if (Array.isArray(obj)) {
+        for (const item of obj) {
+            const child = countKeys(item, depth + 1);
+            keys += child.keys;
+            if (child.depth > maxDepth) maxDepth = child.depth;
+        }
+    }
+    return { keys, depth: maxDepth };
+}
+
+function formatBytes(n) {
+    if (n < 1024) return n + ' B';
+    if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+    return (n / 1024 / 1024).toFixed(2) + ' MB';
+}
+
+function updateStats(parsed, rawOutput) {
+    const statusEl = document.getElementById('statStatus');
+    const keysEl   = document.getElementById('statKeys');
+    const depthEl  = document.getElementById('statDepth');
+    const sizeEl   = document.getElementById('statSize');
+    const linesEl  = document.getElementById('statLines');
+
+    if (!parsed) {
+        statusEl.className = 'stat-err'; statusEl.textContent = '✗ Invalid';
+        keysEl.textContent = depthEl.textContent = sizeEl.textContent = linesEl.textContent = '—';
+        return;
+    }
+    const { keys, depth } = countKeys(parsed);
+    statusEl.className = 'stat-ok'; statusEl.textContent = '✓ Valid';
+    keysEl.textContent   = keys.toLocaleString();
+    depthEl.textContent  = depth;
+    sizeEl.textContent   = formatBytes(new TextEncoder().encode(rawOutput || JSON.stringify(parsed)).length);
+    linesEl.textContent  = (rawOutput || '').split('\n').length;
+}
+
+// ── Error / valid display ──────────────────────────────────
+function showError(msg) {
+    errorBanner.textContent = '⚠ ' + msg;
+    errorBanner.classList.add('visible');
+    validBanner.classList.remove('visible');
+    inputArea.classList.add('has-error');
+    outputArea.value = '';
+    clearTree();
+    updateStats(null, '');
+}
+
+function clearBanners() {
+    errorBanner.classList.remove('visible');
+    validBanner.classList.remove('visible');
+    inputArea.classList.remove('has-error');
+}
+
+// ── Tree ──────────────────────────────────────────────────
+function clearTree() {
+    treeView.innerHTML = '';
+    treeView.appendChild(treePlaceholder);
+    treePlaceholder.style.display = '';
+}
+
+function buildTree(data) {
+    treePlaceholder.style.display = 'none';
+    treeView.innerHTML = '';
+    treeView.appendChild(renderNode(data, '', true));
+}
+
+function escapeHtml(s) {
+    return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function renderNode(value, keyName, isRoot) {
+    const frag = document.createDocumentFragment();
+    const line  = document.createElement('span');
+    line.className = 'j-line';
+
+    const keySpan = keyName !== '' ? (() => {
+        const s = document.createElement('span');
+        s.className = 'j-key';
+        s.textContent = `"${keyName}": `;
+        return s;
+    })() : null;
+
+    if (value === null) {
+        if (keySpan) line.appendChild(keySpan);
+        const v = document.createElement('span');
+        v.className = 'j-null'; v.textContent = 'null';
+        line.appendChild(v);
+    } else if (typeof value === 'boolean') {
+        if (keySpan) line.appendChild(keySpan);
+        const v = document.createElement('span');
+        v.className = 'j-bool'; v.textContent = String(value);
+        line.appendChild(v);
+    } else if (typeof value === 'number') {
+        if (keySpan) line.appendChild(keySpan);
+        const v = document.createElement('span');
+        v.className = 'j-num'; v.textContent = String(value);
+        line.appendChild(v);
+    } else if (typeof value === 'string') {
+        if (keySpan) line.appendChild(keySpan);
+        const v = document.createElement('span');
+        v.className = 'j-str'; v.textContent = `"${value}"`;
+        line.appendChild(v);
+    } else if (Array.isArray(value)) {
+        const wrapper = document.createElement('span');
+        wrapper.className = 'j-collapsible';
+
+        const toggle = document.createElement('span');
+        toggle.className = 'j-toggle'; toggle.textContent = '▾';
+        wrapper.appendChild(toggle);
+
+        if (keySpan) wrapper.appendChild(keySpan);
+        const open = document.createElement('span');
+        open.className = 'j-brace'; open.textContent = `[ `;
+        wrapper.appendChild(open);
+
+        const preview = document.createElement('span');
+        preview.className = 'j-preview';
+        preview.textContent = `… ${value.length} items ]`;
+        wrapper.appendChild(preview);
+
+        const children = document.createElement('div');
+        children.className = 'j-children';
+        children.style.paddingLeft = '20px';
+        value.forEach((item, i) => {
+            children.appendChild(renderNode(item, '', false));
+        });
+        wrapper.appendChild(children);
+
+        const close = document.createElement('span');
+        close.className = 'j-line j-brace'; close.textContent = ']';
+        wrapper.appendChild(close);
+
+        toggle.addEventListener('click', () => {
+            wrapper.classList.toggle('collapsed');
+            toggle.textContent = wrapper.classList.contains('collapsed') ? '▸' : '▾';
+        });
+
+        frag.appendChild(wrapper);
+        return frag;
+    } else if (typeof value === 'object') {
+        const wrapper = document.createElement('span');
+        wrapper.className = 'j-collapsible';
+
+        const toggle = document.createElement('span');
+        toggle.className = 'j-toggle'; toggle.textContent = '▾';
+        wrapper.appendChild(toggle);
+
+        if (keySpan) wrapper.appendChild(keySpan);
+        const open = document.createElement('span');
+        open.className = 'j-brace'; open.textContent = '{ ';
+        wrapper.appendChild(open);
+
+        const keys = Object.keys(value);
+        const preview = document.createElement('span');
+        preview.className = 'j-preview';
+        preview.textContent = `… ${keys.length} keys }`;
+        wrapper.appendChild(preview);
+
+        const children = document.createElement('div');
+        children.className = 'j-children';
+        children.style.paddingLeft = '20px';
+        keys.forEach(k => {
+            children.appendChild(renderNode(value[k], k, false));
+        });
+        wrapper.appendChild(children);
+
+        const close = document.createElement('span');
+        close.className = 'j-line j-brace'; close.textContent = '}';
+        wrapper.appendChild(close);
+
+        toggle.addEventListener('click', () => {
+            wrapper.classList.toggle('collapsed');
+            toggle.textContent = wrapper.classList.contains('collapsed') ? '▸' : '▾';
+        });
+
+        frag.appendChild(wrapper);
+        return frag;
+    }
+
+    frag.appendChild(line);
+    return frag;
+}
+
+// ── Sort keys ──────────────────────────────────────────────
+function sortKeys(obj) {
+    if (Array.isArray(obj)) return obj.map(sortKeys);
+    if (obj !== null && typeof obj === 'object') {
+        return Object.fromEntries(
+            Object.keys(obj).sort().map(k => [k, sortKeys(obj[k])])
+        );
+    }
+    return obj;
+}
+
+// ── Core actions ──────────────────────────────────────────
+function doFormat(data) {
+    clearBanners();
+    const raw = inputArea.value.trim();
+    if (!raw) { showToast('⚠️ Input is empty'); return; }
+    const result = tryParse(raw);
+    if (!result.ok) { showError(result.error); return; }
+    const indent = getIndent();
+    const out = JSON.stringify(data !== undefined ? data : result.value, null, indent);
+    outputArea.value = out;
+    validBanner.classList.add('visible');
+    buildTree(data !== undefined ? data : result.value);
+    updateStats(result.value, out);
+    scheduleSave(out);
+}
+
+function doValidate() {
+    clearBanners();
+    const raw = inputArea.value.trim();
+    if (!raw) { showToast('⚠️ Input is empty'); return; }
+    const result = tryParse(raw);
+    if (!result.ok) { showError(result.error); return; }
+    validBanner.classList.add('visible');
+    showToast('✓ Valid JSON');
+    updateStats(result.value, raw);
+}
+
+function doMinify() {
+    clearBanners();
+    const raw = inputArea.value.trim();
+    if (!raw) { showToast('⚠️ Input is empty'); return; }
+    const result = tryParse(raw);
+    if (!result.ok) { showError(result.error); return; }
+    const out = JSON.stringify(result.value);
+    outputArea.value = out;
+    validBanner.classList.add('visible');
+    buildTree(result.value);
+    updateStats(result.value, out);
+    showToast('✓ Minified');
+    scheduleSave(out);
+}
+
+// ── Sample JSON ───────────────────────────────────────────
+const SAMPLE = {
+    "name": "Ravionus",
+    "version": "2.0.0",
+    "description": "A developer learning platform",
+    "features": ["Learn", "Playground", "Dev Tools"],
+    "stats": { "topics": 10, "lessons": 46, "quizzes": 20 },
+    "active": true,
+    "launchedAt": "2025-01-01",
+    "meta": null
+};
+
+// ── Auto-save ──────────────────────────────────────────────
+let saveTimer;
+function scheduleSave(text) {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+        try { localStorage.setItem(STORAGE_KEY, text); } catch {}
+    }, 800);
+}
+
+// ── Expand / Collapse all ─────────────────────────────────
+function setAllCollapsed(collapsed) {
+    treeView.querySelectorAll('.j-collapsible').forEach(el => {
+        el.classList.toggle('collapsed', collapsed);
+        const t = el.querySelector('.j-toggle');
+        if (t) t.textContent = collapsed ? '▸' : '▾';
+    });
+}
+
+// ── Wiring ────────────────────────────────────────────────
+document.getElementById('btnFormat').addEventListener('click', () => doFormat());
+document.getElementById('btnMinify').addEventListener('click', doMinify);
+document.getElementById('btnValidate').addEventListener('click', doValidate);
+
+document.getElementById('btnSortKeys').addEventListener('click', () => {
+    const raw = inputArea.value.trim();
+    if (!raw) { showToast('⚠️ Input is empty'); return; }
+    const result = tryParse(raw);
+    if (!result.ok) { showError(result.error); return; }
+    const sorted = sortKeys(result.value);
+    const indent = getIndent();
+    const out = JSON.stringify(sorted, null, indent);
+    inputArea.value = out;
+    doFormat(sorted);
+    showToast('✓ Keys sorted alphabetically');
+});
+
+document.getElementById('btnSample').addEventListener('click', () => {
+    inputArea.value = JSON.stringify(SAMPLE, null, 2);
+    inputArea.classList.remove('has-error');
+    clearBanners();
+    doFormat();
+});
+
+document.getElementById('btnClear').addEventListener('click', () => {
+    if (!inputArea.value && !outputArea.value) return;
+    if (!confirm('Clear all content?')) return;
+    inputArea.value = ''; outputArea.value = '';
+    clearBanners(); clearTree();
+    updateStats(null, '');
+    try { localStorage.removeItem(STORAGE_KEY); } catch {}
+    showToast('✓ Cleared');
+});
+
+document.getElementById('btnDownload').addEventListener('click', () => {
+    const out = outputArea.value || inputArea.value;
+    if (!out.trim()) { showToast('⚠️ Nothing to download'); return; }
+    const blob = new Blob([out], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a'); a.href = url; a.download = 'data.json';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('✓ Downloaded data.json');
+});
+
+document.getElementById('btnCopyInput').addEventListener('click', () => copyText(inputArea.value, 'Input'));
+document.getElementById('btnCopyOutput').addEventListener('click', () => copyText(outputArea.value, 'Output'));
+
+document.getElementById('btnPasteInput').addEventListener('click', async () => {
+    try {
+        const text = await navigator.clipboard.readText();
+        inputArea.value = text;
+        doFormat();
+    } catch {
+        showToast('⚠️ Clipboard paste denied — paste manually (Ctrl+V)');
+    }
+});
+
+document.getElementById('btnExpandAll').addEventListener('click', () => setAllCollapsed(false));
+document.getElementById('btnCollapseAll').addEventListener('click', () => setAllCollapsed(true));
+
+// Auto-format on paste into input
+inputArea.addEventListener('paste', () => {
+    // Wait for paste to complete then format
+    setTimeout(() => {
+        if (inputArea.value.trim()) doFormat();
+    }, 30);
+});
+
+// Mobile tabs
+const paneInput  = document.getElementById('paneInput');
+const paneTree   = document.getElementById('paneTree');
+const paneOutput = document.getElementById('paneOutput');
+
+document.getElementById('tabInput').addEventListener('click', function() {
+    [paneInput, paneTree, paneOutput].forEach(p => p.classList.remove('mob-visible'));
+    paneInput.classList.add('mob-visible');
+    document.querySelectorAll('.mob-tab').forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
+});
+document.getElementById('tabTree').addEventListener('click', function() {
+    [paneInput, paneTree, paneOutput].forEach(p => p.classList.remove('mob-visible'));
+    paneTree.classList.add('mob-visible');
+    document.querySelectorAll('.mob-tab').forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
+});
+document.getElementById('tabOutput').addEventListener('click', function() {
+    [paneInput, paneTree, paneOutput].forEach(p => p.classList.remove('mob-visible'));
+    paneOutput.classList.add('mob-visible');
+    document.querySelectorAll('.mob-tab').forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
+});
+
+// ── Boot ──────────────────────────────────────────────────
+(function init() {
+    let saved = '';
+    try { saved = localStorage.getItem(STORAGE_KEY) || ''; } catch {}
+    if (saved) {
+        outputArea.value = saved;
+        // Try to reverse-parse for tree
+        const result = tryParse(saved);
+        if (result.ok) {
+            buildTree(result.value);
+            updateStats(result.value, saved);
+            validBanner.classList.add('visible');
+        }
+    }
+})();
+</script>
+
+</body>
+</html>
