@@ -8,7 +8,7 @@ const PAGE = 'http://localhost:3000/tools/regex/index.html';
 // ─────────────────────────────────────────────────────────────────────────────
 test.describe('Regex Tester — Smoke', () => {
     test('loads without JS or CSP errors', async ({ page }) => {
-        const errors = [];
+        const errors = /** @type {string[]} */ ([]);
         page.on('pageerror',  e => errors.push(e.message));
         page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
         await page.goto(PAGE);

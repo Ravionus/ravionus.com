@@ -1,0 +1,42 @@
+
+Running 32 tests using 1 worker
+
+  Γ£ô   1 [chromium] ΓÇ║ csv.spec.js:10:5 ΓÇ║ CSV Tool ΓÇö Smoke ΓÇ║ loads without JS or CSP errors (651ms)
+  Γ£ô   2 [chromium] ΓÇ║ csv.spec.js:18:5 ΓÇ║ CSV Tool ΓÇö Smoke ΓÇ║ nav links are visible (609ms)
+  Γ£ô   3 [chromium] ΓÇ║ csv.spec.js:24:5 ΓÇ║ CSV Tool ΓÇö Smoke ΓÇ║ toolbar buttons are visible (635ms)
+  Γ£ô   4 [chromium] ΓÇ║ csv.spec.js:40:5 ΓÇ║ CSV Tool ΓÇö CSV ΓåÆ JSON ΓÇ║ converts simple CSV to JSON array (691ms)
+  Γ£ô   5 [chromium] ΓÇ║ csv.spec.js:52:5 ΓÇ║ CSV Tool ΓÇö CSV ΓåÆ JSON ΓÇ║ shows success banner after CSV ΓåÆ JSON (671ms)
+  Γ£ô   6 [chromium] ΓÇ║ csv.spec.js:59:5 ΓÇ║ CSV Tool ΓÇö CSV ΓåÆ JSON ΓÇ║ renders table view after CSV ΓåÆ JSON (744ms)
+  Γ£ô   7 [chromium] ΓÇ║ csv.spec.js:73:5 ΓÇ║ CSV Tool ΓÇö CSV ΓåÆ JSON ΓÇ║ status bar shows rows and columns (680ms)
+  Γ£ô   8 [chromium] ΓÇ║ csv.spec.js:82:5 ΓÇ║ CSV Tool ΓÇö CSV ΓåÆ JSON ΓÇ║ handles quoted fields with commas (685ms)
+  Γ£ô   9 [chromium] ΓÇ║ csv.spec.js:92:5 ΓÇ║ CSV Tool ΓÇö CSV ΓåÆ JSON ΓÇ║ handles escaped double-quotes ("") (685ms)
+  Γ£ô  10 [chromium] ΓÇ║ csv.spec.js:101:5 ΓÇ║ CSV Tool ΓÇö CSV ΓåÆ JSON ΓÇ║ shows error banner for empty input (732ms)
+  Γ£ô  11 [chromium] ΓÇ║ csv.spec.js:111:5 ΓÇ║ CSV Tool ΓÇö JSON ΓåÆ CSV ΓÇ║ converts JSON array to CSV (703ms)
+  Γ£ô  12 [chromium] ΓÇ║ csv.spec.js:123:5 ΓÇ║ CSV Tool ΓÇö JSON ΓåÆ CSV ΓÇ║ shows success banner after JSON ΓåÆ CSV (690ms)
+  Γ£ô  13 [chromium] ΓÇ║ csv.spec.js:130:5 ΓÇ║ CSV Tool ΓÇö JSON ΓåÆ CSV ΓÇ║ shows error for invalid JSON (654ms)
+  Γ£ô  14 [chromium] ΓÇ║ csv.spec.js:137:5 ΓÇ║ CSV Tool ΓÇö JSON ΓåÆ CSV ΓÇ║ shows error for non-array JSON (658ms)
+  Γ£ô  15 [chromium] ΓÇ║ csv.spec.js:144:5 ΓÇ║ CSV Tool ΓÇö JSON ΓåÆ CSV ΓÇ║ renders table view after JSON ΓåÆ CSV (673ms)
+  Γ£ô  16 [chromium] ΓÇ║ csv.spec.js:151:5 ΓÇ║ CSV Tool ΓÇö JSON ΓåÆ CSV ΓÇ║ status bar shows CSV ΓåÆ mode (673ms)
+  Γ£ô  17 [chromium] ΓÇ║ csv.spec.js:158:5 ΓÇ║ CSV Tool ΓÇö JSON ΓåÆ CSV ΓÇ║ quotes fields that contain the delimiter (707ms)
+  Γ£ô  18 [chromium] ΓÇ║ csv.spec.js:168:5 ΓÇ║ CSV Tool ΓÇö Headers toggle ΓÇ║ Headers button has active class by default (637ms)
+  Γ£ô  19 [chromium] ΓÇ║ csv.spec.js:173:5 ΓÇ║ CSV Tool ΓÇö Headers toggle ΓÇ║ toggling Headers off excludes first row as header (632ms)
+  Γ£ô  20 [chromium] ΓÇ║ csv.spec.js:181:5 ΓÇ║ CSV Tool ΓÇö Headers toggle ΓÇ║ with headers off, CSVΓåÆJSON uses col1/col2 keys (700ms)
+  Γ£ô  21 [chromium] ΓÇ║ csv.spec.js:191:5 ΓÇ║ CSV Tool ΓÇö Headers toggle ΓÇ║ with headers off, JSONΓåÆCSV omits header row (694ms)
+  Γ£ô  22 [chromium] ΓÇ║ csv.spec.js:203:5 ΓÇ║ CSV Tool ΓÇö Delimiter ΓÇ║ parses semicolon-delimited CSV (670ms)
+  Γ£ô  23 [chromium] ΓÇ║ csv.spec.js:213:5 ΓÇ║ CSV Tool ΓÇö Delimiter ΓÇ║ parses tab-delimited CSV (713ms)
+  Γ£ô  24 [chromium] ΓÇ║ csv.spec.js:223:5 ΓÇ║ CSV Tool ΓÇö Delimiter ΓÇ║ delimiter label updates in status bar (625ms)
+  Γ£ô  25 [chromium] ΓÇ║ csv.spec.js:231:5 ΓÇ║ CSV Tool ΓÇö Sample button ΓÇ║ Sample fills input and converts to JSON (703ms)
+  Γ£ô  26 [chromium] ΓÇ║ csv.spec.js:241:5 ΓÇ║ CSV Tool ΓÇö Sample button ΓÇ║ Sample shows table after converting (699ms)
+  Γ£ô  27 [chromium] ΓÇ║ csv.spec.js:249:5 ΓÇ║ CSV Tool ΓÇö Clear ΓÇ║ Clear button removes content when confirmed (707ms)
+  Γ£ô  28 [chromium] ΓÇ║ csv.spec.js:261:5 ΓÇ║ CSV Tool ΓÇö Clear ΓÇ║ Clear cancels when dismissed (673ms)
+  Γ£ô  29 [chromium] ΓÇ║ csv.spec.js:274:5 ΓÇ║ CSV Tool ΓÇö Auto-save ΓÇ║ auto-saves and restores after reload (2.0s)
+  Γ£ô  30 [chromium] ΓÇ║ csv.spec.js:288:5 ΓÇ║ CSV Tool ΓÇö Mobile tabs ΓÇ║ mobile tabs are present in DOM (608ms)
+  Γ£ô  31 [chromium] ΓÇ║ csv.spec.js:295:5 ΓÇ║ CSV Tool ΓÇö Mobile tabs ΓÇ║ Mobile: Output tab shows output pane only (550ms)
+  Γ£ô  32 [chromium] ΓÇ║ csv.spec.js:304:5 ΓÇ║ CSV Tool ΓÇö Mobile tabs ΓÇ║ Mobile: Table tab shows table pane only (576ms)
+
+  32 passed (24.6s)
+
+To open last HTML report run:
+[36m[39m
+[36m  npx playwright show-report[39m
+[36m[39m
