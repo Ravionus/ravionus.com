@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hash Generator — Ravionus Dev Tools</title>
+    <meta name="description" content="Generate MD5, SHA-1, SHA-256, SHA-384, and SHA-512 hashes instantly. 100% client-side — your data never leaves your browser.">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none';">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0a0f;
+            --surface: #12121a;
+            --surface2: #0e0e16;
+            --border: #1e1e2e;
+            --border2: #2a2a3e;
+            --text: #e2e2f0;
+            --muted: #7878a0;
+            --purple: #a855f7;
+            --cyan: #22d3ee;
+            --green: #22c55e;
+            --red: #ef4444;
+            --yellow: #eab308;
+            --accent-g: linear-gradient(135deg, #a855f7, #22d3ee);
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+        }
+
+        html, body { height: 100%; overflow: hidden; }
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Nav ── */
+        nav {
+            border-bottom: 1px solid var(--border);
+            background: rgba(10,10,15,.95);
+            backdrop-filter: blur(12px);
+            flex-shrink: 0;
+        }
+        .nav-inner {
+            padding: 0 20px; height: 52px;
+            display: flex; align-items: center; justify-content: space-between; gap: 12px;
+        }
+        .nav-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+        .nav-logo {
+            font-size: 1.1rem; font-weight: 800; text-decoration: none;
+            background: var(--accent-g); -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent; letter-spacing: -.5px; flex-shrink: 0;
+        }
+        .nav-sep { color: var(--border2); flex-shrink: 0; }
+        .nav-breadcrumb { font-size: .82rem; color: var(--muted); }
+        .nav-breadcrumb a { color: var(--muted); text-decoration: none; }
+        .nav-breadcrumb a:hover { color: var(--text); }
+        .nav-breadcrumb .current { color: var(--text); font-weight: 600; }
+        .nav-links { display: flex; gap: 4px; flex-shrink: 0; }
+        .nav-link {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 5px 10px; border-radius: 7px; font-size: .8rem; font-weight: 500;
+            text-decoration: none; color: var(--muted);
+            transition: color .15s, background .15s; white-space: nowrap;
+        }
+        .nav-link:hover { color: var(--text); background: var(--surface); }
+
+        /* ── Toolbar ── */
+        .toolbar {
+            border-bottom: 1px solid var(--border); background: var(--surface);
+            padding: 6px 14px; display: flex; align-items: center;
+            gap: 5px; flex-shrink: 0; flex-wrap: wrap;
+        }
+        .tb-group { display: flex; align-items: center; gap: 3px; }
+        .tb-sep { width: 1px; height: 20px; background: var(--border2); margin: 0 4px; }
+        .tb-label { font-size: .72rem; font-weight: 600; color: var(--muted); margin-right: 3px; white-space: nowrap; }
+        .tb-btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            gap: 5px; height: 28px; padding: 0 10px;
+            border-radius: 6px; border: none;
+            background: transparent; color: var(--muted);
+            font-size: .78rem; font-weight: 600; cursor: pointer;
+            transition: color .12s, background .12s;
+            font-family: inherit; white-space: nowrap;
+        }
+        .tb-btn:hover { color: var(--text); background: var(--border); }
+        .tb-btn.primary { background: rgba(168,85,247,.15); color: var(--purple); border: 1px solid rgba(168,85,247,.3); }
+        .tb-btn.primary:hover { background: rgba(168,85,247,.25); color: #c084fc; }
+        .tb-btn.active { background: rgba(34,211,238,.12); color: var(--cyan); border: 1px solid rgba(34,211,238,.3); }
+        .tb-btn.active:hover { background: rgba(34,211,238,.22); }
+        .tb-btn.danger:hover { color: var(--red); background: rgba(239,68,68,.1); }
+        .tb-right { margin-left: auto; display: flex; align-items: center; gap: 5px; }
+
+        /* ── Input mode tabs ── */
+        .mode-bar {
+            border-bottom: 1px solid var(--border); background: var(--surface2);
+            padding: 0 14px; display: flex; align-items: center; gap: 2px;
+            flex-shrink: 0;
+        }
+        .mode-tab {
+            padding: 7px 12px; font-size: .78rem; font-weight: 600;
+            color: var(--muted); border-bottom: 2px solid transparent;
+            cursor: pointer; transition: color .15s, border-color .15s;
+            user-select: none;
+        }
+        .mode-tab:hover { color: var(--text); }
+        .mode-tab.active { color: var(--purple); border-bottom-color: var(--purple); }
+
+        /* ── Banners ── */
+        .error-banner {
+            background: rgba(239,68,68,.1); border-bottom: 1px solid rgba(239,68,68,.25);
+            color: var(--red); padding: 6px 18px; font-size: .8rem;
+            font-family: var(--font-mono); display: none; flex-shrink: 0;
+            white-space: pre-wrap; word-break: break-all;
+        }
+        .error-banner.visible { display: block; }
+        .success-banner {
+            background: rgba(34,197,94,.08); border-bottom: 1px solid rgba(34,197,94,.2);
+            color: var(--green); padding: 5px 18px; font-size: .78rem;
+            display: none; flex-shrink: 0; align-items: center; gap: 6px;
+        }
+        .success-banner.visible { display: flex; }
+
+        /* ── Main layout ── */
+        .main-layout {
+            flex: 1; display: flex; overflow: hidden; min-height: 0;
+        }
+
+        /* ── Input pane ── */
+        .input-pane {
+            flex: 1; display: flex; flex-direction: column;
+            border-right: 1px solid var(--border); min-width: 0; overflow: hidden;
+        }
+        .pane-header {
+            padding: 5px 16px; background: var(--surface2);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            font-size: .7rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: .08em; color: var(--muted); flex-shrink: 0;
+        }
+        .pane-header-actions { display: flex; gap: 4px; }
+        .ph-btn {
+            padding: 2px 7px; font-size: .68rem; font-weight: 600; border-radius: 4px;
+            border: none; background: transparent; color: var(--muted); cursor: pointer;
+            font-family: inherit; transition: color .1s, background .1s;
+        }
+        .ph-btn:hover { color: var(--text); background: var(--border); }
+
+        #textInput {
+            flex: 1; resize: none; background: var(--bg); border: none; outline: none;
+            color: var(--text); font-family: var(--font-mono); font-size: .88rem;
+            line-height: 1.65; padding: 16px; min-height: 0;
+            caret-color: var(--purple);
+        }
+        #textInput::placeholder { color: var(--muted); }
+
+        /* File drop zone */
+        .file-zone {
+            flex: 1; display: none; flex-direction: column; align-items: center;
+            justify-content: center; gap: 12px; padding: 32px;
+            border: 2px dashed var(--border2); margin: 16px;
+            border-radius: 12px; cursor: pointer;
+            transition: border-color .2s, background .2s;
+        }
+        .file-zone.visible { display: flex; }
+        .file-zone.drag-over {
+            border-color: var(--purple);
+            background: rgba(168,85,247,.05);
+        }
+        .file-zone-icon { font-size: 2.5rem; }
+        .file-zone-title { font-size: 1rem; font-weight: 700; }
+        .file-zone-sub { font-size: .8rem; color: var(--muted); text-align: center; }
+        .file-zone-name {
+            font-family: var(--font-mono); font-size: .78rem; color: var(--cyan);
+            background: rgba(34,211,238,.08); border: 1px solid rgba(34,211,238,.2);
+            padding: 3px 10px; border-radius: 6px; display: none;
+        }
+        #fileInput { display: none; }
+
+        /* ── Output pane ── */
+        .output-pane {
+            flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden;
+        }
+        .hashes-scroll {
+            flex: 1; overflow-y: auto; padding: 16px;
+            display: flex; flex-direction: column; gap: 14px;
+        }
+
+        /* Hash row */
+        .hash-row {
+            display: flex; flex-direction: column; gap: 6px;
+        }
+        .hash-row-header {
+            display: flex; align-items: center; justify-content: space-between; gap: 8px;
+        }
+        .hash-algo {
+            font-size: .72rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: .08em; color: var(--muted);
+        }
+        .hash-algo-pill {
+            display: inline-flex; align-items: center; gap: 5px;
+        }
+        .hash-length {
+            font-size: .65rem; color: var(--border2); font-family: var(--font-mono);
+        }
+        .hash-actions { display: flex; gap: 4px; }
+        .hash-copy-btn {
+            padding: 2px 8px; font-size: .68rem; font-weight: 600; border-radius: 4px;
+            border: 1px solid var(--border2); background: transparent; color: var(--muted);
+            cursor: pointer; font-family: inherit;
+            transition: color .1s, background .1s, border-color .1s;
+        }
+        .hash-copy-btn:hover { color: var(--cyan); border-color: rgba(34,211,238,.4); background: rgba(34,211,238,.07); }
+        .hash-copy-btn.copied { color: var(--green); border-color: rgba(34,197,94,.4); background: rgba(34,197,94,.07); }
+
+        .hash-value {
+            font-family: var(--font-mono); font-size: .8rem; color: var(--cyan);
+            background: var(--surface2); border: 1px solid var(--border);
+            border-radius: 8px; padding: 10px 14px;
+            word-break: break-all; line-height: 1.5;
+            min-height: 2.5rem; display: flex; align-items: center;
+            transition: border-color .2s;
+        }
+        .hash-value:hover { border-color: var(--border2); }
+        .hash-value.computing {
+            color: var(--muted); font-style: italic;
+        }
+        .hash-value.empty { color: var(--muted); font-style: italic; }
+
+        /* Compare section */
+        .compare-section {
+            border-top: 1px solid var(--border); padding: 14px 16px;
+            display: flex; flex-direction: column; gap: 8px; flex-shrink: 0;
+        }
+        .compare-label {
+            font-size: .7rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: .08em; color: var(--muted);
+        }
+        .compare-row { display: flex; align-items: center; gap: 8px; }
+        #compareInput {
+            flex: 1; background: var(--surface2); border: 1px solid var(--border2);
+            outline: none; border-radius: 7px; padding: 6px 10px;
+            color: var(--text); font-family: var(--font-mono); font-size: .8rem;
+            transition: border-color .15s;
+        }
+        #compareInput:focus { border-color: var(--purple); }
+        #compareInput::placeholder { color: var(--muted); }
+        #compareResult {
+            font-size: .75rem; font-weight: 600; padding: 4px 10px;
+            border-radius: 6px; display: none; white-space: nowrap;
+        }
+        #compareResult.match {
+            display: inline-flex; color: var(--green);
+            background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.3);
+        }
+        #compareResult.mismatch {
+            display: inline-flex; color: var(--red);
+            background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.3);
+        }
+
+        /* ── Mobile tabs ── */
+        .mobile-tabs {
+            display: none; border-bottom: 1px solid var(--border);
+            background: var(--surface); padding: 0 14px; gap: 2px;
+        }
+        .mobile-tab {
+            padding: 8px 14px; font-size: .8rem; font-weight: 600;
+            color: var(--muted); border-bottom: 2px solid transparent;
+            cursor: pointer; transition: color .15s, border-color .15s;
+            user-select: none;
+        }
+        .mobile-tab:hover { color: var(--text); }
+        .mobile-tab.active { color: var(--purple); border-bottom-color: var(--purple); }
+
+        /* ── Responsive ── */
+        @media (max-width: 700px) {
+            .mobile-tabs { display: flex; }
+            .main-layout { flex-direction: column; }
+            .input-pane {
+                border-right: none; border-bottom: 1px solid var(--border);
+                display: none;
+            }
+            .input-pane.mobile-active { display: flex; flex: 1; }
+            .output-pane { display: none; }
+            .output-pane.mobile-active { display: flex; flex: 1; }
+            .nav-breadcrumb { display: none; }
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+    </style>
+</head>
+<body>
+
+<!-- ── Nav ── -->
+<nav>
+    <div class="nav-inner">
+        <div class="nav-left">
+            <a class="nav-logo" href="/">Ravionus</a>
+            <span class="nav-sep">/</span>
+            <span class="nav-breadcrumb">
+                <a href="/tools/">Dev Tools</a>
+                <span style="margin:0 5px;color:var(--border2)">/</span>
+                <span class="current">Hash Generator</span>
+            </span>
+        </div>
+        <nav class="nav-links">
+            <a class="nav-link" href="/learn/">📚 Learn</a>
+            <a class="nav-link" href="/tools/">🔧 Tools</a>
+            <a class="nav-link" href="/playground/">🎮 Playground</a>
+        </nav>
+    </div>
+</nav>
+
+<!-- ── Toolbar ── -->
+<div class="toolbar">
+    <div class="tb-group">
+        <button class="tb-btn primary" id="btnHash">🔒 Generate Hashes</button>
+    </div>
+    <div class="tb-sep"></div>
+    <div class="tb-group">
+        <span class="tb-label">Format:</span>
+        <button class="tb-btn active" id="btnHex" data-fmt="hex">hex</button>
+        <button class="tb-btn" id="btnBase64" data-fmt="base64">base64</button>
+    </div>
+    <div class="tb-sep"></div>
+    <div class="tb-group">
+        <button class="tb-btn" id="btnSample">💡 Sample</button>
+        <button class="tb-btn" id="btnCopyAll">📋 Copy All</button>
+    </div>
+    <div class="tb-right">
+        <button class="tb-btn" id="btnDownload">⬇ Download</button>
+        <button class="tb-btn danger" id="btnClear">✕ Clear</button>
+    </div>
+</div>
+
+<!-- ── Input mode tabs ── -->
+<div class="mode-bar">
+    <div class="mode-tab active" id="modeText" data-mode="text">Text</div>
+    <div class="mode-tab" id="modeFile" data-mode="file">File</div>
+</div>
+
+<!-- ── Banners ── -->
+<div class="error-banner" id="errorBanner"></div>
+<div class="success-banner" id="successBanner">
+    <span>✓</span><span id="successMsg"></span>
+</div>
+
+<!-- ── Mobile tabs ── -->
+<div class="mobile-tabs">
+    <div class="mobile-tab active" data-pane="input">Input</div>
+    <div class="mobile-tab" data-pane="output">Output</div>
+</div>
+
+<!-- ── Main layout ── -->
+<div class="main-layout">
+
+    <!-- Input pane -->
+    <div class="input-pane mobile-active" id="inputPane">
+        <div class="pane-header">
+            <span id="inputLabel">Text Input</span>
+            <div class="pane-header-actions">
+                <button class="ph-btn" id="btnPaste">Paste</button>
+            </div>
+        </div>
+
+        <!-- Text mode -->
+        <textarea id="textInput" placeholder="Type or paste text to hash…" spellcheck="false" autocomplete="off"></textarea>
+
+        <!-- File mode -->
+        <div class="file-zone" id="fileZone">
+            <input type="file" id="fileInput" accept="*/*">
+            <div class="file-zone-icon">📂</div>
+            <div class="file-zone-title">Drop a file here</div>
+            <div class="file-zone-sub">or click to browse — any file type, hashed entirely in your browser</div>
+            <div class="file-zone-name" id="fileZoneName"></div>
+        </div>
+    </div>
+
+    <!-- Output pane -->
+    <div class="output-pane" id="outputPane">
+        <div class="pane-header">
+            <span>Hash Output</span>
+        </div>
+
+        <div class="hashes-scroll" id="hashesScroll">
+            <!-- Populated by JS -->
+        </div>
+
+        <!-- Compare section -->
+        <div class="compare-section">
+            <div class="compare-label">🔍 Compare hash</div>
+            <div class="compare-row">
+                <input type="text" id="compareInput" placeholder="Paste a hash to verify…" spellcheck="false" autocomplete="off">
+                <span id="compareResult"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    'use strict';
+
+    // ── State ──────────────────────────────────────────────────────────────
+    const LS_KEY = 'ravionus_tool_hash';
+    let currentMode   = 'text';   // 'text' | 'file'
+    let currentFmt    = 'hex';    // 'hex'  | 'base64'
+    let currentHashes = {};       // { algo: hexString }
+    let fileBytes     = null;     // ArrayBuffer | null
+    let fileName      = '';
+    let debounceTimer = null;
+
+    const ALGORITHMS = [
+        { id: 'MD5',     label: 'MD5',     bits: 128, native: false },
+        { id: 'SHA-1',   label: 'SHA-1',   bits: 160, native: true  },
+        { id: 'SHA-256', label: 'SHA-256', bits: 256, native: true  },
+        { id: 'SHA-384', label: 'SHA-384', bits: 384, native: true  },
+        { id: 'SHA-512', label: 'SHA-512', bits: 512, native: true  },
+    ];
+
+    // ── Elements ───────────────────────────────────────────────────────────
+    const textInput    = document.getElementById('textInput');
+    const fileZone     = document.getElementById('fileZone');
+    const fileInput    = document.getElementById('fileInput');
+    const fileZoneName = document.getElementById('fileZoneName');
+    const hashesScroll = document.getElementById('hashesScroll');
+    const errorBanner  = document.getElementById('errorBanner');
+    const successBanner= document.getElementById('successBanner');
+    const successMsg   = document.getElementById('successMsg');
+    const compareInput = document.getElementById('compareInput');
+    const compareResult= document.getElementById('compareResult');
+    const inputLabel   = document.getElementById('inputLabel');
+    const inputPane    = document.getElementById('inputPane');
+    const outputPane   = document.getElementById('outputPane');
+
+    // ── MD5 (pure-JS, no CDN needed) ─────────────────────────────────────
+    // Reference: RSA Data Security MD5 algorithm — compact implementation
+    function md5(buffer) {
+        const T = new Uint32Array(64);
+        for (let i = 0; i < 64; i++) T[i] = (Math.abs(Math.sin(i + 1)) * 0x100000000) >>> 0;
+
+        const S = [
+            7,12,17,22, 7,12,17,22, 7,12,17,22, 7,12,17,22,
+            5, 9,14,20, 5, 9,14,20, 5, 9,14,20, 5, 9,14,20,
+            4,11,16,23, 4,11,16,23, 4,11,16,23, 4,11,16,23,
+            6,10,15,21, 6,10,15,21, 6,10,15,21, 6,10,15,21,
+        ];
+
+        const bytes = new Uint8Array(buffer);
+        const origLen = bytes.length;
+        const bitLen = origLen * 8;
+
+        // Padding
+        const padded = new Uint8Array(((origLen + 8) & ~63) + 64);
+        padded.set(bytes);
+        padded[origLen] = 0x80;
+        // Append length as 64-bit LE (we only handle lengths < 2^32 bits)
+        const dv = new DataView(padded.buffer);
+        dv.setUint32(padded.length - 8, bitLen >>> 0, true);
+        dv.setUint32(padded.length - 4, Math.floor(bitLen / 0x100000000), true);
+
+        let a0 = 0x67452301, b0 = 0xefcdab89, c0 = 0x98badcfe, d0 = 0x10325476;
+
+        for (let i = 0; i < padded.length; i += 64) {
+            const M = new Uint32Array(16);
+            for (let j = 0; j < 16; j++) M[j] = dv.getUint32(i + j * 4, true);
+
+            let A = a0, B = b0, C = c0, D = d0;
+            for (let j = 0; j < 64; j++) {
+                let F, g;
+                if (j < 16)      { F = (B & C) | (~B & D); g = j; }
+                else if (j < 32) { F = (D & B) | (~D & C); g = (5 * j + 1) & 15; }
+                else if (j < 48) { F = B ^ C ^ D;           g = (3 * j + 5) & 15; }
+                else              { F = C ^ (B | ~D);        g = (7 * j) & 15; }
+                F = (F + A + T[j] + M[g]) >>> 0;
+                A = D; D = C; C = B;
+                B = (B + ((F << S[j]) | (F >>> (32 - S[j])))) >>> 0;
+            }
+            a0 = (a0 + A) >>> 0; b0 = (b0 + B) >>> 0;
+            c0 = (c0 + C) >>> 0; d0 = (d0 + D) >>> 0;
+        }
+
+        const result = new Uint8Array(16);
+        const rv = new DataView(result.buffer);
+        rv.setUint32(0,  a0, true); rv.setUint32(4,  b0, true);
+        rv.setUint32(8,  c0, true); rv.setUint32(12, d0, true);
+        return result.buffer;
+    }
+
+    // ── Encoding helpers ──────────────────────────────────────────────────
+    function bufToHex(ab) {
+        return Array.from(new Uint8Array(ab))
+            .map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function bufToBase64(ab) {
+        const bytes = new Uint8Array(ab);
+        let bin = '';
+        for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+        return btoa(bin);
+    }
+
+    function encode(ab) {
+        return currentFmt === 'hex' ? bufToHex(ab) : bufToBase64(ab);
+    }
+
+    // ── Hash computation ───────────────────────────────────────────────────
+    async function computeHashes(buffer) {
+        const results = {};
+        for (const algo of ALGORITHMS) {
+            try {
+                const ab = algo.native
+                    ? await crypto.subtle.digest(algo.id, buffer)
+                    : md5(buffer);
+                results[algo.id] = bufToHex(ab);   // always store as hex internally
+            } catch (e) {
+                results[algo.id] = null;
+            }
+        }
+        return results;
+    }
+
+    // ── UI: render hash rows ───────────────────────────────────────────────
+    function buildHashRows() {
+        hashesScroll.innerHTML = '';
+        for (const algo of ALGORITHMS) {
+            const row = document.createElement('div');
+            row.className = 'hash-row';
+            row.dataset.algo = algo.id;
+
+            const hexDigits = algo.bits / 4;
+            const b64Len    = Math.ceil(algo.bits / 6);
+
+            row.innerHTML = `
+                <div class="hash-row-header">
+                    <div class="hash-algo-pill">
+                        <span class="hash-algo">${algo.label}</span>
+                        <span class="hash-length" id="len${algo.id.replace('-','')}">${currentFmt === 'hex' ? hexDigits : b64Len} chars</span>
+                    </div>
+                    <div class="hash-actions">
+                        <button class="hash-copy-btn" data-algo="${algo.id}" id="copyBtn${algo.id.replace('-','')}">Copy</button>
+                    </div>
+                </div>
+                <div class="hash-value empty" id="val${algo.id.replace('-','')}">—</div>
+            `;
+            hashesScroll.appendChild(row);
+        }
+        // Wire copy buttons
+        hashesScroll.querySelectorAll('.hash-copy-btn').forEach(btn => {
+            btn.addEventListener('click', () => copyHash(btn.dataset.algo));
+        });
+    }
+
+    function updateHashDisplay() {
+        for (const algo of ALGORITHMS) {
+            const safeId = algo.id.replace('-', '');
+            const valEl  = document.getElementById('val' + safeId);
+            const lenEl  = document.getElementById('len' + safeId);
+            if (!valEl) continue;
+
+            const hexVal = currentHashes[algo.id];
+            if (hexVal === undefined) {
+                valEl.textContent = '—';
+                valEl.className   = 'hash-value empty';
+            } else if (hexVal === null) {
+                valEl.textContent = 'Error computing hash';
+                valEl.className   = 'hash-value';
+                valEl.style.color = 'var(--red)';
+            } else {
+                const displayed = currentFmt === 'hex' ? hexVal : hexToBase64(hexVal);
+                valEl.textContent = displayed;
+                valEl.className   = 'hash-value';
+                valEl.style.color = '';
+
+                const hexDigits = algo.bits / 4;
+                const b64Len    = Math.ceil(algo.bits / 6);
+                if (lenEl) lenEl.textContent = (currentFmt === 'hex' ? hexDigits : b64Len) + ' chars';
+            }
+        }
+        updateCompare();
+    }
+
+    function hexToBase64(hex) {
+        const bytes = new Uint8Array(hex.match(/.{2}/g).map(b => parseInt(b, 16)));
+        let bin = '';
+        for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+        return btoa(bin);
+    }
+
+    // ── Hashing pipeline ──────────────────────────────────────────────────
+    async function runHash() {
+        hideBanners();
+        let buffer;
+        if (currentMode === 'text') {
+            const text = textInput.value;
+            if (!text.trim()) {
+                clearHashes();
+                return;
+            }
+            buffer = new TextEncoder().encode(text).buffer;
+        } else {
+            if (!fileBytes) {
+                clearHashes();
+                return;
+            }
+            buffer = fileBytes;
+        }
+
+        // Show computing state
+        for (const algo of ALGORITHMS) {
+            const safeId = algo.id.replace('-', '');
+            const el = document.getElementById('val' + safeId);
+            if (el) { el.textContent = 'computing…'; el.className = 'hash-value computing'; }
+        }
+
+        currentHashes = await computeHashes(buffer);
+        updateHashDisplay();
+
+        const source = currentMode === 'text'
+            ? `"${textInput.value.slice(0, 40)}${textInput.value.length > 40 ? '…' : ''}"`
+            : fileName;
+        showSuccess(`Hashes computed for ${source}`);
+        saveState();
+    }
+
+    function clearHashes() {
+        currentHashes = {};
+        updateHashDisplay();
+    }
+
+    // ── Compare ───────────────────────────────────────────────────────────
+    function updateCompare() {
+        const candidate = compareInput.value.trim().toLowerCase();
+        if (!candidate) { compareResult.className = ''; compareResult.style.display = 'none'; return; }
+
+        // Collect all current hash values (both representations)
+        const allValues = new Set();
+        for (const [algoId, hexVal] of Object.entries(currentHashes)) {
+            if (!hexVal) continue;
+            allValues.add(hexVal.toLowerCase());
+            allValues.add(hexToBase64(hexVal).toLowerCase());
+        }
+
+        if (allValues.size === 0) { compareResult.className = ''; compareResult.style.display = 'none'; return; }
+
+        if (allValues.has(candidate)) {
+            compareResult.textContent = '✓ Match';
+            compareResult.className = 'match';
+        } else {
+            compareResult.textContent = '✗ Mismatch';
+            compareResult.className = 'mismatch';
+        }
+    }
+
+    // ── Format toggle ─────────────────────────────────────────────────────
+    function setFormat(fmt) {
+        currentFmt = fmt;
+        document.getElementById('btnHex').classList.toggle('active', fmt === 'hex');
+        document.getElementById('btnBase64').classList.toggle('active', fmt === 'base64');
+        updateHashDisplay();
+    }
+
+    // ── Copy helpers ──────────────────────────────────────────────────────
+    async function copyHash(algoId) {
+        const hexVal = currentHashes[algoId];
+        if (!hexVal) return;
+        const text = currentFmt === 'hex' ? hexVal : hexToBase64(hexVal);
+        await navigator.clipboard.writeText(text).catch(() => {});
+        const safeId = algoId.replace('-', '');
+        const btn = document.getElementById('copyBtn' + safeId);
+        if (btn) {
+            btn.textContent = 'Copied!';
+            btn.classList.add('copied');
+            setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1500);
+        }
+    }
+
+    async function copyAll() {
+        if (Object.keys(currentHashes).length === 0) return;
+        const lines = ALGORITHMS
+            .filter(a => currentHashes[a.id])
+            .map(a => {
+                const val = currentFmt === 'hex' ? currentHashes[a.id] : hexToBase64(currentHashes[a.id]);
+                return `${a.label.padEnd(8)}: ${val}`;
+            })
+            .join('\n');
+        await navigator.clipboard.writeText(lines).catch(() => {});
+        showSuccess('All hashes copied to clipboard');
+    }
+
+    // ── Download ──────────────────────────────────────────────────────────
+    function download() {
+        if (Object.keys(currentHashes).length === 0) return;
+        const source = currentMode === 'text'
+            ? `Input: ${textInput.value.slice(0, 80)}\n`
+            : `File: ${fileName}\n`;
+        const lines = [
+            'Hash Generator — Ravionus Dev Tools',
+            source,
+            ...ALGORITHMS
+                .filter(a => currentHashes[a.id])
+                .map(a => {
+                    const val = currentFmt === 'hex' ? currentHashes[a.id] : hexToBase64(currentHashes[a.id]);
+                    return `${a.label.padEnd(8)}: ${val}`;
+                }),
+        ].join('\n');
+        const blob = new Blob([lines], { type: 'text/plain' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href = url; a.download = 'hashes.txt'; a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    // ── Mode switching ────────────────────────────────────────────────────
+    function switchMode(mode) {
+        currentMode = mode;
+        document.querySelectorAll('.mode-tab').forEach(t => {
+            t.classList.toggle('active', t.dataset.mode === mode);
+        });
+        if (mode === 'text') {
+            textInput.style.display = '';
+            fileZone.classList.remove('visible');
+            inputLabel.textContent = 'Text Input';
+        } else {
+            textInput.style.display = 'none';
+            fileZone.classList.add('visible');
+            inputLabel.textContent = 'File Input';
+        }
+        clearHashes();
+        hideBanners();
+    }
+
+    // ── Sample ────────────────────────────────────────────────────────────
+    function loadSample() {
+        if (currentMode === 'file') switchMode('text');
+        textInput.value = 'The quick brown fox jumps over the lazy dog';
+        runHash();
+        saveState();
+    }
+
+    // ── Clear ─────────────────────────────────────────────────────────────
+    function clear() {
+        textInput.value = '';
+        fileBytes = null; fileName = '';
+        fileZoneName.style.display = 'none';
+        fileZoneName.textContent = '';
+        clearHashes();
+        hideBanners();
+        compareInput.value = '';
+        compareResult.className = ''; compareResult.style.display = 'none';
+        saveState();
+    }
+
+    // ── Banners ───────────────────────────────────────────────────────────
+    function showError(msg) {
+        errorBanner.textContent = msg;
+        errorBanner.classList.add('visible');
+        successBanner.classList.remove('visible');
+    }
+    function showSuccess(msg) {
+        successMsg.textContent = msg;
+        successBanner.classList.add('visible');
+        errorBanner.classList.remove('visible');
+    }
+    function hideBanners() {
+        errorBanner.classList.remove('visible');
+        successBanner.classList.remove('visible');
+    }
+
+    // ── localStorage ──────────────────────────────────────────────────────
+    function saveState() {
+        try {
+            localStorage.setItem(LS_KEY, JSON.stringify({
+                text: textInput.value,
+                fmt:  currentFmt,
+            }));
+        } catch (_) {}
+    }
+
+    function restoreState() {
+        try {
+            const raw = localStorage.getItem(LS_KEY);
+            if (!raw) return;
+            const s = JSON.parse(raw);
+            if (s.text) textInput.value = s.text;
+            if (s.fmt === 'base64') setFormat('base64');
+        } catch (_) {}
+    }
+
+    // ── File handling ─────────────────────────────────────────────────────
+    function handleFile(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        fileName = file.name;
+        reader.onload = e => {
+            fileBytes = e.target.result;
+            fileZoneName.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+            fileZoneName.style.display = 'inline-flex';
+            runHash();
+        };
+        reader.onerror = () => showError('Could not read file');
+        reader.readAsArrayBuffer(file);
+    }
+
+    // ── Event wiring ──────────────────────────────────────────────────────
+    document.getElementById('btnHash').addEventListener('click', runHash);
+
+    document.getElementById('btnHex').addEventListener('click',    () => setFormat('hex'));
+    document.getElementById('btnBase64').addEventListener('click', () => setFormat('base64'));
+
+    document.getElementById('btnSample').addEventListener('click',  loadSample);
+    document.getElementById('btnCopyAll').addEventListener('click', copyAll);
+    document.getElementById('btnDownload').addEventListener('click', download);
+    document.getElementById('btnClear').addEventListener('click',   clear);
+
+    document.getElementById('btnPaste').addEventListener('click', async () => {
+        try {
+            const text = await navigator.clipboard.readText();
+            textInput.value = text;
+            runHash();
+        } catch (_) {}
+    });
+
+    // Mode tabs
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+        tab.addEventListener('click', () => switchMode(tab.dataset.mode));
+    });
+
+    // Format buttons
+    document.querySelectorAll('[data-fmt]').forEach(btn => {
+        btn.addEventListener('click', () => setFormat(btn.dataset.fmt));
+    });
+
+    // File zone
+    fileZone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
+
+    fileZone.addEventListener('dragover', e => {
+        e.preventDefault(); fileZone.classList.add('drag-over');
+    });
+    fileZone.addEventListener('dragleave', () => fileZone.classList.remove('drag-over'));
+    fileZone.addEventListener('drop', e => {
+        e.preventDefault(); fileZone.classList.remove('drag-over');
+        handleFile(e.dataTransfer.files[0]);
+    });
+
+    // Auto-hash on text input (debounced)
+    textInput.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(runHash, 400);
+        saveState();
+    });
+
+    // Compare
+    compareInput.addEventListener('input', updateCompare);
+
+    // Mobile tabs
+    document.querySelectorAll('.mobile-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.mobile-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            if (tab.dataset.pane === 'input') {
+                inputPane.classList.add('mobile-active');
+                outputPane.classList.remove('mobile-active');
+            } else {
+                outputPane.classList.add('mobile-active');
+                inputPane.classList.remove('mobile-active');
+            }
+        });
+    });
+
+    // ── Init ──────────────────────────────────────────────────────────────
+    buildHashRows();
+    restoreState();
+    if (textInput.value.trim()) runHash();
+
+})();
+</script>
+</body>
+</html>
