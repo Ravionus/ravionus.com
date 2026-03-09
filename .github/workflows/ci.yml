@@ -58,7 +58,6 @@ jobs:
       regex:     ${{ steps.filter.outputs.regex }}
       formatter: ${{ steps.filter.outputs.formatter }}
       hash:      ${{ steps.filter.outputs.hash }}
-      hash:      ${{ steps.filter.outputs.hash }}
     steps:
       - uses: actions/checkout@v4
 
