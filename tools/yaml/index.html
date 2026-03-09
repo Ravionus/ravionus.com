@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YAML Validator — Ravionus Dev Tools</title>
+    <meta name="description" content="Validate YAML syntax, format and prettify YAML, convert YAML to JSON instantly in your browser. Supports anchors, aliases, multi-document YAML. No server, no sign-up.">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none';">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- js-yaml v4 — RFC-compliant YAML parser/serializer, no JS exec types -->
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0a0f;
+            --surface: #12121a;
+            --surface2: #0e0e16;
+            --border: #1e1e2e;
+            --border2: #2a2a3e;
+            --text: #e2e2f0;
+            --muted: #7878a0;
+            --purple: #a855f7;
+            --cyan: #22d3ee;
+            --green: #22c55e;
+            --red: #ef4444;
+            --accent-g: linear-gradient(135deg, #a855f7, #22d3ee);
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+        }
+
+        html, body { height: 100%; overflow: hidden; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Nav ── */
+        nav {
+            border-bottom: 1px solid var(--border);
+            background: rgba(10,10,15,.95);
+            backdrop-filter: blur(12px);
+            flex-shrink: 0;
+        }
+        .nav-inner {
+            padding: 0 20px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .nav-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+        .nav-logo {
+            font-size: 1.1rem; font-weight: 800;
+            text-decoration: none;
+            background: var(--accent-g);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -.5px; flex-shrink: 0;
+        }
+        .nav-sep { color: var(--border2); flex-shrink: 0; }
+        .nav-breadcrumb { font-size: .82rem; color: var(--muted); }
+        .nav-breadcrumb a { color: var(--muted); text-decoration: none; }
+        .nav-breadcrumb a:hover { color: var(--text); }
+        .nav-breadcrumb .current { color: var(--text); font-weight: 600; }
+        .nav-links { display: flex; gap: 4px; flex-shrink: 0; }
+        .nav-link {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 5px 10px; border-radius: 7px;
+            font-size: .8rem; font-weight: 500; text-decoration: none;
+            color: var(--muted); transition: color .15s, background .15s; white-space: nowrap;
+        }
+        .nav-link:hover { color: var(--text); background: var(--surface); }
+
+        /* ── Toolbar ── */
+        .toolbar {
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+            padding: 6px 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            flex-shrink: 0;
+            flex-wrap: wrap;
+        }
+        .tb-group { display: flex; align-items: center; gap: 3px; }
+        .tb-sep { width: 1px; height: 20px; background: var(--border2); margin: 0 4px; }
+        .tb-btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            gap: 5px; height: 28px; padding: 0 10px;
+            border-radius: 6px; border: none;
+            background: transparent; color: var(--muted);
+            font-size: .78rem; font-weight: 600; cursor: pointer;
+            transition: color .12s, background .12s;
+            font-family: inherit; white-space: nowrap;
+        }
+        .tb-btn:hover { color: var(--text); background: var(--border); }
+        .tb-btn.primary { background: rgba(168,85,247,.15); color: var(--purple); border: 1px solid rgba(168,85,247,.3); }
+        .tb-btn.primary:hover { background: rgba(168,85,247,.25); color: #c084fc; }
+        .tb-btn.active { background: rgba(34,211,238,.12); color: var(--cyan); border: 1px solid rgba(34,211,238,.3); }
+        .tb-btn.active:hover { background: rgba(34,211,238,.22); }
+        .tb-btn.danger:hover { color: var(--red); background: rgba(239,68,68,.1); }
+        .tb-right { margin-left: auto; display: flex; align-items: center; gap: 5px; }
+
+        /* ── Banners ── */
+        .error-banner {
+            background: rgba(239,68,68,.1);
+            border-bottom: 1px solid rgba(239,68,68,.25);
+            color: var(--red);
+            padding: 6px 18px;
+            font-size: .8rem;
+            font-family: var(--font-mono);
+            display: none;
+            flex-shrink: 0;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .error-banner.visible { display: block; }
+
+        .success-banner {
+            background: rgba(34,197,94,.08);
+            border-bottom: 1px solid rgba(34,197,94,.2);
+            color: var(--green);
+            padding: 5px 18px;
+            font-size: .78rem;
+            display: none;
+            flex-shrink: 0;
+            align-items: center;
+            gap: 6px;
+        }
+        .success-banner.visible { display: flex; }
+
+        /* ── Layout ── */
+        .editor-layout {
+            flex: 1; display: flex; overflow: hidden; min-height: 0;
+        }
+        .pane {
+            flex: 1; display: flex; flex-direction: column;
+            min-width: 0; overflow: hidden;
+        }
+        .pane-header {
+            padding: 5px 16px;
+            background: var(--surface2);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            font-size: .7rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: .08em; color: var(--muted); flex-shrink: 0;
+        }
+        .pane-header-actions { display: flex; gap: 4px; }
+        .ph-btn {
+            height: 20px; padding: 0 7px; border-radius: 4px; border: none;
+            background: transparent; color: var(--muted);
+            font-size: .68rem; font-weight: 600; cursor: pointer;
+            transition: color .12s, background .12s; font-family: inherit;
+        }
+        .ph-btn:hover { color: var(--text); background: var(--border); }
+        .pane-divider { width: 1px; background: var(--border); flex-shrink: 0; }
+        .editor-wrap { flex: 1; overflow: hidden; position: relative; }
+
+        textarea {
+            width: 100%; height: 100%;
+            background: var(--bg); color: var(--text);
+            border: none; outline: none; resize: none;
+            padding: 18px 20px;
+            font-family: var(--font-mono); font-size: .85rem; line-height: 1.7;
+            tab-size: 2; overflow-y: auto;
+        }
+        textarea::selection { background: rgba(168,85,247,.22); }
+        textarea.has-error { background: #100808; }
+        textarea[readonly] { color: #b0cce0; cursor: text; }
+
+        /* ── Status bar ── */
+        .status-bar {
+            border-top: 1px solid var(--border);
+            background: var(--surface2);
+            padding: 4px 18px;
+            display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+            font-size: .72rem; color: var(--muted); flex-shrink: 0;
+        }
+        .stat-item { display: flex; align-items: center; gap: 4px; }
+        .stat-val { color: var(--text); font-weight: 600; }
+        .stat-val.ok  { color: var(--green); }
+        .stat-val.err { color: var(--red); }
+
+        /* ── Toast ── */
+        #toast {
+            position: fixed; bottom: 20px; right: 20px;
+            background: var(--surface); border: 1px solid var(--border2);
+            border-radius: 9px; padding: 9px 16px;
+            font-size: .82rem; color: var(--text);
+            box-shadow: 0 4px 24px rgba(0,0,0,.5);
+            transform: translateY(50px); opacity: 0;
+            transition: transform .22s ease, opacity .22s ease;
+            pointer-events: none; z-index: 500;
+        }
+        #toast.show { transform: translateY(0); opacity: 1; }
+
+        /* ── Mobile tabs ── */
+        .mobile-tabs { display: none; flex-shrink: 0; border-bottom: 1px solid var(--border); background: var(--surface); }
+        .mob-tab {
+            flex: 1; padding: 9px; border: none; background: transparent;
+            color: var(--muted); font-size: .85rem; font-weight: 600;
+            cursor: pointer; border-bottom: 2px solid transparent;
+            transition: color .15s, border-color .15s; font-family: inherit;
+        }
+        .mob-tab.active { color: var(--purple); border-bottom-color: var(--purple); }
+
+        @media (max-width: 700px) {
+            .mobile-tabs { display: flex; }
+            .pane-header { display: none; }
+            .pane-divider { display: none; }
+            .pane { display: none; }
+            .pane.mob-visible { display: flex; }
+            .nav-links { display: none; }
+            .tb-right { margin-left: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+    <div class="nav-inner">
+        <div class="nav-left">
+            <a href="/" class="nav-logo">Ravionus</a>
+            <span class="nav-sep">/</span>
+            <span class="nav-breadcrumb">
+                <a href="../">Dev Tools</a> / <span class="current">YAML Validator</span>
+            </span>
+        </div>
+        <div class="nav-links">
+            <a href="../../learn/" class="nav-link">✨ Learn</a>
+            <a href="../../tools/" class="nav-link">🛠️ Tools</a>
+            <a href="../../playground/" class="nav-link">🧪 Playgrounds</a>
+        </div>
+    </div>
+</nav>
+
+<!-- Toolbar -->
+<div class="toolbar">
+    <div class="tb-group">
+        <button class="tb-btn primary" id="btnValidate" title="Validate and preview YAML (Ctrl+Enter)">✓ Validate</button>
+        <button class="tb-btn" id="btnFormat" title="Reformat input YAML in-place">⇌ Format</button>
+    </div>
+    <div class="tb-sep"></div>
+    <div class="tb-group">
+        <button class="tb-btn active" id="btnModeYaml" title="Show formatted YAML in output">YAML out</button>
+        <button class="tb-btn" id="btnModeJson" title="Show JSON equivalent in output">JSON out</button>
+    </div>
+    <div class="tb-sep"></div>
+    <div class="tb-group">
+        <button class="tb-btn" id="btnSample">📋 Sample</button>
+    </div>
+    <div class="tb-right">
+        <button class="tb-btn" id="btnDownload">⬇ Download</button>
+        <button class="tb-btn danger" id="btnClear">✕ Clear</button>
+    </div>
+</div>
+
+<!-- Banners -->
+<div class="error-banner" id="errorBanner"></div>
+<div class="success-banner" id="successBanner"></div>
+
+<!-- Mobile tabs -->
+<div class="mobile-tabs">
+    <button class="mob-tab active" id="tabInput">📥 Input</button>
+    <button class="mob-tab" id="tabOutput">📤 Output</button>
+</div>
+
+<!-- Split layout -->
+<div class="editor-layout">
+
+    <!-- Input pane -->
+    <div class="pane mob-visible" id="paneInput">
+        <div class="pane-header">
+            <span>Input</span>
+            <div class="pane-header-actions">
+                <button class="ph-btn" id="btnPasteInput" title="Paste from clipboard">Paste</button>
+                <button class="ph-btn" id="btnCopyInput">Copy</button>
+            </div>
+        </div>
+        <div class="editor-wrap">
+            <textarea id="inputArea" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"
+                placeholder="Paste YAML here …&#10;&#10;Example:&#10;  name: my-app&#10;  version: 1.0&#10;  enabled: true&#10;  tags:&#10;    - web&#10;    - api&#10;&#10;Or click 📋 Sample for a full example."></textarea>
+        </div>
+    </div>
+
+    <div class="pane-divider"></div>
+
+    <!-- Output pane -->
+    <div class="pane" id="paneOutput">
+        <div class="pane-header">
+            <span id="outputLabel">Output</span>
+            <div class="pane-header-actions">
+                <button class="ph-btn" id="btnCopyOutput">Copy</button>
+            </div>
+        </div>
+        <div class="editor-wrap">
+            <textarea id="outputArea" readonly spellcheck="false" placeholder="Validated / formatted result appears here…"></textarea>
+        </div>
+    </div>
+
+</div>
+
+<!-- Status bar -->
+<div class="status-bar">
+    <span class="stat-item">Status: <span id="statStatus" class="stat-val">—</span></span>
+    <span class="stat-item">Lines: <span id="statLines" class="stat-val">—</span></span>
+    <span class="stat-item">Documents: <span id="statDocs" class="stat-val">—</span></span>
+    <span class="stat-item">Keys: <span id="statKeys" class="stat-val">—</span></span>
+    <span class="stat-item">Mode: <span id="statMode" class="stat-val">YAML</span></span>
+</div>
+
+<div id="toast"></div>
+
+<script>
+'use strict';
+
+const STORAGE_KEY = 'ravionus_tool_yaml';
+
+// DOM refs
+const inputArea    = document.getElementById('inputArea');
+const outputArea   = document.getElementById('outputArea');
+const errorBanner  = document.getElementById('errorBanner');
+const successBanner = document.getElementById('successBanner');
+const outputLabel  = document.getElementById('outputLabel');
+const toast        = document.getElementById('toast');
+
+// State
+let outputMode = 'yaml'; // 'yaml' | 'json'
+let lastDocs   = null;   // last successfully parsed docs array
+
+// ── Lib guard ──────────────────────────────────────────────
+function libOk() {
+    if (typeof jsyaml === 'undefined') {
+        showError('YAML parser (js-yaml) failed to load.\nCheck your network connection and reload the page.');
+        return false;
+    }
+    return true;
+}
+
+// ── Toast ──────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+// ── Banners ────────────────────────────────────────────────
+function showError(msg) {
+    errorBanner.textContent = '⚠ ' + msg;
+    errorBanner.classList.add('visible');
+    successBanner.classList.remove('visible');
+    inputArea.classList.add('has-error');
+}
+function showSuccess(msg) {
+    successBanner.textContent = '✓ ' + msg;
+    successBanner.classList.add('visible');
+    errorBanner.classList.remove('visible');
+    inputArea.classList.remove('has-error');
+}
+function clearBanners() {
+    errorBanner.classList.remove('visible');
+    successBanner.classList.remove('visible');
+    inputArea.classList.remove('has-error');
+}
+
+// ── Status bar ─────────────────────────────────────────────
+function setStatus(status, docs, keys, lines) {
+    const el = document.getElementById('statStatus');
+    el.textContent = status || '—';
+    el.className = 'stat-val' + (status === 'Valid' ? ' ok' : status === 'Invalid' ? ' err' : '');
+    document.getElementById('statDocs').textContent  = docs  != null ? docs  : '—';
+    document.getElementById('statKeys').textContent  = keys  != null ? keys  : '—';
+    document.getElementById('statLines').textContent = lines != null ? lines : '—';
+    document.getElementById('statMode').textContent  = outputMode === 'json' ? 'JSON' : 'YAML';
+}
+
+// ── Count keys in a parsed YAML value ─────────────────────
+function countKeys(val) {
+    if (val === null || val === undefined) return 0;
+    if (Array.isArray(val))  return val.reduce((n, v) => n + countKeys(v), val.length);
+    if (typeof val === 'object') {
+        const k = Object.keys(val).length;
+        return k + Object.values(val).reduce((n, v) => n + countKeys(v), 0);
+    }
+    return 0;
+}
+
+// ── Parse YAML ─────────────────────────────────────────────
+// Returns { ok, docs, errorMsg }
+function parseYAML(raw) {
+    const docs = [];
+    try {
+        // loadAll handles single- and multi-document YAML
+        jsyaml.loadAll(raw, doc => docs.push(doc));
+        return { ok: true, docs, errorMsg: null };
+    } catch (e) {
+        let msg = '';
+        if (e.mark) {
+            msg = `Line ${e.mark.line + 1}, column ${e.mark.column + 1}: ${e.reason}`;
+        } else {
+            msg = e.message.split('\n')[0];
+        }
+        return { ok: false, docs: [], errorMsg: msg };
+    }
+}
+
+// ── Serialize docs to YAML or JSON ─────────────────────────
+function serializeDocs(docs, mode) {
+    if (docs.length === 0) return mode === 'json' ? 'null' : '';
+
+    if (mode === 'json') {
+        const val = docs.length === 1 ? docs[0] : docs;
+        return JSON.stringify(val, null, 2);
+    }
+
+    // YAML mode
+    const opts = { indent: 2, lineWidth: 120, noRefs: false, quotingType: '"', forceQuotes: false };
+    if (docs.length === 1) {
+        return jsyaml.dump(docs[0], opts).trimEnd();
+    }
+    return docs.map(doc => '---\n' + jsyaml.dump(doc, opts).trimEnd()).join('\n\n');
+}
+
+// ── Core: Validate ─────────────────────────────────────────
+function doValidate() {
+    if (!libOk()) return;
+    clearBanners();
+    const raw = inputArea.value.trim();
+    if (!raw) { showToast('⚠️ Input is empty'); return; }
+
+    const lineCount = inputArea.value.split('\n').length;
+    const { ok, docs, errorMsg } = parseYAML(raw);
+
+    if (!ok) {
+        showError(errorMsg);
+        outputArea.value = '';
+        lastDocs = null;
+        setStatus('Invalid', null, null, lineCount);
+        return;
+    }
+
+    lastDocs = docs;
+    const output = serializeDocs(docs, outputMode);
+    outputArea.value = output;
+
+    const totalKeys = docs.reduce((n, d) => n + countKeys(d), 0);
+    showSuccess(`Valid YAML — ${docs.length} document${docs.length !== 1 ? 's' : ''}, ~${totalKeys} key/item${totalKeys !== 1 ? 's' : ''}`);
+    setStatus('Valid', docs.length, totalKeys, lineCount);
+    scheduleSave(raw);
+}
+
+// ── Core: Format (reformat input in-place) ─────────────────
+function doFormat() {
+    if (!libOk()) return;
+    clearBanners();
+    const raw = inputArea.value.trim();
+    if (!raw) { showToast('⚠️ Input is empty'); return; }
+
+    const { ok, docs, errorMsg } = parseYAML(raw);
+    if (!ok) {
+        showError('Cannot format — ' + errorMsg);
+        return;
+    }
+
+    const opts = { indent: 2, lineWidth: 120, noRefs: false, quotingType: '"', forceQuotes: false };
+    let formatted;
+    if (docs.length === 1) {
+        formatted = jsyaml.dump(docs[0], opts).trimEnd();
+    } else {
+        formatted = docs.map(doc => '---\n' + jsyaml.dump(doc, opts).trimEnd()).join('\n\n');
+    }
+
+    inputArea.value = formatted;
+    lastDocs = docs;
+    const totalKeys = docs.reduce((n, d) => n + countKeys(d), 0);
+    // Run validate to populate output pane too
+    outputArea.value = serializeDocs(docs, outputMode);
+    showSuccess('Formatted — comments and anchors may have been normalized');
+    setStatus('Valid', docs.length, totalKeys, formatted.split('\n').length);
+    scheduleSave(formatted);
+}
+
+// ── Output mode ────────────────────────────────────────────
+function setOutputMode(mode) {
+    outputMode = mode;
+    document.getElementById('btnModeYaml').classList.toggle('active', mode === 'yaml');
+    document.getElementById('btnModeJson').classList.toggle('active', mode === 'json');
+    outputLabel.textContent = mode === 'json' ? 'JSON Output' : 'YAML Output';
+    document.getElementById('statMode').textContent = mode === 'json' ? 'JSON' : 'YAML';
+
+    // Re-render output if we have docs
+    if (lastDocs !== null) {
+        outputArea.value = serializeDocs(lastDocs, mode);
+    }
+}
+
+// ── Sample YAML ────────────────────────────────────────────
+const SAMPLE_YAML = `# Sample: Web Application Configuration
+version: "3.8"
+name: my-app
+
+services:
+  api:
+    image: node:18-alpine
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      DB_HOST: db
+      DEBUG: false
+    depends_on:
+      - db
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: myapp
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+# Shared defaults using YAML anchors
+defaults: &defaults
+  timeout: 30
+  retry: 3
+  logging: true
+
+worker_a:
+  <<: *defaults
+  name: worker-alpha
+  queue: default
+
+worker_b:
+  <<: *defaults
+  name: worker-beta
+  queue: priority
+  timeout: 60
+
+volumes:
+  db_data:
+    driver: local`;
+
+// ── Auto-save / restore ────────────────────────────────────
+let saveTimer;
+function scheduleSave(input) {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ input })); } catch {}
+    }, 800);
+}
+
+// ── Clipboard ──────────────────────────────────────────────
+async function copyText(text, label) {
+    if (!String(text).trim()) { showToast('⚠️ Nothing to copy'); return; }
+    try {
+        await navigator.clipboard.writeText(text);
+        showToast('✓ ' + label + ' copied');
+    } catch {
+        showToast('⚠️ Copy failed — use Ctrl+C manually');
+    }
+}
+
+// ── Wiring ────────────────────────────────────────────────
+document.getElementById('btnValidate').addEventListener('click', doValidate);
+document.getElementById('btnFormat').addEventListener('click', doFormat);
+
+document.getElementById('btnModeYaml').addEventListener('click', () => setOutputMode('yaml'));
+document.getElementById('btnModeJson').addEventListener('click', () => setOutputMode('json'));
+
+document.getElementById('btnSample').addEventListener('click', () => {
+    inputArea.value = SAMPLE_YAML;
+    clearBanners();
+    doValidate();
+});
+
+document.getElementById('btnClear').addEventListener('click', () => {
+    if (!inputArea.value && !outputArea.value) return;
+    if (!confirm('Clear all content?')) return;
+    inputArea.value = ''; outputArea.value = '';
+    lastDocs = null;
+    clearBanners();
+    setStatus(null, null, null, null);
+    try { localStorage.removeItem(STORAGE_KEY); } catch {}
+    showToast('✓ Cleared');
+});
+
+document.getElementById('btnDownload').addEventListener('click', () => {
+    const out = outputArea.value;
+    if (!out.trim()) { showToast('⚠️ Nothing to download — validate first'); return; }
+    const ext  = outputMode === 'json' ? 'json' : 'yaml';
+    const mime = outputMode === 'json' ? 'application/json' : 'text/yaml';
+    const blob = new Blob([out], { type: mime });
+    const url  = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'output.' + ext;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('✓ Downloaded output.' + ext);
+});
+
+document.getElementById('btnCopyInput').addEventListener('click',  () => copyText(inputArea.value, 'Input'));
+document.getElementById('btnCopyOutput').addEventListener('click', () => copyText(outputArea.value, 'Output'));
+
+document.getElementById('btnPasteInput').addEventListener('click', async () => {
+    try {
+        const text = await navigator.clipboard.readText();
+        inputArea.value = text;
+        clearBanners();
+    } catch {
+        showToast('⚠️ Clipboard paste denied — paste manually (Ctrl+V)');
+    }
+});
+
+// Keyboard shortcut: Ctrl+Enter to validate
+document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        doValidate();
+    }
+});
+
+// Mobile tabs
+const paneInput  = document.getElementById('paneInput');
+const paneOutput = document.getElementById('paneOutput');
+
+document.getElementById('tabInput').addEventListener('click', function() {
+    paneInput.classList.add('mob-visible');
+    paneOutput.classList.remove('mob-visible');
+    document.querySelectorAll('.mob-tab').forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
+});
+document.getElementById('tabOutput').addEventListener('click', function() {
+    paneOutput.classList.add('mob-visible');
+    paneInput.classList.remove('mob-visible');
+    document.querySelectorAll('.mob-tab').forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
+});
+
+// ── Boot ──────────────────────────────────────────────────
+(function init() {
+    let saved = null;
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) saved = JSON.parse(raw);
+    } catch {}
+    if (saved && saved.input) {
+        inputArea.value = saved.input;
+        doValidate();
+    }
+})();
+</script>
+
+</body>
+</html>
