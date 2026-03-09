@@ -10,9 +10,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <!-- CDN: js-beautify (browser-ready builds) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.15.1/beautify.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.15.1/beautify-css.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.15.1/beautify-html.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.15.1/beautify.min.js"
+            integrity="sha512-kElKX79OYM/vf2AU+lF4Zsi3AnKds70Mc6fRBImpwQzdZNbju6SyeTBBOUe1N9q1P456v1F01HAsjjWZkXIS4Q==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.15.1/beautify-css.min.js"
+            integrity="sha512-GS3bO88bff1ieJ8ZKeWhjlK5Y6Mwvu4WmQ8gdIgbeSyp7iBaqSVxCUGgOV9RjiiQgoci/HW9n7IVn3o670AY8w==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.15.1/beautify-html.min.js"
+            integrity="sha512-9oipLBY8N19ej4XlfPFHfdKkqn8FnAEsucbkycMoLthN77bImVWZ0GtLMfCrXBqpTetBn2eM9N1pliZJC7IrNA==" crossorigin="anonymous"></script>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -220,6 +223,12 @@
         }
         .mob-tab.active { color: var(--purple); border-bottom-color: var(--purple); }
 
+        /* Focus indicators for keyboard navigation */
+        .tb-btn:focus-visible, .opt-btn:focus-visible, .ph-btn:focus-visible, .mob-tab:focus-visible {
+            outline: 2px solid var(--cyan);
+            outline-offset: 2px;
+        }
+
         @media (max-width: 700px) {
             .mobile-tabs { display: flex; }
             .pane-header { display: none; }
@@ -292,9 +301,9 @@
 </div>
 
 <!-- Banners -->
-<div class="error-banner"   id="errorBanner"></div>
-<div class="success-banner" id="successBanner"></div>
-<div class="info-banner"    id="infoBanner"></div>
+<div class="error-banner"   id="errorBanner"   role="alert"></div>
+<div class="success-banner" id="successBanner" aria-live="polite"></div>
+<div class="info-banner"    id="infoBanner"    aria-live="polite"></div>
 
 <!-- Mobile tabs -->
 <div class="mobile-tabs">
@@ -315,7 +324,7 @@
             </div>
         </div>
         <div class="editor-wrap">
-            <textarea id="inputArea" spellcheck="false" autocomplete="off"
+            <textarea id="inputArea" spellcheck="false" autocomplete="off" aria-label="Source code input"
                 placeholder="Paste your JavaScript code here and click ⚡ Format…&#10;&#10;Or click 📋 Sample for an example."></textarea>
         </div>
     </div>
@@ -331,7 +340,7 @@
             </div>
         </div>
         <div class="editor-wrap">
-            <textarea id="outputArea" readonly spellcheck="false"
+            <textarea id="outputArea" readonly spellcheck="false" aria-label="Formatted code output"
                 placeholder="Formatted code will appear here…"></textarea>
         </div>
     </div>
@@ -346,7 +355,7 @@
     <span class="stat-item">Status:   <span id="statStatus" class="stat-val">Ready</span></span>
 </div>
 
-<div id="toast"></div>
+<div id="toast" aria-live="polite"></div>
 
 <script>
 'use strict';
@@ -543,7 +552,7 @@ document.getElementById('btnSample').addEventListener('click', () => {
 
 function resetStatus() {
     const inLines = inputArea.value ? inputArea.value.split('\n').length : 0;
-    document.getElementById('statInput').textContent  = inLines ? inLines + ' lines' : '—';
+    document.getElementById('statInput').textContent  = inLines ? inLines + ' line' + (inLines !== 1 ? 's' : '') : '—';
     document.getElementById('statOutput').textContent = '—';
     const stat = document.getElementById('statStatus');
     stat.textContent = 'Ready';
@@ -580,7 +589,7 @@ document.getElementById('btnDownload').addEventListener('click', () => {
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a'); a.href = url; a.download = 'formatted.' + ext;
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
     showToast('✓ Downloaded formatted.' + ext);
 });
 

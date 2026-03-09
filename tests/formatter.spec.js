@@ -4,6 +4,7 @@ const { test, expect } = require('@playwright/test');
 const PAGE = 'http://localhost:3000/tools/formatter/index.html';
 
 /** Wait for js-beautify CDN scripts to initialise */
+/** @param {import('@playwright/test').Page} page */
 async function waitForReady(page) {
     await page.waitForSelector('body[data-ready="true"]', { timeout: 10_000 });
 }
