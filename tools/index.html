@@ -235,7 +235,24 @@
             padding: 3px 10px;
             border-radius: 999px;
             border: 1px solid var(--border);
-            color: var(--purple);
+            color: var(--muted);
+        }
+
+        .card-badge.live {
+            color: var(--cyan);
+            border-color: var(--cyan);
+            background: rgba(34, 211, 238, .08);
+        }
+
+        /* Live (linked) cards — full opacity, pointer cursor, brighter hover */
+        a.card {
+            opacity: 1;
+            cursor: pointer;
+        }
+
+        a.card:hover {
+            border-color: rgba(168, 85, 247, .5);
+            box-shadow: 0 8px 36px rgba(168, 85, 247, .18);
         }
 
         /* ── Footer ── */
@@ -292,31 +309,31 @@
         <div class="section-title">Data &amp; Conversion Tools</div>
         <div class="cards">
 
-            <a href="./json/" class="card" style="text-decoration:none;cursor:pointer;">
+            <a href="./json/" class="card">
                 <div class="card-icon">📄</div>
                 <div class="card-title">JSON Formatter</div>
                 <div class="card-desc">
                     Parse, validate, pretty-print, minify, and explore JSON with a collapsible tree view.
                 </div>
-                <div class="card-badge" style="color:#22d3ee;border-color:#22d3ee;">⚡ Live</div>
+                <div class="card-badge live">⚡ Live</div>
             </a>
 
-            <a href="./base64/" class="card" style="text-decoration:none;cursor:pointer;">
+            <a href="./base64/" class="card">
                 <div class="card-icon">🔐</div>
                 <div class="card-title">Base64 Encoder/Decoder</div>
                 <div class="card-desc">
                     Encode and decode Base64 instantly. Supports URL-safe mode, file input, and drag-and-drop.
                 </div>
-                <div class="card-badge" style="color:#22d3ee;border-color:#22d3ee;">⚡ Live</div>
+                <div class="card-badge live">⚡ Live</div>
             </a>
 
-            <a href="./url/" class="card" style="text-decoration:none;cursor:pointer;">
+            <a href="./url/" class="card">
                 <div class="card-icon">🔗</div>
                 <div class="card-title">URL Encoder/Decoder</div>
                 <div class="card-desc">
                     Encode and decode URL components. Parse any URL into its parts with query parameter breakdown.
                 </div>
-                <div class="card-badge" style="color:#22d3ee;border-color:#22d3ee;">⚡ Live</div>
+                <div class="card-badge live">⚡ Live</div>
             </a>
 
         </div>
@@ -324,7 +341,7 @@
 
     <!-- More Data & Conversion Tools -->
     <div class="section" style="padding-top:0">
-        <div class="section-label">Coming Soon</div>
+        <div class="section-label">Live Now</div>
         <div class="section-title">More Data &amp; Conversion Tools</div>
         <div class="cards">
 
@@ -351,7 +368,7 @@
 
     <!-- Code Tools section -->
     <div class="section">
-        <div class="section-label">Coming Soon</div>
+        <div class="section-label">Live Now</div>
         <div class="section-title">Code Tools</div>
         <div class="cards">
 
