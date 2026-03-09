@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base64 Encoder / Decoder — Ravionus Dev Tools</title>
+    <meta name="description" content="Encode and decode Base64 instantly in your browser. Supports standard and URL-safe modes. No server, no sign-up.">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none';">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0a0f;
+            --surface: #12121a;
+            --surface2: #0e0e16;
+            --border: #1e1e2e;
+            --border2: #2a2a3e;
+            --text: #e2e2f0;
+            --muted: #7878a0;
+            --purple: #a855f7;
+            --cyan: #22d3ee;
+            --green: #22c55e;
+            --red: #ef4444;
+            --accent-g: linear-gradient(135deg, #a855f7, #22d3ee);
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+        }
+
+        html, body { height: 100%; overflow: hidden; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Nav ── */
+        nav {
+            border-bottom: 1px solid var(--border);
+            background: rgba(10,10,15,.95);
+            backdrop-filter: blur(12px);
+            flex-shrink: 0;
+        }
+        .nav-inner {
+            padding: 0 20px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .nav-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+        .nav-logo {
+            font-size: 1.1rem; font-weight: 800;
+            text-decoration: none;
+            background: var(--accent-g);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -.5px; flex-shrink: 0;
+        }
+        .nav-sep { color: var(--border2); flex-shrink: 0; }
+        .nav-breadcrumb { font-size: .82rem; color: var(--muted); }
+        .nav-breadcrumb a { color: var(--muted); text-decoration: none; }
+        .nav-breadcrumb a:hover { color: var(--text); }
+        .nav-breadcrumb .current { color: var(--text); font-weight: 600; }
+        .nav-links { display: flex; gap: 4px; flex-shrink: 0; }
+        .nav-link {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 5px 10px; border-radius: 7px;
+            font-size: .8rem; font-weight: 500; text-decoration: none;
+            color: var(--muted); transition: color .15s, background .15s; white-space: nowrap;
+        }
+        .nav-link:hover { color: var(--text); background: var(--surface); }
+
+        /* ── Toolbar ── */
+        .toolbar {
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+            padding: 6px 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            flex-shrink: 0;
+            flex-wrap: wrap;
+        }
+        .tb-group { display: flex; align-items: center; gap: 3px; }
+        .tb-sep { width: 1px; height: 20px; background: var(--border2); margin: 0 4px; }
+        .tb-btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            gap: 5px; height: 28px; padding: 0 10px;
+            border-radius: 6px; border: none;
+            background: transparent; color: var(--muted);
+            font-size: .78rem; font-weight: 600; cursor: pointer;
+            transition: color .12s, background .12s;
+            font-family: inherit; white-space: nowrap;
+        }
+        .tb-btn:hover { color: var(--text); background: var(--border); }
+        .tb-btn.primary { background: rgba(168,85,247,.15); color: var(--purple); border: 1px solid rgba(168,85,247,.3); }
+        .tb-btn.primary:hover { background: rgba(168,85,247,.25); color: #c084fc; }
+        .tb-btn.active { background: rgba(34,211,238,.12); color: var(--cyan); border: 1px solid rgba(34,211,238,.3); }
+        .tb-btn.danger:hover { color: var(--red); background: rgba(239,68,68,.1); }
+
+        .tb-right { margin-left: auto; display: flex; align-items: center; gap: 5px; }
+
+        /* ── Banners ── */
+        .error-banner {
+            background: rgba(239,68,68,.1);
+            border-bottom: 1px solid rgba(239,68,68,.25);
+            color: var(--red);
+            padding: 6px 18px;
+            font-size: .8rem;
+            font-family: var(--font-mono);
+            display: none;
+            flex-shrink: 0;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .error-banner.visible { display: block; }
+
+        .success-banner {
+            background: rgba(34,197,94,.08);
+            border-bottom: 1px solid rgba(34,197,94,.2);
+            color: var(--green);
+            padding: 5px 18px;
+            font-size: .78rem;
+            display: none;
+            flex-shrink: 0;
+            align-items: center;
+            gap: 6px;
+        }
+        .success-banner.visible { display: flex; }
+
+        /* ── Layout ── */
+        .editor-layout {
+            flex: 1; display: flex; overflow: hidden; min-height: 0;
+        }
+        .pane {
+            flex: 1; display: flex; flex-direction: column;
+            min-width: 0; overflow: hidden;
+        }
+        .pane-header {
+            padding: 5px 16px;
+            background: var(--surface2);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            font-size: .7rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: .08em; color: var(--muted); flex-shrink: 0;
+        }
+        .pane-header-actions { display: flex; gap: 4px; }
+        .ph-btn {
+            height: 20px; padding: 0 7px; border-radius: 4px; border: none;
+            background: transparent; color: var(--muted);
+            font-size: .68rem; font-weight: 600; cursor: pointer;
+            transition: color .12s, background .12s; font-family: inherit;
+        }
+        .ph-btn:hover { color: var(--text); background: var(--border); }
+        .pane-divider { width: 1px; background: var(--border); flex-shrink: 0; }
+        .editor-wrap { flex: 1; overflow: hidden; position: relative; }
+
+        textarea {
+            width: 100%; height: 100%;
+            background: var(--bg); color: var(--text);
+            border: none; outline: none; resize: none;
+            padding: 18px 20px;
+            font-family: var(--font-mono); font-size: .85rem; line-height: 1.7;
+            tab-size: 2; overflow-y: auto;
+        }
+        textarea::selection { background: rgba(168,85,247,.22); }
+        textarea.has-error { background: #0f0808; }
+        textarea[readonly] { color: #b0cce0; cursor: text; }
+
+        /* ── File drop zone ── */
+        .drop-hint {
+            position: absolute; bottom: 12px; right: 14px;
+            font-size: .7rem; color: var(--muted); pointer-events: none;
+            background: var(--surface2); padding: 3px 8px; border-radius: 5px;
+            border: 1px solid var(--border);
+        }
+        .editor-wrap.drag-over { outline: 2px dashed var(--purple); outline-offset: -4px; }
+
+        /* ── Status bar ── */
+        .status-bar {
+            border-top: 1px solid var(--border);
+            background: var(--surface2);
+            padding: 4px 18px;
+            display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+            font-size: .72rem; color: var(--muted); flex-shrink: 0;
+        }
+        .stat-item { display: flex; align-items: center; gap: 4px; }
+        .stat-val { color: var(--text); font-weight: 600; }
+        .stat-ok  { color: var(--green); font-weight: 600; }
+        .stat-err { color: var(--red); font-weight: 600; }
+
+        /* ── Toast ── */
+        #toast {
+            position: fixed; bottom: 20px; right: 20px;
+            background: var(--surface); border: 1px solid var(--border2);
+            border-radius: 9px; padding: 9px 16px;
+            font-size: .82rem; color: var(--text);
+            box-shadow: 0 4px 24px rgba(0,0,0,.5);
+            transform: translateY(50px); opacity: 0;
+            transition: transform .22s ease, opacity .22s ease;
+            pointer-events: none; z-index: 500;
+        }
+        #toast.show { transform: translateY(0); opacity: 1; }
+
+        /* ── Mobile tabs ── */
+        .mobile-tabs { display: none; flex-shrink: 0; border-bottom: 1px solid var(--border); background: var(--surface); }
+        .mob-tab {
+            flex: 1; padding: 9px; border: none; background: transparent;
+            color: var(--muted); font-size: .85rem; font-weight: 600;
+            cursor: pointer; border-bottom: 2px solid transparent;
+            transition: color .15s, border-color .15s; font-family: inherit;
+        }
+        .mob-tab.active { color: var(--purple); border-bottom-color: var(--purple); }
+
+        @media (max-width: 700px) {
+            .mobile-tabs { display: flex; }
+            .pane-header { display: none; }
+            .pane-divider { display: none; }
+            .pane { display: none; }
+            .pane.mob-visible { display: flex; }
+            .nav-links { display: none; }
+            .tb-right { margin-left: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+    <div class="nav-inner">
+        <div class="nav-left">
+            <a href="/" class="nav-logo">Ravionus</a>
+            <span class="nav-sep">/</span>
+            <span class="nav-breadcrumb">
+                <a href="../">Dev Tools</a> / <span class="current">Base64</span>
+            </span>
+        </div>
+        <div class="nav-links">
+            <a href="../../learn/" class="nav-link">✨ Learn</a>
+            <a href="../../tools/" class="nav-link">🛠️ Tools</a>
+            <a href="../../playground/" class="nav-link">🧪 Playgrounds</a>
+        </div>
+    </div>
+</nav>
+
+<!-- Toolbar -->
+<div class="toolbar">
+    <div class="tb-group">
+        <button class="tb-btn primary" id="btnEncode">⬆ Encode</button>
+        <button class="tb-btn" id="btnDecode">⬇ Decode</button>
+    </div>
+    <div class="tb-sep"></div>
+    <div class="tb-group">
+        <button class="tb-btn" id="btnUrlSafe" title="Toggle URL-safe mode (uses - _ instead of + /)">🔗 URL-Safe</button>
+    </div>
+    <div class="tb-sep"></div>
+    <div class="tb-group">
+        <button class="tb-btn" id="btnSample">📋 Sample</button>
+        <button class="tb-btn" id="btnSwap">⇄ Swap</button>
+    </div>
+    <div class="tb-right">
+        <button class="tb-btn" id="btnDownload">⬇ Download</button>
+        <button class="tb-btn danger" id="btnClear">✕ Clear</button>
+    </div>
+</div>
+
+<!-- Error / success banners -->
+<div class="error-banner" id="errorBanner"></div>
+<div class="success-banner" id="successBanner"></div>
+
+<!-- Mobile tabs -->
+<div class="mobile-tabs">
+    <button class="mob-tab active" id="tabInput">📥 Input</button>
+    <button class="mob-tab" id="tabOutput">📤 Output</button>
+</div>
+
+<!-- Split layout -->
+<div class="editor-layout">
+
+    <!-- Input pane -->
+    <div class="pane mob-visible" id="paneInput">
+        <div class="pane-header">
+            <span>Input</span>
+            <div class="pane-header-actions">
+                <button class="ph-btn" id="btnPasteInput" title="Paste from clipboard">Paste</button>
+                <button class="ph-btn" id="btnCopyInput">Copy</button>
+                <label class="ph-btn" id="btnFileLabel" title="Load file as Base64" style="cursor:pointer">
+                    File
+                    <input type="file" id="fileInput" style="display:none">
+                </label>
+            </div>
+        </div>
+        <div class="editor-wrap" id="inputWrap">
+            <textarea id="inputArea" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"
+                placeholder="Type or paste text here, then click ⬆ Encode …&#10;&#10;Or click 📋 Sample, or drop a file here to Base64-encode it."></textarea>
+            <span class="drop-hint">drop file</span>
+        </div>
+    </div>
+
+    <div class="pane-divider"></div>
+
+    <!-- Output pane -->
+    <div class="pane mob-visible" id="paneOutput">
+        <div class="pane-header">
+            <span>Output</span>
+            <div class="pane-header-actions">
+                <button class="ph-btn" id="btnCopyOutput">Copy</button>
+            </div>
+        </div>
+        <div class="editor-wrap">
+            <textarea id="outputArea" readonly spellcheck="false" placeholder="Result appears here…"></textarea>
+        </div>
+    </div>
+
+</div>
+
+<!-- Status bar -->
+<div class="status-bar">
+    <span class="stat-item">Mode: <span id="statMode" class="stat-val">—</span></span>
+    <span class="stat-item">Input: <span id="statIn" class="stat-val">—</span></span>
+    <span class="stat-item">Output: <span id="statOut" class="stat-val">—</span></span>
+    <span class="stat-item">Encoding: <span id="statEnc" class="stat-val">Standard</span></span>
+</div>
+
+<div id="toast"></div>
+
+<script>
+'use strict';
+
+const STORAGE_KEY = 'ravionus_tool_base64';
+
+// DOM refs
+const inputArea    = document.getElementById('inputArea');
+const outputArea   = document.getElementById('outputArea');
+const errorBanner  = document.getElementById('errorBanner');
+const successBanner= document.getElementById('successBanner');
+const btnUrlSafe   = document.getElementById('btnUrlSafe');
+const toast        = document.getElementById('toast');
+
+// State
+let urlSafeMode = false;
+
+// ── Toast ──────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+// ── Banners ────────────────────────────────────────────────
+function showError(msg) {
+    errorBanner.textContent = '⚠ ' + msg;
+    errorBanner.classList.add('visible');
+    successBanner.classList.remove('visible');
+    inputArea.classList.add('has-error');
+    updateStats(null);
+}
+
+function showSuccess(msg) {
+    successBanner.textContent = '✓ ' + msg;
+    successBanner.classList.add('visible');
+    errorBanner.classList.remove('visible');
+    inputArea.classList.remove('has-error');
+}
+
+function clearBanners() {
+    errorBanner.classList.remove('visible');
+    successBanner.classList.remove('visible');
+    inputArea.classList.remove('has-error');
+}
+
+// ── Status bar ─────────────────────────────────────────────
+function formatBytes(n) {
+    if (n < 1024) return n + ' B';
+    if (n < 1048576) return (n / 1024).toFixed(1) + ' KB';
+    return (n / 1048576).toFixed(2) + ' MB';
+}
+
+function updateStats(mode) {
+    const inLen  = new TextEncoder().encode(inputArea.value).length;
+    const outLen = new TextEncoder().encode(outputArea.value).length;
+    document.getElementById('statMode').textContent = mode || '—';
+    document.getElementById('statIn').textContent   = inputArea.value ? formatBytes(inLen) : '—';
+    document.getElementById('statOut').textContent  = outputArea.value ? formatBytes(outLen) : '—';
+    document.getElementById('statEnc').textContent  = urlSafeMode ? 'URL-Safe' : 'Standard';
+}
+
+// ── Clipboard helpers ──────────────────────────────────────
+async function copyText(text, label) {
+    if (!text.trim()) { showToast('⚠️ Nothing to copy'); return; }
+    try {
+        await navigator.clipboard.writeText(text);
+        showToast('✓ ' + label + ' copied');
+    } catch {
+        showToast('⚠️ Copy failed — use Ctrl+C manually');
+    }
+}
+
+// ── Base64 helpers ─────────────────────────────────────────
+// Use TextEncoder/TextDecoder for full Unicode support.
+
+function encodeBase64(text) {
+    const bytes = new TextEncoder().encode(text);
+    let binary = '';
+    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+    let b64 = btoa(binary);
+    if (urlSafeMode) b64 = b64.replace(/\+/g, '-').replace(/\//g, '_');
+    return b64;
+}
+
+function decodeBase64(b64) {
+    // Normalise URL-safe chars back to standard
+    let normalised = b64.replace(/-/g, '+').replace(/_/g, '/');
+    // Restore padding if stripped
+    const pad = normalised.length % 4;
+    if (pad === 2) normalised += '==';
+    else if (pad === 3) normalised += '=';
+
+    let binary;
+    try {
+        binary = atob(normalised);
+    } catch {
+        throw new Error('Invalid Base64 — unexpected characters or malformed padding');
+    }
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+}
+
+// ── Core actions ──────────────────────────────────────────
+function doEncode() {
+    clearBanners();
+    const raw = inputArea.value;
+    if (!raw) { showToast('⚠️ Input is empty'); return; }
+    const result = encodeBase64(raw);
+    outputArea.value = result;
+    showSuccess('Encoded successfully');
+    updateStats('Encode');
+    scheduleSave({ mode: 'encode', input: raw });
+}
+
+function doDecode() {
+    clearBanners();
+    const raw = inputArea.value.trim();
+    if (!raw) { showToast('⚠️ Input is empty'); return; }
+    try {
+        const result = decodeBase64(raw);
+        outputArea.value = result;
+        showSuccess('Decoded successfully');
+        updateStats('Decode');
+        scheduleSave({ mode: 'decode', input: raw });
+    } catch (e) {
+        showError(e.message);
+        outputArea.value = '';
+    }
+}
+
+// ── Sample data ───────────────────────────────────────────
+const SAMPLE_TEXT = 'Hello, Ravionus! 🚀\n{"tool":"Base64","version":"1.0","emoji":"✓"}';
+
+// ── Auto-save ──────────────────────────────────────────────
+let saveTimer;
+function scheduleSave(data) {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch {}
+    }, 800);
+}
+
+// ── URL-safe toggle ───────────────────────────────────────
+function setUrlSafe(enabled) {
+    urlSafeMode = enabled;
+    if (enabled) {
+        btnUrlSafe.classList.add('active');
+    } else {
+        btnUrlSafe.classList.remove('active');
+    }
+    document.getElementById('statEnc').textContent = enabled ? 'URL-Safe' : 'Standard';
+}
+
+// ── File encoding ─────────────────────────────────────────
+function encodeFile(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+        // result is data:mime/type;base64,XXXX
+        const b64 = reader.result.split(',')[1];
+        const out = urlSafeMode ? b64.replace(/\+/g, '-').replace(/\//g, '_') : b64;
+        inputArea.value = '';  // file → result goes straight to output
+        outputArea.value = out;
+        clearBanners();
+        showSuccess(`File encoded: ${file.name} (${formatBytes(file.size)})`);
+        updateStats('Encode (File)');
+        scheduleSave({ mode: 'encode', input: '' });
+        showToast('✓ File encoded to Base64');
+    };
+    reader.onerror = () => showToast('⚠️ Could not read file');
+    reader.readAsDataURL(file);
+}
+
+// ── Wiring ────────────────────────────────────────────────
+document.getElementById('btnEncode').addEventListener('click', doEncode);
+document.getElementById('btnDecode').addEventListener('click', doDecode);
+
+document.getElementById('btnUrlSafe').addEventListener('click', () => {
+    setUrlSafe(!urlSafeMode);
+    showToast(urlSafeMode ? '✓ URL-Safe mode ON (uses - _)' : '✓ Standard mode ON (uses + /)');
+});
+
+document.getElementById('btnSample').addEventListener('click', () => {
+    inputArea.value = SAMPLE_TEXT;
+    clearBanners();
+    doEncode();
+});
+
+document.getElementById('btnSwap').addEventListener('click', () => {
+    const tmp = inputArea.value;
+    inputArea.value = outputArea.value;
+    outputArea.value = tmp;
+    clearBanners();
+    updateStats('—');
+    showToast('✓ Swapped input ⇄ output');
+});
+
+document.getElementById('btnClear').addEventListener('click', () => {
+    if (!inputArea.value && !outputArea.value) return;
+    if (!confirm('Clear all content?')) return;
+    inputArea.value = ''; outputArea.value = '';
+    clearBanners();
+    updateStats(null);
+    try { localStorage.removeItem(STORAGE_KEY); } catch {}
+    showToast('✓ Cleared');
+});
+
+document.getElementById('btnDownload').addEventListener('click', () => {
+    const out = outputArea.value;
+    if (!out.trim()) { showToast('⚠️ Nothing to download'); return; }
+    const blob = new Blob([out], { type: 'text/plain' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a'); a.href = url; a.download = 'base64.txt';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('✓ Downloaded base64.txt');
+});
+
+document.getElementById('btnCopyInput').addEventListener('click', () => copyText(inputArea.value, 'Input'));
+document.getElementById('btnCopyOutput').addEventListener('click', () => copyText(outputArea.value, 'Output'));
+
+document.getElementById('btnPasteInput').addEventListener('click', async () => {
+    try {
+        const text = await navigator.clipboard.readText();
+        inputArea.value = text;
+        clearBanners();
+    } catch {
+        showToast('⚠️ Clipboard paste denied — paste manually (Ctrl+V)');
+    }
+});
+
+// File input
+document.getElementById('fileInput').addEventListener('change', function() {
+    if (this.files && this.files[0]) encodeFile(this.files[0]);
+    this.value = ''; // reset so same file can be re-selected
+});
+
+// Drag & drop on input pane
+const inputWrap = document.getElementById('inputWrap');
+inputWrap.addEventListener('dragover', e => {
+    e.preventDefault();
+    inputWrap.classList.add('drag-over');
+});
+inputWrap.addEventListener('dragleave', () => inputWrap.classList.remove('drag-over'));
+inputWrap.addEventListener('drop', e => {
+    e.preventDefault();
+    inputWrap.classList.remove('drag-over');
+    const file = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (file) encodeFile(file);
+});
+
+// Mobile tabs
+const paneInput  = document.getElementById('paneInput');
+const paneOutput = document.getElementById('paneOutput');
+
+document.getElementById('tabInput').addEventListener('click', function() {
+    paneInput.classList.add('mob-visible');
+    paneOutput.classList.remove('mob-visible');
+    document.querySelectorAll('.mob-tab').forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
+});
+document.getElementById('tabOutput').addEventListener('click', function() {
+    paneOutput.classList.add('mob-visible');
+    paneInput.classList.remove('mob-visible');
+    document.querySelectorAll('.mob-tab').forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
+});
+
+// ── Boot ──────────────────────────────────────────────────
+(function init() {
+    let saved = null;
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) saved = JSON.parse(raw);
+    } catch {}
+    if (saved && saved.input) {
+        inputArea.value = saved.input;
+        clearBanners();
+        // Re-run the saved operation silently
+        if (saved.mode === 'encode') doEncode();
+        else if (saved.mode === 'decode') doDecode();
+    }
+})();
+</script>
+
+</body>
+</html>

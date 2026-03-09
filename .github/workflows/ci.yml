@@ -51,6 +51,7 @@ jobs:
       learn:    ${{ steps.filter.outputs.learn }}
       json:     ${{ steps.filter.outputs.json }}
       markdown: ${{ steps.filter.outputs.markdown }}
+      base64:   ${{ steps.filter.outputs.base64 }}
     steps:
       - uses: actions/checkout@v4
 
@@ -68,6 +69,9 @@ jobs:
             markdown:
               - 'playground/markdown/**'
               - 'tests/markdown.spec.js'
+            base64:
+              - 'tools/base64/**'
+              - 'tests/base64.spec.js'
 
   # ── Job 1: Learn — catalog + topic tests ─────────────────────────────────
   # Runs when:  learn/** or its spec files change
@@ -186,20 +190,60 @@ jobs:
           path: tests/playwright-report/
           retention-days: 7
 
-  # ── Job 4: Deploy to GitHub Pages ─────────────────────────────────────────
+  # ── Job 4: Base64 Encoder/Decoder tests ───────────────────────────────────
+  # Runs when:  tools/base64/** or tests/base64.spec.js changes
+  #             OR every push to main (pre-deploy gate)
+  test_base64:
+    name: "Test › Base64 Encoder/Decoder"
+    needs: changes
+    if: >-
+      needs.changes.outputs.base64 == 'true' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install test dependencies
+        run: npm install
+        working-directory: tests
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+        working-directory: tests
+
+      - name: Run Base64 tests
+        run: npx playwright test base64.spec.js
+        working-directory: tests
+
+      - name: Upload report on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: base64-report
+          path: tests/playwright-report/
+          retention-days: 7
+
+  # ── Job 5: Deploy to GitHub Pages ─────────────────────────────────────────
   # Only runs on pushes to main.
   # Requires ALL three test jobs to have PASSED or been SKIPPED.
   # On main, no jobs are skipped (all run as pre-deploy gate), so all must pass.
   deploy:
     name: Deploy
-    needs: [test_learn, test_json, test_markdown]
+    needs: [test_learn, test_json, test_markdown, test_base64]
     if: >-
       always() &&
       github.event_name == 'push' &&
       github.ref == 'refs/heads/main' &&
       (needs.test_learn.result    == 'success' || needs.test_learn.result    == 'skipped') &&
       (needs.test_json.result     == 'success' || needs.test_json.result     == 'skipped') &&
-      (needs.test_markdown.result == 'success' || needs.test_markdown.result == 'skipped')
+      (needs.test_markdown.result == 'success' || needs.test_markdown.result == 'skipped') &&
+      (needs.test_base64.result   == 'success' || needs.test_base64.result   == 'skipped')
     runs-on: ubuntu-latest
     environment:
       name: github-pages
