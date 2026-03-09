@@ -380,6 +380,12 @@
             .nav-links { display: none; }
             .preview-body { padding: 16px; }
         }
+
+        /* Focus indicators for keyboard navigation */
+        button:focus-visible, .tb-btn:focus-visible, .ph-btn:focus-visible {
+            outline: 2px solid var(--cyan);
+            outline-offset: 2px;
+        }
     </style>
 </head>
 <body>
@@ -458,6 +464,7 @@
                 autocorrect="off"
                 autocapitalize="off"
                 autocomplete="off"
+                aria-label="Markdown editor"
                 placeholder="Start typing Markdown here…"
             ></textarea>
         </div>
@@ -493,11 +500,13 @@
 </div>
 
 <!-- Toast -->
-<div id="toast"></div>
+<div id="toast" aria-live="polite"></div>
 
 <!-- Libraries (self-contained, no backend) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"
+        integrity="sha384-QsSpx6a0USazT7nK7w8qXDgpSAPhFsb2XtpoLFQ5+X2yFN6hvCKnwEzN8M5FWaJb" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"
+        integrity="sha384-cwS6YdhLI7XS60eoDiC+egV0qHp8zI+Cms46R0nbn8JrmoAzV9uFL60etMZhAnSu" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 <script>
 'use strict';
@@ -622,9 +631,13 @@ function renderPreview() {
     }
 
     // Sanitise before injecting into the DOM
-    const clean = dompurifyAvailable ? DOMPurify.sanitize(html) : html;
-
-    previewContent.innerHTML    = clean;
+    if (dompurifyAvailable) {
+        previewContent.innerHTML = DOMPurify.sanitize(html);
+    } else {
+        // DOMPurify unavailable — escape HTML to prevent XSS
+        const safe = html.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        previewContent.innerHTML = `<pre>${safe}</pre>`;
+    }
     previewContent.style.display = '';
     previewEmpty.style.display  = 'none';
 

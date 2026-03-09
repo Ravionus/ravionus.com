@@ -341,6 +341,12 @@
             .tb-right { margin-left: 0; }
             .pattern-bar-hint { display: none; }
         }
+
+        /* Focus indicators for keyboard navigation */
+        button:focus-visible, .tb-btn:focus-visible, .ph-btn:focus-visible {
+            outline: 2px solid var(--cyan);
+            outline-offset: 2px;
+        }
     </style>
 </head>
 <body>
@@ -407,9 +413,9 @@
 </div>
 
 <!-- Banners -->
-<div class="error-banner"   id="errorBanner"></div>
-<div class="success-banner" id="successBanner"></div>
-<div class="info-banner"    id="infoBanner"></div>
+<div class="error-banner"   id="errorBanner"   role="alert"></div>
+<div class="success-banner" id="successBanner" aria-live="polite"></div>
+<div class="info-banner"    id="infoBanner"    aria-live="polite"></div>
 
 <!-- Mobile tabs -->
 <div class="mobile-tabs">
@@ -430,7 +436,7 @@
             </div>
         </div>
         <div class="editor-wrap">
-            <textarea id="testArea" spellcheck="false" autocomplete="off"
+            <textarea id="testArea" spellcheck="false" autocomplete="off" aria-label="Test string input"
                 placeholder="Type or paste the string to test against the pattern above…&#10;&#10;Or click 📋 Sample for a live example."></textarea>
         </div>
     </div>
@@ -475,7 +481,7 @@
     <span class="stat-item">Chars:   <span id="statChars"   class="stat-val">—</span></span>
 </div>
 
-<div id="toast"></div>
+<div id="toast" aria-live="polite"></div>
 
 <script>
 'use strict';

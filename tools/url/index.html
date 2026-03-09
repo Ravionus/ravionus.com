@@ -254,6 +254,12 @@
             .nav-links { display: none; }
             .tb-right { margin-left: 0; }
         }
+
+        /* Focus indicators for keyboard navigation */
+        button:focus-visible, .tb-btn:focus-visible, .ph-btn:focus-visible {
+            outline: 2px solid var(--cyan);
+            outline-offset: 2px;
+        }
     </style>
 </head>
 <body>
@@ -302,8 +308,8 @@
 </div>
 
 <!-- Banners -->
-<div class="error-banner" id="errorBanner"></div>
-<div class="success-banner" id="successBanner"></div>
+<div class="error-banner" id="errorBanner" role="alert"></div>
+<div class="success-banner" id="successBanner" aria-live="polite"></div>
 
 <!-- Mobile tabs -->
 <div class="mobile-tabs">
@@ -325,7 +331,7 @@
             </div>
         </div>
         <div class="editor-wrap">
-            <textarea id="inputArea" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"
+            <textarea id="inputArea" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" aria-label="URL input"
                 placeholder="Type or paste text / URL here …&#10;&#10;Click ⬆ Encode or ⬇ Decode a URL component.&#10;Click 🔍 Parse URL to break down a full URL.&#10;Or click 📋 Sample for a live example."></textarea>
         </div>
     </div>
@@ -356,7 +362,7 @@
             </div>
         </div>
         <div class="editor-wrap">
-            <textarea id="outputArea" readonly spellcheck="false" placeholder="Encoded / decoded result appears here…"></textarea>
+            <textarea id="outputArea" readonly spellcheck="false" aria-label="Encoded/decoded output" placeholder="Encoded / decoded result appears here…"></textarea>
         </div>
     </div>
 
@@ -370,7 +376,7 @@
     <span class="stat-item">Encoding: <span id="statEnc" class="stat-val">Component</span></span>
 </div>
 
-<div id="toast"></div>
+<div id="toast" aria-live="polite"></div>
 
 <script>
 'use strict';

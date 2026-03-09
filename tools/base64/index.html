@@ -227,6 +227,12 @@
             .nav-links { display: none; }
             .tb-right { margin-left: 0; }
         }
+
+        /* Focus indicators for keyboard navigation */
+        button:focus-visible, .tb-btn:focus-visible, .ph-btn:focus-visible {
+            outline: 2px solid var(--cyan);
+            outline-offset: 2px;
+        }
     </style>
 </head>
 <body>
@@ -271,8 +277,8 @@
 </div>
 
 <!-- Error / success banners -->
-<div class="error-banner" id="errorBanner"></div>
-<div class="success-banner" id="successBanner"></div>
+<div class="error-banner" id="errorBanner" role="alert"></div>
+<div class="success-banner" id="successBanner" aria-live="polite"></div>
 
 <!-- Mobile tabs -->
 <div class="mobile-tabs">
@@ -297,7 +303,7 @@
             </div>
         </div>
         <div class="editor-wrap" id="inputWrap">
-            <textarea id="inputArea" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"
+            <textarea id="inputArea" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" aria-label="Input text"
                 placeholder="Type or paste text here, then click ⬆ Encode …&#10;&#10;Or click 📋 Sample, or drop a file here to Base64-encode it."></textarea>
             <span class="drop-hint">drop file</span>
         </div>
@@ -314,7 +320,7 @@
             </div>
         </div>
         <div class="editor-wrap">
-            <textarea id="outputArea" readonly spellcheck="false" placeholder="Result appears here…"></textarea>
+            <textarea id="outputArea" readonly spellcheck="false" aria-label="Encoded/decoded output" placeholder="Result appears here…"></textarea>
         </div>
     </div>
 
@@ -328,7 +334,7 @@
     <span class="stat-item">Encoding: <span id="statEnc" class="stat-val">Standard</span></span>
 </div>
 
-<div id="toast"></div>
+<div id="toast" aria-live="polite"></div>
 
 <script>
 'use strict';

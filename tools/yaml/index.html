@@ -10,7 +10,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <!-- js-yaml v4 — RFC-compliant YAML parser/serializer, no JS exec types -->
-    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"
+            integrity="sha384-+pxiN6T7yvpryuJmE1gM9PX7yQit15auDb+ZwwvJOd/4be2Cie5/IuVXgQb/S9du" crossorigin="anonymous"></script>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -220,6 +221,12 @@
             .nav-links { display: none; }
             .tb-right { margin-left: 0; }
         }
+
+        /* Focus indicators for keyboard navigation */
+        button:focus-visible, .tb-btn:focus-visible, .ph-btn:focus-visible {
+            outline: 2px solid var(--cyan);
+            outline-offset: 2px;
+        }
     </style>
 </head>
 <body>
@@ -264,8 +271,8 @@
 </div>
 
 <!-- Banners -->
-<div class="error-banner" id="errorBanner"></div>
-<div class="success-banner" id="successBanner"></div>
+<div class="error-banner" id="errorBanner" role="alert"></div>
+<div class="success-banner" id="successBanner" aria-live="polite"></div>
 
 <!-- Mobile tabs -->
 <div class="mobile-tabs">
@@ -286,7 +293,7 @@
             </div>
         </div>
         <div class="editor-wrap">
-            <textarea id="inputArea" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"
+            <textarea id="inputArea" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" aria-label="YAML input"
                 placeholder="Paste YAML here …&#10;&#10;Example:&#10;  name: my-app&#10;  version: 1.0&#10;  enabled: true&#10;  tags:&#10;    - web&#10;    - api&#10;&#10;Or click 📋 Sample for a full example."></textarea>
         </div>
     </div>
@@ -302,7 +309,7 @@
             </div>
         </div>
         <div class="editor-wrap">
-            <textarea id="outputArea" readonly spellcheck="false" placeholder="Validated / formatted result appears here…"></textarea>
+            <textarea id="outputArea" readonly spellcheck="false" aria-label="YAML output" placeholder="Validated / formatted result appears here…"></textarea>
         </div>
     </div>
 
@@ -317,7 +324,7 @@
     <span class="stat-item">Mode: <span id="statMode" class="stat-val">YAML</span></span>
 </div>
 
-<div id="toast"></div>
+<div id="toast" aria-live="polite"></div>
 
 <script>
 'use strict';

@@ -295,6 +295,12 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+        /* Focus indicators for keyboard navigation */
+        button:focus-visible, .tb-btn:focus-visible, .ph-btn:focus-visible, .mode-tab:focus-visible {
+            outline: 2px solid var(--cyan);
+            outline-offset: 2px;
+        }
     </style>
 </head>
 <body>
@@ -303,19 +309,19 @@
 <nav>
     <div class="nav-inner">
         <div class="nav-left">
-            <a class="nav-logo" href="/">Ravionus</a>
+            <a class="nav-logo" href="../../">Ravionus</a>
             <span class="nav-sep">/</span>
             <span class="nav-breadcrumb">
-                <a href="/tools/">Dev Tools</a>
+                <a href="../">Dev Tools</a>
                 <span style="margin:0 5px;color:var(--border2)">/</span>
                 <span class="current">Hash Generator</span>
             </span>
         </div>
-        <nav class="nav-links">
-            <a class="nav-link" href="/learn/">📚 Learn</a>
-            <a class="nav-link" href="/tools/">🔧 Tools</a>
-            <a class="nav-link" href="/playground/">🎮 Playground</a>
-        </nav>
+        <div class="nav-links">
+            <a class="nav-link" href="../../learn/">📚 Learn</a>
+            <a class="nav-link" href="../../tools/">🔧 Tools</a>
+            <a class="nav-link" href="../../playground/">🎮 Playground</a>
+        </div>
     </div>
 </nav>
 
@@ -348,8 +354,8 @@
 </div>
 
 <!-- ── Banners ── -->
-<div class="error-banner" id="errorBanner"></div>
-<div class="success-banner" id="successBanner">
+<div class="error-banner" id="errorBanner" role="alert"></div>
+<div class="success-banner" id="successBanner" aria-live="polite">
     <span>✓</span><span id="successMsg"></span>
 </div>
 
@@ -372,7 +378,7 @@
         </div>
 
         <!-- Text mode -->
-        <textarea id="textInput" placeholder="Type or paste text to hash…" spellcheck="false" autocomplete="off"></textarea>
+        <textarea id="textInput" placeholder="Type or paste text to hash…" spellcheck="false" autocomplete="off" aria-label="Text input for hashing"></textarea>
 
         <!-- File mode -->
         <div class="file-zone" id="fileZone">

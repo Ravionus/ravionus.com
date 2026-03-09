@@ -265,6 +265,12 @@
             .nav-links { display: none; }
             .tb-right { margin-left: 0; }
         }
+
+        /* Focus indicators for keyboard navigation */
+        button:focus-visible, .tb-btn:focus-visible, .ph-btn:focus-visible {
+            outline: 2px solid var(--cyan);
+            outline-offset: 2px;
+        }
     </style>
 </head>
 <body>
@@ -318,8 +324,8 @@
 </div>
 
 <!-- Banners -->
-<div class="error-banner" id="errorBanner"></div>
-<div class="success-banner" id="successBanner"></div>
+<div class="error-banner" id="errorBanner" role="alert"></div>
+<div class="success-banner" id="successBanner" aria-live="polite"></div>
 
 <!-- Mobile tabs -->
 <div class="mobile-tabs">
@@ -341,7 +347,7 @@
             </div>
         </div>
         <div class="editor-wrap">
-            <textarea id="inputArea" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"
+            <textarea id="inputArea" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" aria-label="CSV or JSON input"
                 placeholder="Paste CSV or JSON here …&#10;&#10;CSV example:&#10;  name,age,city&#10;  Alice,30,NYC&#10;&#10;JSON example:&#10;  [{"name":"Alice","age":30}]&#10;&#10;Or click 📋 Sample for a live example."></textarea>
         </div>
     </div>
@@ -372,7 +378,7 @@
             </div>
         </div>
         <div class="editor-wrap">
-            <textarea id="outputArea" readonly spellcheck="false" placeholder="Converted result appears here…"></textarea>
+            <textarea id="outputArea" readonly spellcheck="false" aria-label="Converted output" placeholder="Converted result appears here…"></textarea>
         </div>
     </div>
 
@@ -387,7 +393,7 @@
     <span class="stat-item">Headers: <span id="statHeaders" class="stat-val">On</span></span>
 </div>
 
-<div id="toast"></div>
+<div id="toast" aria-live="polite"></div>
 
 <script>
 'use strict';
