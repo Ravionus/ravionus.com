@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Encoder / Decoder — Ravionus Dev Tools</title>
+    <meta name="description" content="Encode and decode URLs and URL components instantly in your browser. Supports component and full URI modes with URL parser. No server, no sign-up.">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none';">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0a0f;
+            --surface: #12121a;
+            --surface2: #0e0e16;
+            --border: #1e1e2e;
+            --border2: #2a2a3e;
+            --text: #e2e2f0;
+            --muted: #7878a0;
+            --purple: #a855f7;
+            --cyan: #22d3ee;
+            --green: #22c55e;
+            --red: #ef4444;
+            --accent-g: linear-gradient(135deg, #a855f7, #22d3ee);
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+        }
+
+        html, body { height: 100%; overflow: hidden; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Nav ── */
+        nav {
+            border-bottom: 1px solid var(--border);
+            background: rgba(10,10,15,.95);
+            backdrop-filter: blur(12px);
+            flex-shrink: 0;
+        }
+        .nav-inner {
+            padding: 0 20px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .nav-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+        .nav-logo {
+            font-size: 1.1rem; font-weight: 800;
+            text-decoration: none;
+            background: var(--accent-g);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -.5px; flex-shrink: 0;
+        }
+        .nav-sep { color: var(--border2); flex-shrink: 0; }
+        .nav-breadcrumb { font-size: .82rem; color: var(--muted); }
+        .nav-breadcrumb a { color: var(--muted); text-decoration: none; }
+        .nav-breadcrumb a:hover { color: var(--text); }
+        .nav-breadcrumb .current { color: var(--text); font-weight: 600; }
+        .nav-links { display: flex; gap: 4px; flex-shrink: 0; }
+        .nav-link {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 5px 10px; border-radius: 7px;
+            font-size: .8rem; font-weight: 500; text-decoration: none;
+            color: var(--muted); transition: color .15s, background .15s; white-space: nowrap;
+        }
+        .nav-link:hover { color: var(--text); background: var(--surface); }
+
+        /* ── Toolbar ── */
+        .toolbar {
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+            padding: 6px 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            flex-shrink: 0;
+            flex-wrap: wrap;
+        }
+        .tb-group { display: flex; align-items: center; gap: 3px; }
+        .tb-sep { width: 1px; height: 20px; background: var(--border2); margin: 0 4px; }
+        .tb-btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            gap: 5px; height: 28px; padding: 0 10px;
+            border-radius: 6px; border: none;
+            background: transparent; color: var(--muted);
+            font-size: .78rem; font-weight: 600; cursor: pointer;
+            transition: color .12s, background .12s;
+            font-family: inherit; white-space: nowrap;
+        }
+        .tb-btn:hover { color: var(--text); background: var(--border); }
+        .tb-btn.primary { background: rgba(168,85,247,.15); color: var(--purple); border: 1px solid rgba(168,85,247,.3); }
+        .tb-btn.primary:hover { background: rgba(168,85,247,.25); color: #c084fc; }
+        .tb-btn.active { background: rgba(34,211,238,.12); color: var(--cyan); border: 1px solid rgba(34,211,238,.3); }
+        .tb-btn.active:hover { background: rgba(34,211,238,.22); }
+        .tb-btn.danger:hover { color: var(--red); background: rgba(239,68,68,.1); }
+
+        .tb-right { margin-left: auto; display: flex; align-items: center; gap: 5px; }
+
+        /* ── Banners ── */
+        .error-banner {
+            background: rgba(239,68,68,.1);
+            border-bottom: 1px solid rgba(239,68,68,.25);
+            color: var(--red);
+            padding: 6px 18px;
+            font-size: .8rem;
+            font-family: var(--font-mono);
+            display: none;
+            flex-shrink: 0;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .error-banner.visible { display: block; }
+
+        .success-banner {
+            background: rgba(34,197,94,.08);
+            border-bottom: 1px solid rgba(34,197,94,.2);
+            color: var(--green);
+            padding: 5px 18px;
+            font-size: .78rem;
+            display: none;
+            flex-shrink: 0;
+            align-items: center;
+            gap: 6px;
+        }
+        .success-banner.visible { display: flex; }
+
+        /* ── Layout ── */
+        .editor-layout {
+            flex: 1; display: flex; overflow: hidden; min-height: 0;
+        }
+        .pane {
+            flex: 1; display: flex; flex-direction: column;
+            min-width: 0; overflow: hidden;
+        }
+        .pane-header {
+            padding: 5px 16px;
+            background: var(--surface2);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            font-size: .7rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: .08em; color: var(--muted); flex-shrink: 0;
+        }
+        .pane-header-actions { display: flex; gap: 4px; }
+        .ph-btn {
+            height: 20px; padding: 0 7px; border-radius: 4px; border: none;
+            background: transparent; color: var(--muted);
+            font-size: .68rem; font-weight: 600; cursor: pointer;
+            transition: color .12s, background .12s; font-family: inherit;
+        }
+        .ph-btn:hover { color: var(--text); background: var(--border); }
+        .pane-divider { width: 1px; background: var(--border); flex-shrink: 0; }
+        .editor-wrap { flex: 1; overflow: hidden; position: relative; }
+
+        textarea {
+            width: 100%; height: 100%;
+            background: var(--bg); color: var(--text);
+            border: none; outline: none; resize: none;
+            padding: 18px 20px;
+            font-family: var(--font-mono); font-size: .85rem; line-height: 1.7;
+            tab-size: 2; overflow-y: auto;
+        }
+        textarea::selection { background: rgba(168,85,247,.22); }
+        textarea.has-error { background: #0f0808; }
+        textarea[readonly] { color: #b0cce0; cursor: text; }
+
+        /* ── Parse view ── */
+        .parse-scroll {
+            flex: 1; overflow-y: auto;
+            background: var(--bg); padding: 18px 20px;
+            font-family: var(--font-mono); font-size: .82rem; line-height: 1.8;
+        }
+        .parse-placeholder {
+            color: var(--muted); font-size: .85rem;
+            padding: 60px 20px; text-align: center;
+        }
+        .parse-section {
+            margin: 14px 0 6px;
+            font-size: .68rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: .12em;
+            color: var(--muted);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 3px;
+        }
+        .parse-section:first-child { margin-top: 0; }
+        .parse-row {
+            display: flex; gap: 12px; align-items: baseline;
+            padding: 1px 0;
+        }
+        .parse-key {
+            color: var(--purple); min-width: 90px; font-weight: 600;
+            font-size: .8rem; flex-shrink: 0;
+        }
+        .parse-val {
+            color: var(--cyan); word-break: break-all;
+            font-size: .82rem;
+        }
+        .parse-val.clickable {
+            cursor: pointer; transition: opacity .12s;
+        }
+        .parse-val.clickable:hover { opacity: .7; }
+        .parse-empty { color: var(--muted) !important; font-style: italic; }
+
+        /* ── Status bar ── */
+        .status-bar {
+            border-top: 1px solid var(--border);
+            background: var(--surface2);
+            padding: 4px 18px;
+            display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+            font-size: .72rem; color: var(--muted); flex-shrink: 0;
+        }
+        .stat-item { display: flex; align-items: center; gap: 4px; }
+        .stat-val { color: var(--text); font-weight: 600; }
+
+        /* ── Toast ── */
+        #toast {
+            position: fixed; bottom: 20px; right: 20px;
+            background: var(--surface); border: 1px solid var(--border2);
+            border-radius: 9px; padding: 9px 16px;
+            font-size: .82rem; color: var(--text);
+            box-shadow: 0 4px 24px rgba(0,0,0,.5);
+            transform: translateY(50px); opacity: 0;
+            transition: transform .22s ease, opacity .22s ease;
+            pointer-events: none; z-index: 500;
+        }
+        #toast.show { transform: translateY(0); opacity: 1; }
+
+        /* ── Mobile tabs ── */
+        .mobile-tabs { display: none; flex-shrink: 0; border-bottom: 1px solid var(--border); background: var(--surface); }
+        .mob-tab {
+            flex: 1; padding: 9px; border: none; background: transparent;
+            color: var(--muted); font-size: .85rem; font-weight: 600;
+            cursor: pointer; border-bottom: 2px solid transparent;
+            transition: color .15s, border-color .15s; font-family: inherit;
+        }
+        .mob-tab.active { color: var(--purple); border-bottom-color: var(--purple); }
+
+        @media (max-width: 700px) {
+            .mobile-tabs { display: flex; }
+            .pane-header { display: none; }
+            .pane-divider { display: none; }
+            .pane { display: none; }
+            .pane.mob-visible { display: flex; }
+            .nav-links { display: none; }
+            .tb-right { margin-left: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+    <div class="nav-inner">
+        <div class="nav-left">
+            <a href="/" class="nav-logo">Ravionus</a>
+            <span class="nav-sep">/</span>
+            <span class="nav-breadcrumb">
+                <a href="../">Dev Tools</a> / <span class="current">URL Encoder/Decoder</span>
+            </span>
+        </div>
+        <div class="nav-links">
+            <a href="../../learn/" class="nav-link">✨ Learn</a>
+            <a href="../../tools/" class="nav-link">🛠️ Tools</a>
+            <a href="../../playground/" class="nav-link">🧪 Playgrounds</a>
+        </div>
+    </div>
+</nav>
+
+<!-- Toolbar -->
+<div class="toolbar">
+    <div class="tb-group">
+        <button class="tb-btn primary" id="btnEncode">⬆ Encode</button>
+        <button class="tb-btn" id="btnDecode">⬇ Decode</button>
+    </div>
+    <div class="tb-sep"></div>
+    <div class="tb-group">
+        <button class="tb-btn" id="btnParse">🔍 Parse URL</button>
+    </div>
+    <div class="tb-sep"></div>
+    <div class="tb-group">
+        <button class="tb-btn" id="btnModeToggle" title="Toggle between Component (encodeURIComponent) and Full URI (encodeURI) encoding">🔗 Full URI</button>
+    </div>
+    <div class="tb-sep"></div>
+    <div class="tb-group">
+        <button class="tb-btn" id="btnSample">📋 Sample</button>
+        <button class="tb-btn" id="btnSwap">⇄ Swap</button>
+    </div>
+    <div class="tb-right">
+        <button class="tb-btn" id="btnDownload">⬇ Download</button>
+        <button class="tb-btn danger" id="btnClear">✕ Clear</button>
+    </div>
+</div>
+
+<!-- Banners -->
+<div class="error-banner" id="errorBanner"></div>
+<div class="success-banner" id="successBanner"></div>
+
+<!-- Mobile tabs -->
+<div class="mobile-tabs">
+    <button class="mob-tab active" id="tabInput">📥 Input</button>
+    <button class="mob-tab" id="tabParsed">🔍 Parsed</button>
+    <button class="mob-tab" id="tabOutput">📤 Output</button>
+</div>
+
+<!-- Split layout -->
+<div class="editor-layout">
+
+    <!-- Input pane -->
+    <div class="pane mob-visible" id="paneInput">
+        <div class="pane-header">
+            <span>Input</span>
+            <div class="pane-header-actions">
+                <button class="ph-btn" id="btnPasteInput" title="Paste from clipboard">Paste</button>
+                <button class="ph-btn" id="btnCopyInput">Copy</button>
+            </div>
+        </div>
+        <div class="editor-wrap">
+            <textarea id="inputArea" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"
+                placeholder="Type or paste text / URL here …&#10;&#10;Click ⬆ Encode or ⬇ Decode a URL component.&#10;Click 🔍 Parse URL to break down a full URL.&#10;Or click 📋 Sample for a live example."></textarea>
+        </div>
+    </div>
+
+    <div class="pane-divider"></div>
+
+    <!-- Parse view pane -->
+    <div class="pane" id="paneParsed">
+        <div class="pane-header">
+            <span>URL Structure</span>
+            <div class="pane-header-actions">
+                <button class="ph-btn" id="btnCopyParsed">Copy</button>
+            </div>
+        </div>
+        <div class="parse-scroll" id="parseView">
+            <div class="parse-placeholder" id="parsePlaceholder">Parse a full URL to see its components breakdown</div>
+        </div>
+    </div>
+
+    <div class="pane-divider"></div>
+
+    <!-- Output pane -->
+    <div class="pane" id="paneOutput">
+        <div class="pane-header">
+            <span>Output</span>
+            <div class="pane-header-actions">
+                <button class="ph-btn" id="btnCopyOutput">Copy</button>
+            </div>
+        </div>
+        <div class="editor-wrap">
+            <textarea id="outputArea" readonly spellcheck="false" placeholder="Encoded / decoded result appears here…"></textarea>
+        </div>
+    </div>
+
+</div>
+
+<!-- Status bar -->
+<div class="status-bar">
+    <span class="stat-item">Mode: <span id="statMode" class="stat-val">—</span></span>
+    <span class="stat-item">Input: <span id="statIn" class="stat-val">—</span></span>
+    <span class="stat-item">Output: <span id="statOut" class="stat-val">—</span></span>
+    <span class="stat-item">Encoding: <span id="statEnc" class="stat-val">Component</span></span>
+</div>
+
+<div id="toast"></div>
+
+<script>
+'use strict';
+
+const STORAGE_KEY = 'ravionus_tool_url';
+
+// DOM refs
+const inputArea     = document.getElementById('inputArea');
+const outputArea    = document.getElementById('outputArea');
+const parseView     = document.getElementById('parseView');
+const parsePlaceholder = document.getElementById('parsePlaceholder');
+const errorBanner   = document.getElementById('errorBanner');
+const successBanner = document.getElementById('successBanner');
+const btnModeToggle = document.getElementById('btnModeToggle');
+const toast         = document.getElementById('toast');
+
+// State
+let fullUriMode = false;
+
+// ── Toast ──────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+// ── Banners ────────────────────────────────────────────────
+function showError(msg) {
+    errorBanner.textContent = '⚠ ' + msg;
+    errorBanner.classList.add('visible');
+    successBanner.classList.remove('visible');
+    inputArea.classList.add('has-error');
+    updateStats(null);
+}
+
+function showSuccess(msg) {
+    successBanner.textContent = '✓ ' + msg;
+    successBanner.classList.add('visible');
+    errorBanner.classList.remove('visible');
+    inputArea.classList.remove('has-error');
+}
+
+function clearBanners() {
+    errorBanner.classList.remove('visible');
+    successBanner.classList.remove('visible');
+    inputArea.classList.remove('has-error');
+}
+
+// ── Status bar ─────────────────────────────────────────────
+function formatBytes(n) {
+    if (n < 1024) return n + ' B';
+    if (n < 1048576) return (n / 1024).toFixed(1) + ' KB';
+    return (n / 1048576).toFixed(2) + ' MB';
+}
+
+function updateStats(mode) {
+    const inBytes  = new TextEncoder().encode(inputArea.value).length;
+    const outBytes = new TextEncoder().encode(outputArea.value).length;
+    document.getElementById('statMode').textContent = mode || '—';
+    document.getElementById('statIn').textContent   = inputArea.value  ? formatBytes(inBytes)  : '—';
+    document.getElementById('statOut').textContent  = outputArea.value ? formatBytes(outBytes) : '—';
+    document.getElementById('statEnc').textContent  = fullUriMode ? 'Full URI' : 'Component';
+}
+
+// ── Clipboard ──────────────────────────────────────────────
+async function copyText(text, label) {
+    if (!String(text).trim()) { showToast('⚠️ Nothing to copy'); return; }
+    try {
+        await navigator.clipboard.writeText(String(text));
+        showToast('✓ ' + label + ' copied');
+    } catch {
+        showToast('⚠️ Copy failed — use Ctrl+C manually');
+    }
+}
+
+// ── Parse view helpers ─────────────────────────────────────
+function clearParseView() {
+    [...parseView.children].forEach(child => {
+        if (child.id !== 'parsePlaceholder') child.remove();
+    });
+    parsePlaceholder.style.display = '';
+}
+
+function renderParseView(url) {
+    clearParseView();
+    parsePlaceholder.style.display = 'none';
+
+    function addSection(label) {
+        const s = document.createElement('div');
+        s.className = 'parse-section';
+        s.textContent = label;
+        parseView.appendChild(s);
+    }
+
+    function addRow(key, val, isMuted) {
+        const row = document.createElement('div');
+        row.className = 'parse-row';
+
+        const k = document.createElement('span');
+        k.className = 'parse-key';
+        k.textContent = key;
+
+        const v = document.createElement('span');
+        if (isMuted) {
+            v.className = 'parse-val parse-empty';
+            v.textContent = val;
+        } else {
+            v.className = 'parse-val clickable';
+            v.textContent = val;
+            v.title = 'Click to copy';
+            v.addEventListener('click', () => copyText(val, key));
+        }
+
+        row.appendChild(k);
+        row.appendChild(v);
+        parseView.appendChild(row);
+    }
+
+    addSection('URL STRUCTURE');
+    addRow('Protocol', url.protocol);
+    addRow('Host',     url.host);
+    addRow('Hostname', url.hostname);
+    addRow('Port',     url.port || '(default)', !url.port);
+    addRow('Pathname', url.pathname);
+    addRow('Search',   url.search || '(none)',  !url.search);
+    addRow('Hash',     url.hash   || '(none)',  !url.hash);
+    addRow('Origin',   url.origin);
+
+    const params = [...url.searchParams.entries()];
+    if (params.length > 0) {
+        addSection('QUERY PARAMETERS');
+        for (const [k, v] of params) {
+            addRow(k, v, false);
+        }
+    }
+}
+
+// ── Core actions ──────────────────────────────────────────
+function doEncode() {
+    clearBanners();
+    const raw = inputArea.value;
+    if (!raw) { showToast('⚠️ Input is empty'); return; }
+    clearParseView();
+    try {
+        const result = fullUriMode ? encodeURI(raw) : encodeURIComponent(raw);
+        outputArea.value = result;
+        showSuccess('Encoded successfully');
+        updateStats('Encode');
+        scheduleSave({ mode: 'encode', input: raw });
+    } catch (e) {
+        showError(e.message);
+        outputArea.value = '';
+    }
+}
+
+function doDecode() {
+    clearBanners();
+    const raw = inputArea.value.trim();
+    if (!raw) { showToast('⚠️ Input is empty'); return; }
+    clearParseView();
+    try {
+        const result = fullUriMode ? decodeURI(raw) : decodeURIComponent(raw);
+        outputArea.value = result;
+        showSuccess('Decoded successfully');
+        updateStats('Decode');
+        scheduleSave({ mode: 'decode', input: raw });
+    } catch (e) {
+        showError('Invalid percent-encoding — ' + e.message);
+        outputArea.value = '';
+    }
+}
+
+function doParse() {
+    clearBanners();
+    const raw = inputArea.value.trim();
+    if (!raw) { showToast('⚠️ Input is empty'); return; }
+    let url;
+    try {
+        url = new URL(raw);
+    } catch {
+        showError('Invalid URL — include a protocol (e.g. https://)');
+        clearParseView();
+        return;
+    }
+    renderParseView(url);
+    showSuccess('URL parsed successfully');
+    updateStats('Parse');
+    scheduleSave({ mode: 'parse', input: raw });
+}
+
+// ── Sample URL ─────────────────────────────────────────────
+const SAMPLE_URL = 'https://api.ravionus.com/v2/search?q=hello+world&lang=en&page=1#results';
+
+// ── Auto-save ──────────────────────────────────────────────
+let saveTimer;
+function scheduleSave(data) {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch {}
+    }, 800);
+}
+
+// ── Mode toggle ────────────────────────────────────────────
+function setFullUriMode(enabled) {
+    fullUriMode = enabled;
+    if (enabled) {
+        btnModeToggle.classList.add('active');
+    } else {
+        btnModeToggle.classList.remove('active');
+    }
+    document.getElementById('statEnc').textContent = enabled ? 'Full URI' : 'Component';
+}
+
+// ── Wiring ────────────────────────────────────────────────
+document.getElementById('btnEncode').addEventListener('click', doEncode);
+document.getElementById('btnDecode').addEventListener('click', doDecode);
+document.getElementById('btnParse').addEventListener('click', doParse);
+
+document.getElementById('btnModeToggle').addEventListener('click', () => {
+    setFullUriMode(!fullUriMode);
+    showToast(fullUriMode
+        ? '✓ Full URI mode ON (uses encodeURI — preserves URL structure)'
+        : '✓ Component mode ON (uses encodeURIComponent — encodes all special chars)');
+});
+
+document.getElementById('btnSample').addEventListener('click', () => {
+    inputArea.value = SAMPLE_URL;
+    clearBanners();
+    doParse();
+});
+
+document.getElementById('btnSwap').addEventListener('click', () => {
+    const tmp = inputArea.value;
+    inputArea.value = outputArea.value;
+    outputArea.value = tmp;
+    clearBanners();
+    clearParseView();
+    updateStats('—');
+    showToast('✓ Swapped input ⇄ output');
+});
+
+document.getElementById('btnClear').addEventListener('click', () => {
+    if (!inputArea.value && !outputArea.value) return;
+    if (!confirm('Clear all content?')) return;
+    inputArea.value = '';
+    outputArea.value = '';
+    clearBanners();
+    clearParseView();
+    updateStats(null);
+    try { localStorage.removeItem(STORAGE_KEY); } catch {}
+    showToast('✓ Cleared');
+});
+
+document.getElementById('btnDownload').addEventListener('click', () => {
+    const out = outputArea.value;
+    if (!out.trim()) { showToast('⚠️ Nothing to download'); return; }
+    const blob = new Blob([out], { type: 'text/plain' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a'); a.href = url; a.download = 'url-output.txt';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('✓ Downloaded url-output.txt');
+});
+
+document.getElementById('btnCopyInput').addEventListener('click', () => copyText(inputArea.value, 'Input'));
+document.getElementById('btnCopyOutput').addEventListener('click', () => copyText(outputArea.value, 'Output'));
+
+document.getElementById('btnPasteInput').addEventListener('click', async () => {
+    try {
+        const text = await navigator.clipboard.readText();
+        inputArea.value = text;
+        clearBanners();
+    } catch {
+        showToast('⚠️ Clipboard paste denied — paste manually (Ctrl+V)');
+    }
+});
+
+document.getElementById('btnCopyParsed').addEventListener('click', () => {
+    const rows = parseView.querySelectorAll('.parse-row');
+    if (!rows.length) { showToast('⚠️ Nothing parsed yet'); return; }
+    const lines = [];
+    [...parseView.children].forEach(el => {
+        if (el.id === 'parsePlaceholder') return;
+        if (el.classList.contains('parse-section')) {
+            lines.push('\n─── ' + el.textContent.trim() + ' ───');
+        } else if (el.classList.contains('parse-row')) {
+            const key = el.querySelector('.parse-key');
+            const val = el.querySelector('.parse-val');
+            lines.push((key ? key.textContent.padEnd(12) : '') + (val ? val.textContent : ''));
+        }
+    });
+    copyText(lines.join('\n').trim(), 'Parsed URL');
+});
+
+// Mobile tabs
+const paneInput  = document.getElementById('paneInput');
+const paneParsed = document.getElementById('paneParsed');
+const paneOutput = document.getElementById('paneOutput');
+const allPanes   = [paneInput, paneParsed, paneOutput];
+
+document.getElementById('tabInput').addEventListener('click', function() {
+    allPanes.forEach(p => p.classList.remove('mob-visible'));
+    paneInput.classList.add('mob-visible');
+    document.querySelectorAll('.mob-tab').forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
+});
+document.getElementById('tabParsed').addEventListener('click', function() {
+    allPanes.forEach(p => p.classList.remove('mob-visible'));
+    paneParsed.classList.add('mob-visible');
+    document.querySelectorAll('.mob-tab').forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
+});
+document.getElementById('tabOutput').addEventListener('click', function() {
+    allPanes.forEach(p => p.classList.remove('mob-visible'));
+    paneOutput.classList.add('mob-visible');
+    document.querySelectorAll('.mob-tab').forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
+});
+
+// ── Boot ──────────────────────────────────────────────────
+(function init() {
+    let saved = null;
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) saved = JSON.parse(raw);
+    } catch {}
+    if (saved && saved.input) {
+        inputArea.value = saved.input;
+        if (saved.mode === 'encode') doEncode();
+        else if (saved.mode === 'decode') doDecode();
+        else if (saved.mode === 'parse') doParse();
+    }
+})();
+</script>
+
+</body>
+</html>
