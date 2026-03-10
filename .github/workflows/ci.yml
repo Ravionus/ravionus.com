@@ -525,6 +525,9 @@ jobs:
           mkdir _site
           cp -r index.html CNAME learn tools playground _site/ 2>/dev/null || true
           [ -f README.md ] && cp README.md _site/ || true
+          [ -f robots.txt ] && cp robots.txt _site/ || true
+          [ -f sitemap.xml ] && cp sitemap.xml _site/ || true
+          [ -f favicon.svg ] && cp favicon.svg _site/ || true
 
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3
