@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+    <title>Diff Checker — Ravionus Dev Tools</title>
+    <meta name="description" content="Compare two texts and see differences side-by-side with line-level highlighting. 100% client-side — your data never leaves your browser. No server, no sign-up.">
+    <link rel="canonical" href="https://ravionus.com/tools/diff/">
+    <meta property="og:title" content="Diff Checker — Ravionus Dev Tools">
+    <meta property="og:description" content="Compare two texts and see differences side-by-side with line-level highlighting. 100% client-side — your data never leaves your browser. No server, no sign-up.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ravionus.com/tools/diff/">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none';">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #0a0a0f;    --surface: #12121a;   --surface2: #0e0e16;
+            --border: #1e1e2e; --border2: #2a2a3e;
+            --text: #e2e2f0;   --muted: #7878a0;
+            --purple: #a855f7; --cyan: #22d3ee;
+            --green: #22c55e;  --red: #ef4444;
+            --accent-g: linear-gradient(135deg, #a855f7, #22d3ee);
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+        }
+        html, body { height: 100%; }
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg); color: var(--text);
+            display: flex; flex-direction: column; min-height: 100vh;
+        }
+
+        /* ── Nav ─────────────────────────────────────────────────── */
+        nav { background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+        .nav-inner {
+            max-width: 1440px; margin: 0 auto; height: 52px;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 20px;
+        }
+        .nav-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+        .nav-logo {
+            font-weight: 800; font-size: 1.1rem; text-decoration: none;
+            background: var(--accent-g); -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent; background-clip: text;
+            flex-shrink: 0;
+        }
+        .nav-sep { color: var(--muted); margin: 0 2px; flex-shrink: 0; }
+        .nav-breadcrumb { color: var(--muted); font-size: .85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .nav-breadcrumb a { color: var(--muted); text-decoration: none; }
+        .nav-breadcrumb a:hover { color: var(--text); }
+        .nav-breadcrumb .current { color: var(--text); font-weight: 600; }
+        .nav-links { display: flex; gap: 6px; flex-shrink: 0; }
+        .nav-link {
+            color: var(--muted); text-decoration: none; font-size: .8rem;
+            padding: 5px 10px; border-radius: 7px; transition: color .15s;
+        }
+        .nav-link:hover { color: var(--text); }
+
+        /* ── Page header ─────────────────────────────────────────── */
+        .page-header { padding: 12px 18px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+        .page-header h1 { font-size: 1.15rem; font-weight: 600; color: var(--text); margin: 0 0 4px; }
+        .page-header p  { margin: 0; color: var(--muted); font-size: .85rem; max-width: 720px; line-height: 1.4; }
+
+        /* ── Toolbar ─────────────────────────────────────────────── */
+        .toolbar {
+            display: flex; align-items: center; gap: 6px;
+            padding: 8px 12px; background: var(--surface);
+            border-bottom: 1px solid var(--border); flex-shrink: 0;
+            flex-wrap: wrap;
+        }
+        .tb-group { display: flex; gap: 4px; align-items: center; }
+        .tb-sep   { width: 1px; height: 22px; background: var(--border2); margin: 0 4px; }
+        .tb-right { margin-left: auto; display: flex; gap: 4px; }
+        .tb-btn {
+            font-family: inherit; font-size: .78rem; font-weight: 500;
+            padding: 5px 11px; border-radius: 7px; cursor: pointer;
+            border: 1px solid var(--border2); background: transparent;
+            color: var(--text); transition: background .15s, border-color .15s;
+            white-space: nowrap;
+        }
+        .tb-btn:hover { background: var(--surface2); border-color: var(--muted); }
+        .tb-btn.primary {
+            background: var(--purple); border-color: var(--purple); color: #fff;
+        }
+        .tb-btn.primary:hover { filter: brightness(1.15); }
+        .tb-btn.danger:hover  { border-color: var(--red); color: var(--red); }
+
+        /* ── Mobile tabs ─────────────────────────────────────────── */
+        .mobile-tabs { display: none; }
+
+        /* ── Editor layout ───────────────────────────────────────── */
+        .editor-layout {
+            display: flex; flex: 1; min-height: 0; overflow: hidden;
+            transition: flex .2s;
+        }
+        .editor-layout.has-diff { flex: 0.45; min-height: 150px; }
+        .pane { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .pane-divider { width: 1px; background: var(--border); flex-shrink: 0; }
+        .pane-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 6px 12px; background: var(--surface); border-bottom: 1px solid var(--border);
+            font-size: .78rem; color: var(--muted); font-weight: 600;
+            text-transform: uppercase; letter-spacing: .5px;
+        }
+        .pane-header-actions { display: flex; gap: 4px; }
+        .ph-btn {
+            font-family: inherit; font-size: .72rem; font-weight: 500;
+            padding: 3px 8px; border-radius: 5px; cursor: pointer;
+            border: 1px solid var(--border2); background: transparent;
+            color: var(--muted); transition: color .15s, border-color .15s;
+        }
+        .ph-btn:hover { color: var(--text); border-color: var(--muted); }
+        .editor-wrap { flex: 1; position: relative; display: flex; }
+        .editor-wrap textarea {
+            flex: 1; resize: none; border: none; outline: none;
+            background: var(--bg); color: var(--text); padding: 12px;
+            font-family: var(--font-mono); font-size: .88rem;
+            line-height: 1.55; tab-size: 2;
+        }
+        .editor-wrap textarea::placeholder { color: var(--muted); opacity: .6; }
+
+        /* ── Diff output ─────────────────────────────────────────── */
+        .diff-output {
+            display: none; flex-direction: column;
+            border-top: 1px solid var(--border); background: var(--surface2);
+            overflow: hidden;
+        }
+        .diff-output.visible { display: flex; flex: 0.55; min-height: 180px; }
+        .diff-lines {
+            flex: 1; overflow: auto; padding: 0;
+        }
+        .diff-placeholder {
+            display: flex; align-items: center; justify-content: center;
+            flex: 1; color: var(--muted); font-size: .9rem;
+        }
+        .diff-line {
+            display: flex; font-family: var(--font-mono); font-size: .82rem;
+            line-height: 1.55; border-bottom: 1px solid transparent;
+        }
+        .diff-line.add    { background: rgba(34,197,94,.08); }
+        .diff-line.remove { background: rgba(239,68,68,.08); }
+        .diff-ln {
+            width: 44px; text-align: right; padding: 0 8px;
+            color: var(--muted); opacity: .5; flex-shrink: 0;
+            user-select: none; font-size: .78rem;
+        }
+        .diff-prefix {
+            width: 18px; flex-shrink: 0; text-align: center;
+            font-weight: 600; user-select: none;
+        }
+        .diff-line.add .diff-prefix    { color: var(--green); }
+        .diff-line.remove .diff-prefix { color: var(--red); }
+        .diff-line.equal .diff-prefix  { color: var(--muted); opacity: .3; }
+        .diff-text {
+            flex: 1; white-space: pre; overflow-x: auto; padding-right: 12px;
+        }
+        .diff-line.add .diff-text    { color: var(--green); }
+        .diff-line.remove .diff-text { color: var(--red); }
+        .diff-line.equal .diff-text  { color: var(--muted); }
+
+        /* ── Banners ─────────────────────────────────────────────── */
+        .error-banner, .success-banner {
+            display: none; padding: 8px 14px; font-size: .82rem;
+            font-family: var(--font-mono); white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .error-banner   { background: rgba(239,68,68,.1); color: var(--red); border-top: 1px solid rgba(239,68,68,.2); }
+        .success-banner { background: rgba(34,197,94,.08); color: var(--green); border-top: 1px solid rgba(34,197,94,.15); }
+        .error-banner.visible, .success-banner.visible { display: flex; align-items: center; gap: 8px; }
+
+        /* ── Status bar ──────────────────────────────────────────── */
+        .status-bar {
+            display: flex; gap: 18px; padding: 4px 18px;
+            font-size: .72rem; color: var(--muted);
+            background: var(--surface2); border-top: 1px solid var(--border);
+            flex-shrink: 0; flex-wrap: wrap;
+        }
+        .stat-val { font-weight: 600; color: var(--text); }
+
+        /* ── Toast ───────────────────────────────────────────────── */
+        #toast {
+            position: fixed; bottom: 20px; right: 20px;
+            background: var(--surface); border: 1px solid var(--border2);
+            color: var(--text); font-size: .82rem;
+            border-radius: 9px; padding: 9px 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,.5);
+            transform: translateY(50px); opacity: 0;
+            transition: transform .22s ease, opacity .22s ease;
+            pointer-events: none; z-index: 500;
+        }
+        #toast.show { transform: translateY(0); opacity: 1; }
+
+        /* ── Focus-visible ───────────────────────────────────────── */
+        button:focus-visible, .tb-btn:focus-visible, .ph-btn:focus-visible, .mob-tab:focus-visible {
+            outline: 2px solid var(--cyan); outline-offset: 2px;
+        }
+
+        /* ── Scrollbar ───────────────────────────────────────────── */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+        /* ── Responsive ──────────────────────────────────────────── */
+        @media (max-width: 700px) {
+            .nav-links { display: none; }
+            .mobile-tabs {
+                display: flex; border-bottom: 1px solid var(--border);
+                background: var(--surface); flex-shrink: 0;
+            }
+            .mob-tab {
+                flex: 1; padding: 10px 0; text-align: center;
+                background: transparent; border: none; border-bottom: 2px solid transparent;
+                color: var(--muted); font-family: inherit; font-size: .82rem;
+                font-weight: 500; cursor: pointer; transition: color .15s;
+            }
+            .mob-tab.active { color: var(--text); border-bottom-color: var(--purple); }
+            .editor-layout { flex-direction: column; }
+            .pane { display: none; }
+            .pane.mob-visible { display: flex; flex: 1; }
+            .pane-divider { display: none; }
+            .diff-output { display: none !important; }
+            .diff-output.mob-visible { display: flex !important; flex: 1; flex-direction: column; }
+            .editor-layout.has-diff { flex: 1; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+    <div class="nav-inner">
+        <div class="nav-left">
+            <a href="/" class="nav-logo">Ravionus</a>
+            <span class="nav-sep">/</span>
+            <span class="nav-breadcrumb">
+                <a href="../">Dev Tools</a> / <span class="current">Diff Checker</span>
+            </span>
+        </div>
+        <div class="nav-links">
+            <a href="../../learn/" class="nav-link">✨ Learn</a>
+            <a href="../../tools/" class="nav-link">🛠️ Tools</a>
+            <a href="../../playground/" class="nav-link">🧪 Playgrounds</a>
+        </div>
+    </div>
+</nav>
+
+<header class="page-header">
+    <h1>Diff Checker</h1>
+    <p>Compare two texts and see differences side-by-side with colour-coded line-level highlighting. All processing happens locally — your data never leaves your device.</p>
+</header>
+
+<!-- Toolbar -->
+<div class="toolbar">
+    <div class="tb-group">
+        <button class="tb-btn primary" id="btnCompare">⚡ Compare</button>
+    </div>
+    <div class="tb-sep"></div>
+    <div class="tb-group">
+        <button class="tb-btn" id="btnSwap">⇄ Swap</button>
+        <button class="tb-btn" id="btnSample">📋 Sample</button>
+    </div>
+    <div class="tb-right">
+        <button class="tb-btn" id="btnDownload">⬇ Download</button>
+        <button class="tb-btn danger" id="btnClear">✕ Clear</button>
+    </div>
+</div>
+
+<!-- Mobile tabs -->
+<div class="mobile-tabs">
+    <button class="mob-tab active" id="tabOriginal">📝 Original</button>
+    <button class="mob-tab" id="tabModified">📝 Modified</button>
+    <button class="mob-tab" id="tabDiff">🔍 Diff</button>
+</div>
+
+<!-- Editor layout -->
+<div class="editor-layout" id="editorLayout">
+    <div class="pane mob-visible" id="paneA">
+        <div class="pane-header">
+            <span>Original</span>
+            <div class="pane-header-actions">
+                <button class="ph-btn" id="btnPasteA">Paste</button>
+                <button class="ph-btn" id="btnCopyA">Copy</button>
+            </div>
+        </div>
+        <div class="editor-wrap">
+            <textarea id="inputA" aria-label="Original text" placeholder="Paste original text here…"></textarea>
+        </div>
+    </div>
+    <div class="pane-divider"></div>
+    <div class="pane" id="paneB">
+        <div class="pane-header">
+            <span>Modified</span>
+            <div class="pane-header-actions">
+                <button class="ph-btn" id="btnPasteB">Paste</button>
+                <button class="ph-btn" id="btnCopyB">Copy</button>
+            </div>
+        </div>
+        <div class="editor-wrap">
+            <textarea id="inputB" aria-label="Modified text" placeholder="Paste modified text here…"></textarea>
+        </div>
+    </div>
+</div>
+
+<!-- Diff output -->
+<div class="diff-output" id="paneDiff">
+    <div class="pane-header">
+        <span>Diff Result</span>
+        <div class="pane-header-actions">
+            <button class="ph-btn" id="btnCopyDiff">Copy</button>
+        </div>
+    </div>
+    <div class="diff-lines" id="diffLines">
+        <div class="diff-placeholder">Click ⚡ Compare to see differences</div>
+    </div>
+</div>
+
+<!-- Banners -->
+<div class="error-banner" id="errorBanner" role="alert"></div>
+<div class="success-banner" id="successBanner" aria-live="polite"></div>
+
+<!-- Status bar -->
+<div class="status-bar">
+    <span class="stat-item">Original: <span id="statLinesA" class="stat-val">0</span> lines</span>
+    <span class="stat-item">Modified: <span id="statLinesB" class="stat-val">0</span> lines</span>
+    <span class="stat-item">Added: <span id="statAdded" class="stat-val">—</span></span>
+    <span class="stat-item">Removed: <span id="statRemoved" class="stat-val">—</span></span>
+</div>
+
+<div id="toast" aria-live="polite"></div>
+
+<script>
+'use strict';
+
+const STORAGE_KEY = 'ravionus_tool_diff';
+const MAX_DIFF_CELLS = 25_000_000;
+
+/* ── DOM refs ─────────────────────────────────────────────────────────── */
+const inputA       = document.getElementById('inputA');
+const inputB       = document.getElementById('inputB');
+const editorLayout = document.getElementById('editorLayout');
+const paneDiff     = document.getElementById('paneDiff');
+const diffLines    = document.getElementById('diffLines');
+const errorBanner  = document.getElementById('errorBanner');
+const successBanner= document.getElementById('successBanner');
+const toast        = document.getElementById('toast');
+
+/* ── Toast ────────────────────────────────────────────────────────────── */
+let toastTimer;
+function showToast(msg) {
+    clearTimeout(toastTimer);
+    toast.textContent = msg;
+    toast.classList.add('show');
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+/* ── Banners ──────────────────────────────────────────────────────────── */
+function clearBanners() {
+    errorBanner.classList.remove('visible');
+    successBanner.classList.remove('visible');
+    errorBanner.textContent = '';
+    successBanner.textContent = '';
+}
+function showError(msg) {
+    clearBanners();
+    errorBanner.textContent = msg;
+    errorBanner.classList.add('visible');
+}
+function showSuccess(msg) {
+    clearBanners();
+    successBanner.textContent = msg;
+    successBanner.classList.add('visible');
+}
+
+/* ── Status bar ───────────────────────────────────────────────────────── */
+function updateStats() {
+    const a = inputA.value, b = inputB.value;
+    document.getElementById('statLinesA').textContent = a ? a.split('\n').length : '0';
+    document.getElementById('statLinesB').textContent = b ? b.split('\n').length : '0';
+}
+
+/* ── LCS-based diff ───────────────────────────────────────────────────── */
+function computeDiff(textA, textB) {
+    const a = textA.split('\n');
+    const b = textB.split('\n');
+
+    // Strip common prefix
+    let pi = 0;
+    while (pi < a.length && pi < b.length && a[pi] === b[pi]) pi++;
+
+    // Strip common suffix
+    let si = 0;
+    while (si < a.length - pi && si < b.length - pi &&
+           a[a.length - 1 - si] === b[b.length - 1 - si]) si++;
+
+    const midA = a.slice(pi, a.length - si);
+    const midB = b.slice(pi, b.length - si);
+
+    let mid = [];
+    if (midA.length === 0 && midB.length === 0) {
+        /* nothing */
+    } else if (midA.length === 0) {
+        mid = midB.map(t => ({ type: 'add', text: t }));
+    } else if (midB.length === 0) {
+        mid = midA.map(t => ({ type: 'remove', text: t }));
+    } else if (midA.length * midB.length > MAX_DIFF_CELLS) {
+        mid = midA.map(t => ({ type: 'remove', text: t }))
+              .concat(midB.map(t => ({ type: 'add', text: t })));
+    } else {
+        const m = midA.length, n = midB.length;
+        const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+        for (let i = 1; i <= m; i++)
+            for (let j = 1; j <= n; j++)
+                dp[i][j] = midA[i-1] === midB[j-1]
+                    ? dp[i-1][j-1] + 1
+                    : Math.max(dp[i-1][j], dp[i][j-1]);
+
+        let i = m, j = n;
+        while (i > 0 || j > 0) {
+            if (i > 0 && j > 0 && midA[i-1] === midB[j-1]) {
+                mid.unshift({ type: 'equal', text: midA[i-1] });
+                i--; j--;
+            } else if (j > 0 && (i === 0 || dp[i][j-1] >= dp[i-1][j])) {
+                mid.unshift({ type: 'add', text: midB[j-1] });
+                j--;
+            } else {
+                mid.unshift({ type: 'remove', text: midA[i-1] });
+                i--;
+            }
+        }
+    }
+
+    const prefix = a.slice(0, pi).map(t => ({ type: 'equal', text: t }));
+    const suffix = a.slice(a.length - si).map(t => ({ type: 'equal', text: t }));
+    const raw = prefix.concat(mid, suffix);
+
+    // Assign line numbers
+    let la = 0, lb = 0;
+    return raw.map(d => {
+        if (d.type === 'equal')  return { ...d, lineA: ++la, lineB: ++lb };
+        if (d.type === 'remove') return { ...d, lineA: ++la, lineB: null };
+        return { ...d, lineA: null, lineB: ++lb };
+    });
+}
+
+/* ── Render diff ──────────────────────────────────────────────────────── */
+function renderDiff(entries) {
+    diffLines.innerHTML = '';
+    const frag = document.createDocumentFragment();
+    const limit = 10000;
+    const count = Math.min(entries.length, limit);
+
+    for (let i = 0; i < count; i++) {
+        const e = entries[i];
+        const row = document.createElement('div');
+        row.className = 'diff-line ' + e.type;
+
+        const lnA = document.createElement('span');
+        lnA.className = 'diff-ln';
+        lnA.textContent = e.lineA != null ? e.lineA : '';
+
+        const lnB = document.createElement('span');
+        lnB.className = 'diff-ln';
+        lnB.textContent = e.lineB != null ? e.lineB : '';
+
+        const pfx = document.createElement('span');
+        pfx.className = 'diff-prefix';
+        pfx.textContent = e.type === 'add' ? '+' : e.type === 'remove' ? '-' : ' ';
+
+        const txt = document.createElement('span');
+        txt.className = 'diff-text';
+        txt.textContent = e.text;
+
+        row.append(lnA, lnB, pfx, txt);
+        frag.appendChild(row);
+    }
+
+    if (entries.length > limit) {
+        const note = document.createElement('div');
+        note.className = 'diff-line equal';
+        note.style.justifyContent = 'center';
+        note.style.padding = '8px';
+        note.style.color = 'var(--muted)';
+        note.textContent = `… ${entries.length - limit} more lines truncated`;
+        frag.appendChild(note);
+    }
+
+    diffLines.appendChild(frag);
+}
+
+/* ── Unified diff text ────────────────────────────────────────────────── */
+function toUnifiedDiff(entries) {
+    const lines = ['--- Original', '+++ Modified', ''];
+    for (const e of entries) {
+        const prefix = e.type === 'add' ? '+' : e.type === 'remove' ? '-' : ' ';
+        lines.push(prefix + e.text);
+    }
+    return lines.join('\n');
+}
+
+/* ── Compare ──────────────────────────────────────────────────────────── */
+let lastEntries = null;
+
+function doCompare() {
+    clearBanners();
+    const a = inputA.value;
+    const b = inputB.value;
+
+    if (!a && !b) { showToast('⚠️ Both fields are empty'); return; }
+
+    if (a === b) {
+        showSuccess('✓ Texts are identical — no differences found.');
+        paneDiff.classList.add('visible');
+        editorLayout.classList.add('has-diff');
+        diffLines.innerHTML = '<div class="diff-placeholder">No differences — texts are identical</div>';
+        lastEntries = [];
+        document.getElementById('statAdded').textContent = '0';
+        document.getElementById('statRemoved').textContent = '0';
+        return;
+    }
+
+    const entries = computeDiff(a, b);
+    lastEntries = entries;
+    renderDiff(entries);
+
+    paneDiff.classList.add('visible');
+    editorLayout.classList.add('has-diff');
+
+    const added   = entries.filter(e => e.type === 'add').length;
+    const removed = entries.filter(e => e.type === 'remove').length;
+
+    document.getElementById('statAdded').textContent   = added;
+    document.getElementById('statRemoved').textContent  = removed;
+
+    showToast(`Found ${added} addition${added !== 1 ? 's' : ''}, ${removed} removal${removed !== 1 ? 's' : ''}`);
+
+    // Auto-switch to diff tab on mobile
+    const tabDiff = document.getElementById('tabDiff');
+    if (tabDiff && window.innerWidth <= 700) tabDiff.click();
+}
+
+/* ── Swap ─────────────────────────────────────────────────────────────── */
+function doSwap() {
+    const tmp = inputA.value;
+    inputA.value = inputB.value;
+    inputB.value = tmp;
+    updateStats();
+    scheduleSave();
+    showToast('⇄ Texts swapped');
+}
+
+/* ── Sample ───────────────────────────────────────────────────────────── */
+function loadSample() {
+    inputA.value = 'function greet(name) {\n    console.log("Hello, " + name);\n    return true;\n}\n\ngreet("World");';
+    inputB.value = 'function greet(name, greeting) {\n    const message = `${greeting}, ${name}!`;\n    console.log(message);\n    return message;\n}\n\ngreet("World", "Hi");';
+    updateStats();
+    scheduleSave();
+    showToast('📋 Sample loaded');
+}
+
+/* ── Clear ────────────────────────────────────────────────────────────── */
+function doClear() {
+    inputA.value = '';
+    inputB.value = '';
+    clearBanners();
+    paneDiff.classList.remove('visible');
+    editorLayout.classList.remove('has-diff');
+    diffLines.innerHTML = '<div class="diff-placeholder">Click ⚡ Compare to see differences</div>';
+    lastEntries = null;
+    document.getElementById('statAdded').textContent   = '—';
+    document.getElementById('statRemoved').textContent  = '—';
+    updateStats();
+    scheduleSave();
+    showToast('✕ Cleared');
+}
+
+/* ── Download ─────────────────────────────────────────────────────────── */
+function doDownload() {
+    if (!lastEntries || lastEntries.length === 0) {
+        showToast('⚠️ Nothing to download — run Compare first');
+        return;
+    }
+    const text = toUnifiedDiff(lastEntries);
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url;
+    a.download = 'diff.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('⬇ Diff downloaded');
+}
+
+/* ── Copy / Paste helpers ─────────────────────────────────────────────── */
+function copyText(text, label) {
+    navigator.clipboard.writeText(text).then(
+        () => showToast(`📋 ${label} copied`),
+        () => showToast('⚠️ Copy failed')
+    );
+}
+async function pasteInto(textarea) {
+    try {
+        const text = await navigator.clipboard.readText();
+        textarea.value = text;
+        updateStats();
+        scheduleSave();
+        showToast('📋 Pasted');
+    } catch { showToast('⚠️ Paste failed — check permissions'); }
+}
+
+/* ── localStorage auto-save ───────────────────────────────────────────── */
+let saveTimer;
+function scheduleSave() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                inputA: inputA.value,
+                inputB: inputB.value
+            }));
+        } catch {}
+    }, 800);
+}
+
+/* ── Mobile tabs ──────────────────────────────────────────────────────── */
+const tabs  = document.querySelectorAll('.mob-tab');
+const paneA = document.getElementById('paneA');
+const paneB = document.getElementById('paneB');
+const pDiff = document.getElementById('paneDiff');
+
+tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        paneA.classList.remove('mob-visible');
+        paneB.classList.remove('mob-visible');
+        pDiff.classList.remove('mob-visible');
+        if (tab.id === 'tabOriginal')  paneA.classList.add('mob-visible');
+        else if (tab.id === 'tabModified') paneB.classList.add('mob-visible');
+        else if (tab.id === 'tabDiff')     pDiff.classList.add('mob-visible');
+    });
+});
+
+/* ── Wire buttons ─────────────────────────────────────────────────────── */
+document.getElementById('btnCompare').addEventListener('click', doCompare);
+document.getElementById('btnSwap').addEventListener('click', doSwap);
+document.getElementById('btnSample').addEventListener('click', loadSample);
+document.getElementById('btnClear').addEventListener('click', doClear);
+document.getElementById('btnDownload').addEventListener('click', doDownload);
+document.getElementById('btnPasteA').addEventListener('click', () => pasteInto(inputA));
+document.getElementById('btnCopyA').addEventListener('click', () => copyText(inputA.value, 'Original'));
+document.getElementById('btnPasteB').addEventListener('click', () => pasteInto(inputB));
+document.getElementById('btnCopyB').addEventListener('click', () => copyText(inputB.value, 'Modified'));
+document.getElementById('btnCopyDiff').addEventListener('click', () => {
+    if (!lastEntries || lastEntries.length === 0) { showToast('⚠️ No diff to copy'); return; }
+    copyText(toUnifiedDiff(lastEntries), 'Diff');
+});
+
+/* ── Input events ─────────────────────────────────────────────────────── */
+inputA.addEventListener('input', () => { updateStats(); scheduleSave(); });
+inputB.addEventListener('input', () => { updateStats(); scheduleSave(); });
+
+/* ── Boot / restore ───────────────────────────────────────────────────── */
+(function init() {
+    let saved = null;
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) saved = JSON.parse(raw);
+    } catch {}
+    if (saved) {
+        if (saved.inputA) inputA.value = saved.inputA;
+        if (saved.inputB) inputB.value = saved.inputB;
+    }
+    updateStats();
+})();
+</script>
+</body>
+</html>
