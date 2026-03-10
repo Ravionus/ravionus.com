@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+    <title>UUID / GUID Generator — Ravionus Dev Tools</title>
+    <meta name="description" content="Generate UUID v4 identifiers in multiple formats: lowercase, uppercase, no hyphens, curly braces, and URN prefix. No server, no sign-up.">
+    <link rel="canonical" href="https://ravionus.com/tools/uuid/">
+    <meta property="og:title" content="UUID / GUID Generator — Ravionus Dev Tools">
+    <meta property="og:description" content="Generate UUID v4 identifiers in multiple formats: lowercase, uppercase, no hyphens, curly braces, and URN prefix. No server, no sign-up.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ravionus.com/tools/uuid/">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none';">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0a0f;    --surface: #12121a;   --surface2: #0e0e16;
+            --border: #1e1e2e; --border2: #2a2a3e;
+            --text: #e2e2f0;   --muted: #7878a0;
+            --purple: #a855f7;  --cyan: #22d3ee;
+            --green: #22c55e;   --red: #ef4444;
+            --accent-g: linear-gradient(135deg, #a855f7, #22d3ee);
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Nav ── */
+        nav {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+        nav a { color: var(--muted); text-decoration: none; transition: color 0.15s; }
+        nav a:hover { color: var(--text); }
+        .nav-sep { color: var(--border2); }
+        .nav-links { margin-left: auto; display: flex; gap: 16px; }
+        .nav-links a { font-size: 0.8rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+        .nav-links a:hover { color: var(--cyan); }
+
+        /* ── Page Header ── */
+        .page-header {
+            padding: 24px 20px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .page-header h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            background: var(--accent-g);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 6px;
+        }
+        .page-header p {
+            color: var(--muted);
+            font-size: 0.875rem;
+            max-width: 640px;
+        }
+
+        /* ── Toolbar ── */
+        .toolbar {
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface2);
+        }
+        .tb-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            border: 1px solid var(--border2);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text);
+            font-size: 0.82rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s, color 0.15s;
+            font-family: inherit;
+        }
+        .tb-btn:hover { background: var(--surface); border-color: var(--border2); }
+        .tb-btn.primary {
+            background: linear-gradient(135deg, #a855f7, #7c3aed);
+            border-color: transparent;
+            color: #fff;
+        }
+        .tb-btn.primary:hover { opacity: 0.9; }
+        .tb-btn.danger { color: var(--red); border-color: rgba(239,68,68,0.3); }
+        .tb-btn.danger:hover { background: rgba(239,68,68,0.1); }
+        .tb-sep { width: 1px; height: 24px; background: var(--border); margin: 0 4px; }
+        .tb-spacer { flex: 1; }
+
+        button:focus-visible, .tb-btn:focus-visible, .ph-btn:focus-visible, .mob-tab:focus-visible {
+            outline: 2px solid var(--cyan);
+            outline-offset: 2px;
+        }
+
+        /* ── Main Layout ── */
+        .editor-layout {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+            height: calc(100vh - 230px);
+        }
+
+        /* ── Pane ── */
+        .pane {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+        }
+        .pane-header {
+            padding: 8px 14px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface2);
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .pane-divider {
+            width: 4px;
+            background: var(--border);
+            flex-shrink: 0;
+        }
+
+        /* ── Settings Pane ── */
+        .settings-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .setting-group {
+            margin-bottom: 24px;
+        }
+        .setting-label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 10px;
+        }
+        .count-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .count-input {
+            width: 84px;
+            padding: 8px 12px;
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            border-radius: 6px;
+            color: var(--text);
+            font-family: var(--font-mono);
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-align: center;
+        }
+        .count-input:focus {
+            outline: 2px solid var(--cyan);
+            outline-offset: 2px;
+            border-color: var(--cyan);
+        }
+        .count-unit { color: var(--muted); font-size: 0.875rem; }
+        .count-hint { font-size: 0.75rem; color: var(--muted); margin-top: 6px; }
+
+        .radio-group { display: flex; flex-direction: column; gap: 8px; }
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: border-color 0.15s, background 0.15s;
+        }
+        .radio-option:hover { border-color: var(--border2); background: var(--surface); }
+        .radio-option.selected {
+            border-color: var(--purple);
+            background: rgba(168,85,247,0.08);
+        }
+        .radio-option input[type=radio] {
+            accent-color: var(--purple);
+            width: 15px;
+            height: 15px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .opt-label { font-size: 0.875rem; font-weight: 500; }
+        .opt-example {
+            margin-left: auto;
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--muted);
+            white-space: nowrap;
+        }
+
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: border-color 0.15s, background 0.15s;
+        }
+        .toggle-row:hover { border-color: var(--border2); background: var(--surface); }
+        .toggle-row.checked {
+            border-color: var(--purple);
+            background: rgba(168,85,247,0.08);
+        }
+        .toggle-row input[type=checkbox] {
+            accent-color: var(--purple);
+            width: 15px;
+            height: 15px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        /* ── Output Pane ── */
+        .output-body {
+            flex: 1;
+            overflow-y: auto;
+        }
+        .uuid-list {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .uuid-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 12px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            transition: border-color 0.15s;
+        }
+        .uuid-row:hover { border-color: var(--border2); }
+        .uuid-num {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--muted);
+            min-width: 24px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .uuid-value {
+            flex: 1;
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            color: var(--cyan);
+            word-break: break-all;
+            user-select: all;
+        }
+        .ph-btn {
+            padding: 4px 10px;
+            border: 1px solid var(--border2);
+            border-radius: 4px;
+            background: transparent;
+            color: var(--muted);
+            font-size: 0.75rem;
+            cursor: pointer;
+            font-family: inherit;
+            transition: color 0.15s, border-color 0.15s, background 0.15s;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .ph-btn:hover { color: var(--text); border-color: var(--cyan); }
+
+        .output-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 200px;
+            height: 100%;
+            color: var(--muted);
+            gap: 12px;
+        }
+        .output-placeholder .ph-icon { font-size: 2.5rem; opacity: 0.4; }
+        .output-placeholder .ph-text { font-size: 0.875rem; }
+
+        /* ── Status Bar ── */
+        .status-bar {
+            padding: 6px 16px;
+            display: flex;
+            gap: 20px;
+            font-size: 0.75rem;
+            color: var(--muted);
+            border-top: 1px solid var(--border);
+            background: var(--surface2);
+            flex-wrap: wrap;
+        }
+        .stat { display: flex; align-items: center; gap: 5px; }
+        .stat-val { color: var(--cyan); font-weight: 600; font-family: var(--font-mono); }
+
+        /* ── Toast ── */
+        #toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            border-radius: 8px;
+            padding: 10px 18px;
+            font-size: 0.85rem;
+            color: var(--text);
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity 0.2s, transform 0.2s;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        #toast.show { opacity: 1; transform: translateY(0); }
+
+        /* ── Mobile Tabs ── */
+        .mobile-tabs { display: none; border-bottom: 1px solid var(--border); }
+        .mob-tab {
+            flex: 1;
+            padding: 10px;
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: inherit;
+            border-bottom: 2px solid transparent;
+            transition: color 0.15s, border-color 0.15s;
+        }
+        .mob-tab.active { color: var(--purple); border-bottom-color: var(--purple); }
+
+        @media (max-width: 700px) {
+            .mobile-tabs { display: flex; }
+            .editor-layout { height: auto; flex-direction: column; }
+            .pane { display: none; }
+            .pane.mob-visible { display: flex; min-height: 400px; }
+            .pane-divider { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a href="../../">Ravionus</a>
+        <span class="nav-sep">›</span>
+        <a href="../../tools/">Dev Tools</a>
+        <span class="nav-sep">›</span>
+        <span>UUID Generator</span>
+        <div class="nav-links">
+            <a href="../../learn/">✨ Learn</a>
+            <a href="../../tools/">🛠️ Tools</a>
+            <a href="../../playground/">🧪 Playgrounds</a>
+        </div>
+    </nav>
+
+    <header class="page-header">
+        <h1>🆔 UUID / GUID Generator</h1>
+        <p>Generate Version 4 UUIDs (universally unique identifiers) instantly in your browser. Choose lowercase or uppercase, strip hyphens, wrap in curly braces, or add a URN prefix. Fully client-side — nothing leaves your device.</p>
+    </header>
+
+    <div class="toolbar">
+        <button class="tb-btn primary" id="btnGenerate">⚡ Generate</button>
+        <button class="tb-btn" id="btnCopyAll">📋 Copy All</button>
+        <div class="tb-sep"></div>
+        <button class="tb-btn" id="btnDownload">⬇️ Download</button>
+        <div class="tb-spacer"></div>
+        <button class="tb-btn danger" id="btnClear">🗑 Clear</button>
+    </div>
+
+    <div class="mobile-tabs">
+        <button class="mob-tab active" id="tabSettings">⚙️ Settings</button>
+        <button class="mob-tab" id="tabOutput">📤 Output</button>
+    </div>
+
+    <div class="editor-layout">
+
+        <!-- Settings pane -->
+        <div class="pane mob-visible" id="paneSettings">
+            <div class="pane-header">Settings</div>
+            <div class="settings-body">
+
+                <!-- Count -->
+                <div class="setting-group">
+                    <div class="setting-label">Count</div>
+                    <div class="count-row">
+                        <input type="number" id="countInput" class="count-input"
+                               value="5" min="1" max="100"
+                               aria-label="Number of UUIDs to generate">
+                        <span class="count-unit">UUIDs</span>
+                    </div>
+                    <div class="count-hint">Between 1 and 100</div>
+                </div>
+
+                <!-- Case -->
+                <div class="setting-group">
+                    <div class="setting-label">Case</div>
+                    <div class="radio-group" id="caseGroup">
+                        <label class="radio-option selected">
+                            <input type="radio" name="uuidCase" value="lower" checked>
+                            <span class="opt-label">Lowercase</span>
+                            <span class="opt-example">a1b2c3d4-…</span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="uuidCase" value="upper">
+                            <span class="opt-label">Uppercase</span>
+                            <span class="opt-example">A1B2C3D4-…</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Hyphens -->
+                <div class="setting-group">
+                    <div class="setting-label">Hyphens</div>
+                    <label class="toggle-row checked" id="hyphensRow">
+                        <input type="checkbox" id="hyphensCheck" checked
+                               aria-label="Include hyphens in UUID">
+                        <span class="opt-label">Include hyphens</span>
+                        <span class="opt-example">xxxxxxxx-xxxx-4xxx-…</span>
+                    </label>
+                </div>
+
+                <!-- Wrapper -->
+                <div class="setting-group">
+                    <div class="setting-label">Wrapper</div>
+                    <div class="radio-group" id="wrapperGroup">
+                        <label class="radio-option selected">
+                            <input type="radio" name="uuidWrapper" value="none" checked>
+                            <span class="opt-label">None</span>
+                            <span class="opt-example">uuid</span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="uuidWrapper" value="braces">
+                            <span class="opt-label">Curly Braces</span>
+                            <span class="opt-example">{uuid}</span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="uuidWrapper" value="urn">
+                            <span class="opt-label">URN Prefix</span>
+                            <span class="opt-example">urn:uuid:uuid</span>
+                        </label>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="pane-divider"></div>
+
+        <!-- Output pane -->
+        <div class="pane" id="paneOutput">
+            <div class="pane-header">Generated UUIDs</div>
+            <div class="output-body" id="outputBody">
+                <div class="output-placeholder" id="outputPlaceholder">
+                    <div class="ph-icon">🆔</div>
+                    <div class="ph-text">Click ⚡ Generate to create UUIDs</div>
+                </div>
+                <div class="uuid-list" id="uuidList" style="display:none"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="status-bar">
+        <span class="stat">Generated: <span class="stat-val" id="statCount">0</span></span>
+        <span class="stat">Format: <span class="stat-val" id="statFormat">v4 · lowercase · hyphens</span></span>
+        <span class="stat">Version: <span class="stat-val">v4 (random)</span></span>
+    </div>
+
+    <div id="toast" aria-live="polite"></div>
+
+    <script>
+    (function () {
+        'use strict';
+
+        const STORAGE_KEY = 'ravionus_tool_uuid';
+
+        // ── Elements ──────────────────────────────────────────────────────────
+        const countInput        = document.getElementById('countInput');
+        const hyphensCheck      = document.getElementById('hyphensCheck');
+        const hyphensRow        = document.getElementById('hyphensRow');
+        const btnGenerate       = document.getElementById('btnGenerate');
+        const btnCopyAll        = document.getElementById('btnCopyAll');
+        const btnDownload       = document.getElementById('btnDownload');
+        const btnClear          = document.getElementById('btnClear');
+        const outputPlaceholder = document.getElementById('outputPlaceholder');
+        const uuidList          = document.getElementById('uuidList');
+        const statCount         = document.getElementById('statCount');
+        const statFormat        = document.getElementById('statFormat');
+        const toast             = document.getElementById('toast');
+        const tabSettings       = document.getElementById('tabSettings');
+        const tabOutput         = document.getElementById('tabOutput');
+        const paneSettings      = document.getElementById('paneSettings');
+        const paneOutput        = document.getElementById('paneOutput');
+
+        let currentUUIDs = [];
+        let toastTimer   = null;
+
+        // ── Accessors ─────────────────────────────────────────────────────────
+        function getCase()    { return document.querySelector('input[name="uuidCase"]:checked')?.value    || 'lower'; }
+        function getWrapper() { return document.querySelector('input[name="uuidWrapper"]:checked')?.value || 'none';  }
+        function getCount() {
+            const v = parseInt(countInput.value, 10);
+            if (isNaN(v) || v < 1) return 1;
+            if (v > 100) return 100;
+            return v;
+        }
+
+        // ── Format one UUID ───────────────────────────────────────────────────
+        function formatUUID(raw) {
+            // raw is always lowercase with hyphens from crypto.randomUUID()
+            let s = raw;
+            if (!hyphensCheck.checked) s = s.replace(/-/g, '');
+            if (getCase() === 'upper') s = s.toUpperCase();
+            const w = getWrapper();
+            if (w === 'braces') s = '{' + s + '}';
+            else if (w === 'urn') s = 'urn:uuid:' + s;
+            return s;
+        }
+
+        // ── Generate ──────────────────────────────────────────────────────────
+        function generate() {
+            const count = getCount();
+            currentUUIDs = [];
+            for (let i = 0; i < count; i++) {
+                currentUUIDs.push(formatUUID(crypto.randomUUID()));
+            }
+            renderOutput();
+            saveState();
+        }
+
+        // ── Render ────────────────────────────────────────────────────────────
+        function renderOutput() {
+            if (currentUUIDs.length === 0) {
+                outputPlaceholder.style.display = '';
+                uuidList.style.display = 'none';
+                uuidList.innerHTML = '';
+                statCount.textContent = '0';
+                updateFormatStat();
+                return;
+            }
+
+            outputPlaceholder.style.display = 'none';
+            uuidList.style.display = '';
+
+            const frag = document.createDocumentFragment();
+            currentUUIDs.forEach(function (uuid, i) {
+                const row = document.createElement('div');
+                row.className = 'uuid-row';
+                row.innerHTML =
+                    '<span class="uuid-num">' + (i + 1) + '</span>' +
+                    '<span class="uuid-value">' + escapeHtml(uuid) + '</span>' +
+                    '<button class="ph-btn" data-idx="' + i + '" aria-label="Copy UUID ' + (i + 1) + '">Copy</button>';
+                frag.appendChild(row);
+            });
+            uuidList.innerHTML = '';
+            uuidList.appendChild(frag);
+
+            statCount.textContent = String(currentUUIDs.length);
+            updateFormatStat();
+        }
+
+        function updateFormatStat() {
+            const caseLabel = getCase() === 'upper' ? 'uppercase' : 'lowercase';
+            const hypLabel  = hyphensCheck.checked ? 'hyphens' : 'no hyphens';
+            const wrapMap   = { none: '', braces: ' · { }', urn: ' · urn' };
+            statFormat.textContent = 'v4 · ' + caseLabel + ' · ' + hypLabel + (wrapMap[getWrapper()] || '');
+        }
+
+        // ── Copy ──────────────────────────────────────────────────────────────
+        async function copyText(text, msg) {
+            try {
+                await navigator.clipboard.writeText(text);
+                showToast(msg || '✅ Copied!');
+            } catch (_) {
+                showToast('❌ Copy failed — try selecting and pressing Ctrl+C');
+            }
+        }
+
+        // ── Per-row copy ──────────────────────────────────────────────────────
+        uuidList.addEventListener('click', function (e) {
+            const btn = e.target.closest('[data-idx]');
+            if (!btn) return;
+            const idx = parseInt(btn.dataset.idx, 10);
+            if (idx >= 0 && idx < currentUUIDs.length) {
+                copyText(currentUUIDs[idx], '✅ UUID copied!');
+            }
+        });
+
+        // ── Toolbar ───────────────────────────────────────────────────────────
+        btnGenerate.addEventListener('click', generate);
+
+        btnCopyAll.addEventListener('click', function () {
+            if (currentUUIDs.length === 0) {
+                showToast('⚠️ Nothing to copy — generate first');
+                return;
+            }
+            copyText(currentUUIDs.join('\n'), '✅ ' + currentUUIDs.length + ' UUIDs copied!');
+        });
+
+        btnDownload.addEventListener('click', function () {
+            if (currentUUIDs.length === 0) {
+                showToast('⚠️ Nothing to download — generate first');
+                return;
+            }
+            const blob = new Blob([currentUUIDs.join('\n') + '\n'], { type: 'text/plain' });
+            const url  = URL.createObjectURL(blob);
+            const a    = document.createElement('a');
+            a.href     = url;
+            a.download = 'uuids-' + Date.now() + '.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('✅ Downloaded!');
+        });
+
+        btnClear.addEventListener('click', function () {
+            currentUUIDs = [];
+            renderOutput();
+            saveState();
+            showToast('🗑 Cleared');
+        });
+
+        // ── Settings change ───────────────────────────────────────────────────
+        function onSettingChange() {
+            syncSelectionStyles();
+            updateFormatStat();
+            // Re-generate live if results already exist
+            if (currentUUIDs.length > 0) {
+                generate();
+            } else {
+                saveState();
+            }
+        }
+
+        document.querySelectorAll('input[name="uuidCase"]').forEach(function (r) {
+            r.addEventListener('change', onSettingChange);
+        });
+        document.querySelectorAll('input[name="uuidWrapper"]').forEach(function (r) {
+            r.addEventListener('change', onSettingChange);
+        });
+
+        hyphensCheck.addEventListener('change', function () {
+            hyphensRow.classList.toggle('checked', hyphensCheck.checked);
+            onSettingChange();
+        });
+
+        countInput.addEventListener('change', function () {
+            let v = parseInt(this.value, 10);
+            if (isNaN(v) || v < 1) v = 1;
+            if (v > 100) v = 100;
+            this.value = v;
+            updateFormatStat();
+            saveState();
+        });
+
+        function syncSelectionStyles() {
+            document.querySelectorAll('input[name="uuidCase"]').forEach(function (r) {
+                r.closest('.radio-option').classList.toggle('selected', r.checked);
+            });
+            document.querySelectorAll('input[name="uuidWrapper"]').forEach(function (r) {
+                r.closest('.radio-option').classList.toggle('selected', r.checked);
+            });
+        }
+
+        // ── Mobile tabs ───────────────────────────────────────────────────────
+        tabSettings.addEventListener('click', function () {
+            tabSettings.classList.add('active');
+            tabOutput.classList.remove('active');
+            paneSettings.classList.add('mob-visible');
+            paneOutput.classList.remove('mob-visible');
+        });
+
+        tabOutput.addEventListener('click', function () {
+            tabOutput.classList.add('active');
+            tabSettings.classList.remove('active');
+            paneOutput.classList.add('mob-visible');
+            paneSettings.classList.remove('mob-visible');
+        });
+
+        // ── Toast ─────────────────────────────────────────────────────────────
+        function showToast(msg) {
+            clearTimeout(toastTimer);
+            toast.textContent = msg;
+            toast.classList.add('show');
+            toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 2500);
+        }
+
+        // ── Escape HTML ───────────────────────────────────────────────────────
+        function escapeHtml(s) {
+            return s
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+
+        // ── Persistence ───────────────────────────────────────────────────────
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                    count:   countInput.value,
+                    caseVal: getCase(),
+                    wrapVal: getWrapper(),
+                    hyphens: hyphensCheck.checked,
+                    uuids:   currentUUIDs
+                }));
+            } catch (_) {}
+        }
+
+        function restoreState() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return;
+                const s = JSON.parse(raw);
+                if (s.count !== undefined) countInput.value = parseInt(s.count, 10) || 5;
+                if (s.hyphens !== undefined) {
+                    hyphensCheck.checked = !!s.hyphens;
+                    hyphensRow.classList.toggle('checked', hyphensCheck.checked);
+                }
+                if (s.caseVal) {
+                    const r = document.querySelector('input[name="uuidCase"][value="' + s.caseVal + '"]');
+                    if (r) r.checked = true;
+                }
+                if (s.wrapVal) {
+                    const r = document.querySelector('input[name="uuidWrapper"][value="' + s.wrapVal + '"]');
+                    if (r) r.checked = true;
+                }
+                if (Array.isArray(s.uuids) && s.uuids.length > 0) {
+                    currentUUIDs = s.uuids;
+                    renderOutput();
+                }
+                syncSelectionStyles();
+            } catch (_) {}
+        }
+
+        // ── Init ──────────────────────────────────────────────────────────────
+        restoreState();
+        updateFormatStat();
+
+    }());
+    </script>
+</body>
+</html>
