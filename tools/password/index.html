@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+    <title>Password Generator — Ravionus Dev Tools</title>
+    <meta name="description" content="Generate cryptographically secure passwords with custom length, character sets, and strength indicators. No server, no sign-up.">
+    <link rel="canonical" href="https://ravionus.com/tools/password/">
+    <meta property="og:title" content="Password Generator — Ravionus Dev Tools">
+    <meta property="og:description" content="Generate cryptographically secure passwords with custom length, character sets, and strength indicators. No server, no sign-up.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ravionus.com/tools/password/">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none';">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0a0f;    --surface: #12121a;   --surface2: #0e0e16;
+            --border: #1e1e2e; --border2: #2a2a3e;
+            --text: #e2e2f0;   --muted: #7878a0;
+            --purple: #a855f7;  --cyan: #22d3ee;
+            --green: #22c55e;   --red: #ef4444;
+            --accent-g: linear-gradient(135deg, #a855f7, #22d3ee);
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Nav ── */
+        nav {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+        nav a { color: var(--muted); text-decoration: none; transition: color 0.15s; }
+        nav a:hover { color: var(--text); }
+        .nav-sep { color: var(--border2); }
+        .nav-links { margin-left: auto; display: flex; gap: 16px; }
+        .nav-links a { font-size: 0.8rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+        .nav-links a:hover { color: var(--cyan); }
+
+        /* ── Page Header ── */
+        .page-header {
+            padding: 24px 20px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .page-header h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            background: var(--accent-g);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 6px;
+        }
+        .page-header p {
+            color: var(--muted);
+            font-size: 0.875rem;
+            max-width: 640px;
+        }
+
+        /* ── Toolbar ── */
+        .toolbar {
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface2);
+        }
+        .tb-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            border: 1px solid var(--border2);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text);
+            font-size: 0.82rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s, color 0.15s;
+            font-family: inherit;
+        }
+        .tb-btn:hover { background: var(--surface); }
+        .tb-btn.primary {
+            background: linear-gradient(135deg, #a855f7, #7c3aed);
+            border-color: transparent;
+            color: #fff;
+        }
+        .tb-btn.primary:hover { opacity: 0.9; }
+        .tb-btn.danger { color: var(--red); border-color: rgba(239,68,68,0.3); }
+        .tb-btn.danger:hover { background: rgba(239,68,68,0.1); }
+        .tb-sep { width: 1px; height: 24px; background: var(--border); margin: 0 4px; }
+        .tb-spacer { flex: 1; }
+
+        button:focus-visible, .tb-btn:focus-visible, .ph-btn:focus-visible, .mob-tab:focus-visible {
+            outline: 2px solid var(--cyan);
+            outline-offset: 2px;
+        }
+
+        /* ── Main Layout ── */
+        .editor-layout {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+            height: calc(100vh - 248px);
+        }
+
+        /* ── Pane ── */
+        .pane {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+        }
+        .pane-header {
+            padding: 8px 14px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface2);
+            flex-shrink: 0;
+        }
+        .pane-divider {
+            width: 4px;
+            background: var(--border);
+            flex-shrink: 0;
+        }
+
+        /* ── Settings Pane ── */
+        .settings-body {
+            padding: 18px 16px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .setting-group { margin-bottom: 22px; }
+        .setting-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 10px;
+        }
+
+        /* Length row */
+        .length-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .slider {
+            flex: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 4px;
+            background: var(--border2);
+            border-radius: 2px;
+            outline: none;
+            cursor: pointer;
+        }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--purple);
+            cursor: pointer;
+            border: 2px solid var(--surface2);
+            box-shadow: 0 0 0 1px var(--purple);
+        }
+        .slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--purple);
+            cursor: pointer;
+            border: 2px solid var(--surface2);
+        }
+        .length-num {
+            width: 64px;
+            padding: 7px 10px;
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            border-radius: 6px;
+            color: var(--text);
+            font-family: var(--font-mono);
+            font-size: 1rem;
+            font-weight: 600;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .length-num:focus {
+            outline: 2px solid var(--cyan);
+            outline-offset: 2px;
+            border-color: var(--cyan);
+        }
+
+        /* Count row */
+        .count-row { display: flex; align-items: center; gap: 12px; }
+        .count-input {
+            width: 70px;
+            padding: 7px 10px;
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            border-radius: 6px;
+            color: var(--text);
+            font-family: var(--font-mono);
+            font-size: 1rem;
+            font-weight: 600;
+            text-align: center;
+        }
+        .count-input:focus {
+            outline: 2px solid var(--cyan);
+            outline-offset: 2px;
+            border-color: var(--cyan);
+        }
+        .count-unit { color: var(--muted); font-size: 0.875rem; }
+        .count-hint { font-size: 0.72rem; color: var(--muted); margin-top: 6px; }
+
+        /* Checkbox/toggle rows */
+        .checkbox-group { display: flex; flex-direction: column; gap: 6px; }
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: border-color 0.15s, background 0.15s;
+        }
+        .toggle-row:hover { border-color: var(--border2); background: var(--surface); }
+        .toggle-row.checked {
+            border-color: var(--purple);
+            background: rgba(168,85,247,0.08);
+        }
+        .toggle-row input[type=checkbox] {
+            accent-color: var(--purple);
+            width: 15px;
+            height: 15px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .opt-label { font-size: 0.875rem; font-weight: 500; flex: 1; }
+        .opt-example {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--muted);
+            white-space: nowrap;
+        }
+        .opt-sub {
+            display: block;
+            font-size: 0.72rem;
+            color: var(--muted);
+            font-weight: 400;
+            margin-top: 2px;
+        }
+
+        /* ── Output Pane ── */
+        .output-body { flex: 1; overflow-y: auto; }
+        .pw-list {
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .pw-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 10px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            transition: border-color 0.15s;
+        }
+        .pw-row:hover { border-color: var(--border2); }
+        .pw-num {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--muted);
+            min-width: 20px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .pw-value {
+            flex: 1;
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            color: var(--text);
+            word-break: break-all;
+            user-select: all;
+            min-width: 0;
+        }
+        .pw-strength {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            white-space: nowrap;
+            flex-shrink: 0;
+            letter-spacing: 0.02em;
+        }
+        .str-weak    { background: rgba(239,68,68,0.15);   color: #ef4444; }
+        .str-fair    { background: rgba(251,191,36,0.15);  color: #fbbf24; }
+        .str-strong  { background: rgba(34,197,94,0.15);   color: #22c55e; }
+        .str-vstrong { background: rgba(34,211,238,0.15);  color: #22d3ee; }
+
+        .ph-btn {
+            padding: 4px 10px;
+            border: 1px solid var(--border2);
+            border-radius: 4px;
+            background: transparent;
+            color: var(--muted);
+            font-size: 0.75rem;
+            cursor: pointer;
+            font-family: inherit;
+            transition: color 0.15s, border-color 0.15s;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .ph-btn:hover { color: var(--text); border-color: var(--cyan); }
+
+        .output-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 180px;
+            height: 100%;
+            color: var(--muted);
+            gap: 12px;
+        }
+        .output-placeholder .ph-icon { font-size: 2.5rem; opacity: 0.4; }
+        .output-placeholder .ph-text { font-size: 0.875rem; }
+
+        /* ── Error Banner ── */
+        .error-banner {
+            margin: 0 16px;
+            padding: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.2s, padding 0.2s;
+            background: rgba(239,68,68,0.1);
+            border-radius: 6px;
+            color: var(--red);
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .error-banner.visible {
+            max-height: 60px;
+            padding: 10px 14px;
+            border: 1px solid rgba(239,68,68,0.3);
+            margin: 8px 16px;
+        }
+
+        /* ── Status Bar ── */
+        .status-bar {
+            padding: 6px 16px;
+            display: flex;
+            gap: 20px;
+            font-size: 0.75rem;
+            color: var(--muted);
+            border-top: 1px solid var(--border);
+            background: var(--surface2);
+            flex-wrap: wrap;
+        }
+        .stat { display: flex; align-items: center; gap: 5px; }
+        .stat-val { color: var(--cyan); font-weight: 600; font-family: var(--font-mono); }
+
+        /* ── Toast ── */
+        #toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            border-radius: 8px;
+            padding: 10px 18px;
+            font-size: 0.85rem;
+            color: var(--text);
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity 0.2s, transform 0.2s;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        #toast.show { opacity: 1; transform: translateY(0); }
+
+        /* ── Mobile Tabs ── */
+        .mobile-tabs { display: none; border-bottom: 1px solid var(--border); }
+        .mob-tab {
+            flex: 1;
+            padding: 10px;
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: inherit;
+            border-bottom: 2px solid transparent;
+            transition: color 0.15s, border-color 0.15s;
+        }
+        .mob-tab.active { color: var(--purple); border-bottom-color: var(--purple); }
+
+        @media (max-width: 700px) {
+            .mobile-tabs { display: flex; }
+            .editor-layout { height: auto; flex-direction: column; }
+            .pane { display: none; }
+            .pane.mob-visible { display: flex; min-height: 400px; }
+            .pane-divider { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a href="../../">Ravionus</a>
+        <span class="nav-sep">›</span>
+        <a href="../../tools/">Dev Tools</a>
+        <span class="nav-sep">›</span>
+        <span>Password Generator</span>
+        <div class="nav-links">
+            <a href="../../learn/">✨ Learn</a>
+            <a href="../../tools/">🛠️ Tools</a>
+            <a href="../../playground/">🧪 Playgrounds</a>
+        </div>
+    </nav>
+
+    <header class="page-header">
+        <h1>🔑 Password Generator</h1>
+        <p>Generate cryptographically secure passwords using the Web Crypto API. Customise length (4–128 characters), pick your character sets, and generate up to 20 passwords at once. Everything runs in your browser — no data leaves your device.</p>
+    </header>
+
+    <div class="toolbar">
+        <button class="tb-btn primary" id="btnGenerate">⚡ Generate</button>
+        <button class="tb-btn" id="btnCopyAll">📋 Copy All</button>
+        <div class="tb-sep"></div>
+        <button class="tb-btn" id="btnDownload">⬇️ Download</button>
+        <div class="tb-spacer"></div>
+        <button class="tb-btn danger" id="btnClear">🗑 Clear</button>
+    </div>
+
+    <div class="mobile-tabs">
+        <button class="mob-tab active" id="tabSettings">⚙️ Settings</button>
+        <button class="mob-tab" id="tabOutput">📤 Output</button>
+    </div>
+
+    <div class="editor-layout">
+
+        <!-- Settings pane -->
+        <div class="pane mob-visible" id="paneSettings">
+            <div class="pane-header">Settings</div>
+            <div class="settings-body">
+
+                <!-- Length -->
+                <div class="setting-group">
+                    <div class="setting-label">Length</div>
+                    <div class="length-row">
+                        <input type="range" id="lengthSlider" class="slider"
+                               min="4" max="128" value="16"
+                               aria-label="Password length slider">
+                        <input type="number" id="lengthInput" class="length-num"
+                               min="4" max="128" value="16"
+                               aria-label="Password length">
+                    </div>
+                    <div class="count-hint">Between 4 and 128 characters</div>
+                </div>
+
+                <!-- Count -->
+                <div class="setting-group">
+                    <div class="setting-label">Count</div>
+                    <div class="count-row">
+                        <input type="number" id="countInput" class="count-input"
+                               value="5" min="1" max="20"
+                               aria-label="Number of passwords to generate">
+                        <span class="count-unit">passwords</span>
+                    </div>
+                    <div class="count-hint">Between 1 and 20</div>
+                </div>
+
+                <!-- Character Sets -->
+                <div class="setting-group">
+                    <div class="setting-label">Character Sets</div>
+                    <div class="checkbox-group">
+                        <label class="toggle-row checked">
+                            <input type="checkbox" id="chkUpper" checked
+                                   aria-label="Include uppercase letters A-Z">
+                            <span class="opt-label">Uppercase</span>
+                            <span class="opt-example">A–Z (26)</span>
+                        </label>
+                        <label class="toggle-row checked">
+                            <input type="checkbox" id="chkLower" checked
+                                   aria-label="Include lowercase letters a-z">
+                            <span class="opt-label">Lowercase</span>
+                            <span class="opt-example">a–z (26)</span>
+                        </label>
+                        <label class="toggle-row checked">
+                            <input type="checkbox" id="chkNumbers" checked
+                                   aria-label="Include numbers 0-9">
+                            <span class="opt-label">Numbers</span>
+                            <span class="opt-example">0–9 (10)</span>
+                        </label>
+                        <label class="toggle-row checked">
+                            <input type="checkbox" id="chkSymbols" checked
+                                   aria-label="Include symbols">
+                            <span class="opt-label">Symbols</span>
+                            <span class="opt-example">!@#$… (26)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Options -->
+                <div class="setting-group">
+                    <div class="setting-label">Options</div>
+                    <label class="toggle-row" id="ambiguousRow">
+                        <input type="checkbox" id="chkAmbiguous"
+                               aria-label="Exclude ambiguous characters">
+                        <div>
+                            <span class="opt-label">Exclude ambiguous</span>
+                            <span class="opt-sub">Removes 0, O, I, l, 1 for readability</span>
+                        </div>
+                    </label>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="pane-divider"></div>
+
+        <!-- Output pane -->
+        <div class="pane" id="paneOutput">
+            <div class="pane-header">Generated Passwords</div>
+            <div class="output-body">
+                <div class="output-placeholder" id="outputPlaceholder">
+                    <div class="ph-icon">🔑</div>
+                    <div class="ph-text">Click ⚡ Generate to create passwords</div>
+                </div>
+                <div class="pw-list" id="pwList" style="display:none"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="error-banner" id="errorBanner" role="alert"></div>
+
+    <div class="status-bar">
+        <span class="stat">Generated: <span class="stat-val" id="statCount">0</span></span>
+        <span class="stat">Length: <span class="stat-val" id="statLength">16</span></span>
+        <span class="stat">Charset: <span class="stat-val" id="statCharset">88</span> chars</span>
+        <span class="stat">Entropy: <span class="stat-val" id="statEntropy">~103</span> bits</span>
+    </div>
+
+    <div id="toast" aria-live="polite"></div>
+
+    <script>
+    (function () {
+        'use strict';
+
+        const STORAGE_KEY = 'ravionus_tool_password';
+
+        // Character sets (consistent order throughout)
+        const SETS = {
+            upper:   'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+            lower:   'abcdefghijklmnopqrstuvwxyz',
+            numbers: '0123456789',
+            symbols: '!@#$%^&*()-_=+[]{}|;:,.<>?'
+        };
+        const AMBIGUOUS = /[0OIl1]/g;
+
+        // ── Elements ──────────────────────────────────────────────────────────
+        const lengthSlider      = document.getElementById('lengthSlider');
+        const lengthInput       = document.getElementById('lengthInput');
+        const countInput        = document.getElementById('countInput');
+        const chkUpper          = document.getElementById('chkUpper');
+        const chkLower          = document.getElementById('chkLower');
+        const chkNumbers        = document.getElementById('chkNumbers');
+        const chkSymbols        = document.getElementById('chkSymbols');
+        const chkAmbiguous      = document.getElementById('chkAmbiguous');
+        const ambiguousRow      = document.getElementById('ambiguousRow');
+        const btnGenerate       = document.getElementById('btnGenerate');
+        const btnCopyAll        = document.getElementById('btnCopyAll');
+        const btnDownload       = document.getElementById('btnDownload');
+        const btnClear          = document.getElementById('btnClear');
+        const outputPlaceholder = document.getElementById('outputPlaceholder');
+        const pwList            = document.getElementById('pwList');
+        const errorBanner       = document.getElementById('errorBanner');
+        const statCount         = document.getElementById('statCount');
+        const statLength        = document.getElementById('statLength');
+        const statCharset       = document.getElementById('statCharset');
+        const statEntropy       = document.getElementById('statEntropy');
+        const toast             = document.getElementById('toast');
+        const tabSettings       = document.getElementById('tabSettings');
+        const tabOutput         = document.getElementById('tabOutput');
+        const paneSettings      = document.getElementById('paneSettings');
+        const paneOutput        = document.getElementById('paneOutput');
+
+        let currentPasswords = [];
+        let toastTimer       = null;
+
+        // ── Crypto: rejection-sampling to eliminate modulo bias ───────────────
+        function secureRandomInt(max) {
+            if (max <= 1) return 0;
+            const limit = Math.floor(0x100000000 / max) * max;
+            const buf = new Uint32Array(1);
+            do { crypto.getRandomValues(buf); } while (buf[0] >= limit);
+            return buf[0] % max;
+        }
+
+        // ── Build active character sets ───────────────────────────────────────
+        function buildActiveSets() {
+            const excl = chkAmbiguous.checked;
+            const sets = [];
+            if (chkUpper.checked) {
+                const s = excl ? SETS.upper.replace(AMBIGUOUS, '') : SETS.upper;
+                if (s) sets.push(s);
+            }
+            if (chkLower.checked) {
+                const s = excl ? SETS.lower.replace(AMBIGUOUS, '') : SETS.lower;
+                if (s) sets.push(s);
+            }
+            if (chkNumbers.checked) {
+                const s = excl ? SETS.numbers.replace(AMBIGUOUS, '') : SETS.numbers;
+                if (s) sets.push(s);
+            }
+            if (chkSymbols.checked) {
+                sets.push(SETS.symbols); // symbols have no ambiguous chars to exclude
+            }
+            return sets;
+        }
+
+        function getCharsetSize() {
+            return buildActiveSets().join('').length;
+        }
+
+        function getLength() {
+            const v = parseInt(lengthInput.value, 10);
+            if (isNaN(v) || v < 4)   return 4;
+            if (v > 128) return 128;
+            return v;
+        }
+
+        function getCount() {
+            const v = parseInt(countInput.value, 10);
+            if (isNaN(v) || v < 1)  return 1;
+            if (v > 20)  return 20;
+            return v;
+        }
+
+        // ── Generate one password (guaranteed to contain ≥1 char per set) ────
+        function generateOnePassword(length) {
+            const sets = buildActiveSets();
+            if (sets.length === 0) return null;
+
+            const combined = sets.join('');
+            // Must be at least as long as the number of required sets
+            const actualLen = Math.max(length, sets.length);
+
+            // Guarantee one char from each mandatory set
+            const chars = sets.map(set => set[secureRandomInt(set.length)]);
+
+            // Fill remainder from combined pool
+            while (chars.length < actualLen) {
+                chars.push(combined[secureRandomInt(combined.length)]);
+            }
+
+            // Fisher-Yates shuffle (cryptographically fair)
+            for (let i = chars.length - 1; i > 0; i--) {
+                const j = secureRandomInt(i + 1);
+                const tmp = chars[i]; chars[i] = chars[j]; chars[j] = tmp;
+            }
+
+            return chars.join('');
+        }
+
+        // ── Strength from entropy bits ─────────────────────────────────────────
+        function getStrength(entropy) {
+            if (entropy <  40) return { label: 'Weak',        cls: 'str-weak'    };
+            if (entropy <  60) return { label: 'Fair',        cls: 'str-fair'    };
+            if (entropy < 100) return { label: 'Strong',      cls: 'str-strong'  };
+            return               { label: 'Very Strong',      cls: 'str-vstrong' };
+        }
+
+        function calcEntropy() {
+            const cs = getCharsetSize();
+            if (cs === 0) return 0;
+            return Math.floor(getLength() * Math.log2(cs));
+        }
+
+        // ── Generate all ──────────────────────────────────────────────────────
+        function generate() {
+            const sets = buildActiveSets();
+            if (sets.length === 0) {
+                showError('⚠️ Select at least one character set.');
+                return;
+            }
+            hideError();
+
+            const count    = getCount();
+            const length   = getLength();
+            currentPasswords = [];
+            for (let i = 0; i < count; i++) {
+                currentPasswords.push(generateOnePassword(length));
+            }
+            renderOutput();
+            saveState();
+        }
+
+        // ── Render ────────────────────────────────────────────────────────────
+        function renderOutput() {
+            if (currentPasswords.length === 0) {
+                outputPlaceholder.style.display = '';
+                pwList.style.display = 'none';
+                pwList.innerHTML = '';
+                statCount.textContent = '0';
+                updateStats();
+                return;
+            }
+
+            outputPlaceholder.style.display = 'none';
+            pwList.style.display = '';
+
+            const entropy = calcEntropy();
+            const { label, cls } = getStrength(entropy);
+
+            const frag = document.createDocumentFragment();
+            currentPasswords.forEach(function (pw, i) {
+                const row = document.createElement('div');
+                row.className = 'pw-row';
+
+                const numEl = document.createElement('span');
+                numEl.className = 'pw-num';
+                numEl.textContent = String(i + 1);
+
+                const valEl = document.createElement('span');
+                valEl.className = 'pw-value';
+                valEl.setAttribute('aria-label', 'Password ' + (i + 1));
+                valEl.textContent = pw; // textContent — no XSS risk
+
+                const badgeEl = document.createElement('span');
+                badgeEl.className = 'pw-strength ' + cls;
+                badgeEl.textContent = label;
+
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'ph-btn';
+                copyBtn.dataset.idx = String(i);
+                copyBtn.setAttribute('aria-label', 'Copy password ' + (i + 1));
+                copyBtn.textContent = 'Copy';
+
+                row.appendChild(numEl);
+                row.appendChild(valEl);
+                row.appendChild(badgeEl);
+                row.appendChild(copyBtn);
+                frag.appendChild(row);
+            });
+            pwList.innerHTML = '';
+            pwList.appendChild(frag);
+
+            statCount.textContent = String(currentPasswords.length);
+            updateStats();
+        }
+
+        function updateStats() {
+            const len = getLength();
+            const cs  = getCharsetSize();
+            const ent = cs > 0 ? Math.floor(len * Math.log2(cs)) : 0;
+            statLength.textContent  = String(len);
+            statCharset.textContent = String(cs);
+            statEntropy.textContent = cs > 0 ? '~' + ent : '—';
+        }
+
+        // ── Error banner ──────────────────────────────────────────────────────
+        function showError(msg) {
+            errorBanner.textContent = msg;
+            errorBanner.classList.add('visible');
+        }
+        function hideError() {
+            errorBanner.classList.remove('visible');
+        }
+
+        // ── Per-row copy via event delegation ─────────────────────────────────
+        pwList.addEventListener('click', function (e) {
+            const btn = e.target.closest('[data-idx]');
+            if (!btn) return;
+            const idx = parseInt(btn.dataset.idx, 10);
+            if (idx >= 0 && idx < currentPasswords.length) {
+                copyText(currentPasswords[idx], '✅ Password copied!');
+            }
+        });
+
+        // ── Toolbar ───────────────────────────────────────────────────────────
+        btnGenerate.addEventListener('click', generate);
+
+        btnCopyAll.addEventListener('click', function () {
+            if (currentPasswords.length === 0) {
+                showToast('⚠️ Nothing to copy — generate first');
+                return;
+            }
+            copyText(currentPasswords.join('\n'), '✅ ' + currentPasswords.length + ' passwords copied!');
+        });
+
+        btnDownload.addEventListener('click', function () {
+            if (currentPasswords.length === 0) {
+                showToast('⚠️ Nothing to download — generate first');
+                return;
+            }
+            const blob = new Blob([currentPasswords.join('\n') + '\n'], { type: 'text/plain' });
+            const url  = URL.createObjectURL(blob);
+            const a    = document.createElement('a');
+            a.href     = url;
+            a.download = 'passwords-' + Date.now() + '.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('✅ Downloaded!');
+        });
+
+        btnClear.addEventListener('click', function () {
+            currentPasswords = [];
+            hideError();
+            renderOutput();
+            saveState();
+            showToast('🗑 Cleared');
+        });
+
+        // ── Settings change ───────────────────────────────────────────────────
+        function onSettingChange() {
+            syncCheckboxStyles();
+            updateStats();
+            hideError();
+            if (currentPasswords.length > 0) {
+                generate();
+            } else {
+                saveState();
+            }
+        }
+
+        // Length: slider ↔ number input bidirectional sync
+        lengthSlider.addEventListener('input', function () {
+            lengthInput.value = this.value;
+            onSettingChange();
+        });
+        lengthInput.addEventListener('change', function () {
+            let v = parseInt(this.value, 10);
+            if (isNaN(v) || v < 4) v = 4;
+            if (v > 128) v = 128;
+            this.value = v;
+            lengthSlider.value = v;
+            onSettingChange();
+        });
+
+        countInput.addEventListener('change', function () {
+            let v = parseInt(this.value, 10);
+            if (isNaN(v) || v < 1) v = 1;
+            if (v > 20) v = 20;
+            this.value = v;
+            updateStats();
+            saveState();
+        });
+
+        [chkUpper, chkLower, chkNumbers, chkSymbols, chkAmbiguous].forEach(function (cb) {
+            cb.addEventListener('change', function () {
+                if (cb === chkAmbiguous) {
+                    ambiguousRow.classList.toggle('checked', cb.checked);
+                }
+                onSettingChange();
+            });
+        });
+
+        function syncCheckboxStyles() {
+            const map = [
+                [chkUpper,   chkUpper.closest('.toggle-row')],
+                [chkLower,   chkLower.closest('.toggle-row')],
+                [chkNumbers, chkNumbers.closest('.toggle-row')],
+                [chkSymbols, chkSymbols.closest('.toggle-row')],
+            ];
+            map.forEach(function ([cb, row]) {
+                if (row) row.classList.toggle('checked', cb.checked);
+            });
+        }
+
+        // ── Mobile tabs ───────────────────────────────────────────────────────
+        tabSettings.addEventListener('click', function () {
+            tabSettings.classList.add('active');
+            tabOutput.classList.remove('active');
+            paneSettings.classList.add('mob-visible');
+            paneOutput.classList.remove('mob-visible');
+        });
+        tabOutput.addEventListener('click', function () {
+            tabOutput.classList.add('active');
+            tabSettings.classList.remove('active');
+            paneOutput.classList.add('mob-visible');
+            paneSettings.classList.remove('mob-visible');
+        });
+
+        // ── Toast ─────────────────────────────────────────────────────────────
+        function showToast(msg) {
+            clearTimeout(toastTimer);
+            toast.textContent = msg;
+            toast.classList.add('show');
+            toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 2500);
+        }
+
+        // ── Copy ──────────────────────────────────────────────────────────────
+        async function copyText(text, msg) {
+            try {
+                await navigator.clipboard.writeText(text);
+                showToast(msg || '✅ Copied!');
+            } catch (_) {
+                showToast('❌ Copy failed — try selecting and pressing Ctrl+C');
+            }
+        }
+
+        // ── localStorage ──────────────────────────────────────────────────────
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                    length:    lengthInput.value,
+                    count:     countInput.value,
+                    upper:     chkUpper.checked,
+                    lower:     chkLower.checked,
+                    numbers:   chkNumbers.checked,
+                    symbols:   chkSymbols.checked,
+                    ambiguous: chkAmbiguous.checked,
+                    passwords: currentPasswords
+                }));
+            } catch (_) {}
+        }
+
+        function restoreState() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return;
+                const s = JSON.parse(raw);
+                if (s.length   !== undefined) { lengthInput.value  = parseInt(s.length, 10)  || 16; lengthSlider.value = lengthInput.value; }
+                if (s.count    !== undefined) { countInput.value   = parseInt(s.count, 10)   || 5; }
+                if (s.upper    !== undefined) { chkUpper.checked   = !!s.upper;   }
+                if (s.lower    !== undefined) { chkLower.checked   = !!s.lower;   }
+                if (s.numbers  !== undefined) { chkNumbers.checked = !!s.numbers; }
+                if (s.symbols  !== undefined) { chkSymbols.checked = !!s.symbols; }
+                if (s.ambiguous !== undefined) { chkAmbiguous.checked = !!s.ambiguous; ambiguousRow.classList.toggle('checked', chkAmbiguous.checked); }
+                if (Array.isArray(s.passwords) && s.passwords.length > 0) {
+                    currentPasswords = s.passwords;
+                    renderOutput();
+                }
+                syncCheckboxStyles();
+            } catch (_) {}
+        }
+
+        // ── Init ──────────────────────────────────────────────────────────────
+        restoreState();
+        updateStats();
+
+    }());
+    </script>
+</body>
+</html>
