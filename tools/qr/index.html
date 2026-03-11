@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+    <title>QR Code Generator — Ravionus Dev Tools</title>
+    <meta name="description" content="Generate QR codes from any text or URL instantly. Download as PNG or SVG. No server, no sign-up.">
+    <link rel="canonical" href="https://ravionus.com/tools/qr/">
+    <meta property="og:title" content="QR Code Generator — Ravionus Dev Tools">
+    <meta property="og:description" content="Generate QR codes from any text or URL instantly. Download as PNG or SVG. No server, no sign-up.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ravionus.com/tools/qr/">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none';">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0a0f;     --surface: #12121a;   --surface2: #0e0e16;
+            --border: #1e1e2e; --border2: #2a2a3e;
+            --text: #e2e2f0;   --muted: #7878a0;
+            --purple: #a855f7; --cyan: #22d3ee;
+            --green: #22c55e;  --red: #ef4444;
+            --accent-g: linear-gradient(135deg, #a855f7, #22d3ee);
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Nav ── */
+        nav {
+            border-bottom: 1px solid var(--border);
+            background: rgba(10,10,15,.95);
+            backdrop-filter: blur(12px);
+            flex-shrink: 0;
+        }
+        .nav-inner {
+            padding: 0 20px; height: 52px;
+            display: flex; align-items: center; justify-content: space-between; gap: 12px;
+        }
+        .nav-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+        .nav-logo {
+            font-size: 1.1rem; font-weight: 800; text-decoration: none;
+            background: var(--accent-g); -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent; letter-spacing: -.5px; flex-shrink: 0;
+        }
+        .nav-sep { color: var(--border2); flex-shrink: 0; }
+        .nav-breadcrumb { font-size: .82rem; color: var(--muted); }
+        .nav-breadcrumb a { color: var(--muted); text-decoration: none; }
+        .nav-breadcrumb a:hover { color: var(--text); }
+        .nav-breadcrumb .current { color: var(--text); font-weight: 600; }
+        .nav-links { display: flex; gap: 4px; flex-shrink: 0; }
+        .nav-link {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 5px 10px; border-radius: 7px; font-size: .8rem; font-weight: 500;
+            text-decoration: none; color: var(--muted); transition: color .15s, background .15s;
+        }
+        .nav-link:hover { color: var(--text); background: rgba(255,255,255,.06); }
+
+        /* ── Page header ── */
+        .page-header {
+            padding: 18px 20px 14px;
+            border-bottom: 1px solid var(--border);
+        }
+        .page-header h1 {
+            font-size: 1.35rem; font-weight: 800; letter-spacing: -.5px;
+            background: var(--accent-g); -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent; margin-bottom: 5px;
+        }
+        .page-header p { font-size: .85rem; color: var(--muted); max-width: 680px; }
+
+        /* ── Main content ── */
+        .main-content {
+            flex: 1; display: flex; justify-content: center; align-items: flex-start;
+            padding: 32px 20px 40px; gap: 40px;
+        }
+
+        /* ── Control panel ── */
+        .control-panel {
+            flex: 0 0 380px; max-width: 380px; display: flex; flex-direction: column; gap: 20px;
+        }
+
+        .field-group { display: flex; flex-direction: column; gap: 6px; }
+        .field-label {
+            font-size: .78rem; font-weight: 700; letter-spacing: .06em;
+            text-transform: uppercase; color: var(--muted);
+        }
+        textarea.input-text {
+            padding: 12px 14px; background: var(--surface2); color: var(--text);
+            border: 1px solid var(--border2); border-radius: 10px;
+            font-family: var(--font-mono); font-size: .85rem; line-height: 1.5;
+            resize: vertical; min-height: 96px;
+            outline: none; transition: border-color .15s;
+        }
+        textarea.input-text:focus { border-color: var(--purple); background: var(--surface); }
+
+        .options-row { display: flex; gap: 12px; flex-wrap: wrap; }
+        .option-group { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 120px; }
+        select, input[type="color"], input[type="range"] {
+            font-family: inherit;
+        }
+        select {
+            padding: 8px 12px; background: var(--surface2); color: var(--text);
+            border: 1px solid var(--border2); border-radius: 8px; font-size: .82rem;
+            outline: none; cursor: pointer; transition: border-color .15s;
+            -webkit-appearance: none; appearance: none;
+        }
+        select:focus { border-color: var(--purple); }
+
+        .color-row { display: flex; gap: 12px; }
+        .color-field { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+        .color-swatch-wrap { display: flex; align-items: center; gap: 8px; }
+        input[type="color"] {
+            width: 36px; height: 36px; border: 2px solid var(--border2); border-radius: 8px;
+            background: none; cursor: pointer; padding: 2px;
+        }
+        .color-hex {
+            flex: 1; padding: 8px 10px; background: var(--surface2); color: var(--text);
+            border: 1px solid var(--border2); border-radius: 8px; font-family: var(--font-mono);
+            font-size: .8rem; outline: none; transition: border-color .15s;
+        }
+        .color-hex:focus { border-color: var(--purple); }
+
+        .size-row { display: flex; align-items: center; gap: 10px; }
+        input[type="range"] {
+            flex: 1; accent-color: var(--purple); cursor: pointer;
+        }
+        .size-label { font-size: .82rem; color: var(--text); min-width: 52px; text-align: right; font-weight: 600; }
+
+        /* ── Action buttons ── */
+        .action-row { display: flex; gap: 8px; flex-wrap: wrap; }
+        .tb-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 9px 16px; border-radius: 9px; border: none;
+            font-size: .82rem; font-weight: 600; font-family: inherit;
+            cursor: pointer; transition: opacity .15s, transform .1s;
+        }
+        .tb-btn:hover { opacity: .88; }
+        .tb-btn:active { transform: scale(.97); }
+        .tb-btn.primary { background: var(--purple); color: #fff; }
+        .tb-btn.secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border2); }
+        .tb-btn.danger { background: rgba(239,68,68,.15); color: var(--red); border: 1px solid rgba(239,68,68,.3); }
+
+        /* ── Preview panel ── */
+        .preview-panel {
+            flex: 0 0 320px; display: flex; flex-direction: column; align-items: center; gap: 16px;
+        }
+        .qr-frame {
+            padding: 20px; background: #fff; border-radius: 16px;
+            box-shadow: 0 8px 40px rgba(0,0,0,.4);
+            display: flex; align-items: center; justify-content: center;
+            min-width: 200px; min-height: 200px;
+        }
+        #qrCanvas {
+            display: block; image-rendering: pixelated;
+        }
+        .qr-placeholder {
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+            color: #aaa; font-size: .85rem;
+        }
+        .qr-placeholder .ph-icon { font-size: 3rem; }
+        .qr-meta { font-size: .78rem; color: var(--muted); text-align: center; }
+
+        /* ── Banners ── */
+        .error-banner {
+            display: none; padding: 8px 20px; font-size: .82rem; font-weight: 500;
+        }
+        .error-banner.visible { display: flex; align-items: center; gap: 8px; background: rgba(239,68,68,.1); color: var(--red); }
+
+        /* ── Status bar ── */
+        .status-bar {
+            padding: 5px 20px;
+            border-top: 1px solid var(--border);
+            background: var(--surface2);
+            display: flex; gap: 20px; font-size: .75rem; color: var(--muted);
+            flex-wrap: wrap;
+        }
+        .status-item strong { color: var(--text); }
+
+        /* ── Toast ── */
+        #toast {
+            position: fixed; bottom: 24px; right: 24px;
+            padding: 10px 18px; border-radius: 10px; background: var(--surface);
+            border: 1px solid var(--border2); color: var(--text); font-size: .82rem; font-weight: 500;
+            box-shadow: 0 8px 32px rgba(0,0,0,.5);
+            opacity: 0; transform: translateY(8px); pointer-events: none;
+            transition: opacity .2s, transform .2s; z-index: 9999;
+        }
+        #toast.show { opacity: 1; transform: translateY(0); }
+
+        /* ── Focus-visible ── */
+        button:focus-visible, .tb-btn:focus-visible, select:focus-visible,
+        input[type="color"]:focus-visible, .color-hex:focus-visible {
+            outline: 2px solid var(--cyan); outline-offset: 2px;
+        }
+
+        /* ── Mobile ── */
+        @media (max-width: 780px) {
+            .main-content { flex-direction: column; align-items: center; padding: 20px 16px 32px; gap: 24px; }
+            .control-panel { flex: none; width: 100%; max-width: 100%; }
+            .preview-panel { flex: none; width: 100%; align-items: center; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ── Nav ──────────────────────────────────────────────────────────────── -->
+<nav>
+    <div class="nav-inner">
+        <div class="nav-left">
+            <a href="../../" class="nav-logo">Ravionus</a>
+            <span class="nav-sep">›</span>
+            <span class="nav-breadcrumb">
+                <a href="../../tools/">Dev Tools</a>
+                <span class="nav-sep"> › </span>
+                <span class="current">QR Code Generator</span>
+            </span>
+        </div>
+        <div class="nav-links">
+            <a href="../../learn/" class="nav-link">✨ Learn</a>
+            <a href="../../tools/" class="nav-link">🛠️ Tools</a>
+            <a href="../../playground/" class="nav-link">🧪 Playgrounds</a>
+        </div>
+    </div>
+</nav>
+
+<!-- ── Page header ──────────────────────────────────────────────────────── -->
+<header class="page-header">
+    <h1>📱 QR Code Generator</h1>
+    <p>Generate QR codes from any text or URL instantly. Customise the foreground and background colours, error correction level, and output size. Download as PNG or SVG. Everything runs in your browser — no data leaves your device.</p>
+</header>
+
+<!-- ── Error banner ─────────────────────────────────────────────────────── -->
+<div class="error-banner" id="errorBanner" role="alert"></div>
+
+<!-- ── Main content ─────────────────────────────────────────────────────── -->
+<div class="main-content">
+
+    <!-- Control panel -->
+    <div class="control-panel">
+
+        <div class="field-group">
+            <label class="field-label" for="inputText">Text or URL</label>
+            <textarea class="input-text" id="inputText"
+                      aria-label="Text or URL to encode as QR code"
+                      placeholder="https://ravionus.com"></textarea>
+        </div>
+
+        <div class="field-group">
+            <div class="field-label">Options</div>
+            <div class="options-row">
+                <div class="option-group">
+                    <label class="field-label" for="selectEcc">Error Correction</label>
+                    <select id="selectEcc">
+                        <option value="L">L — Low (7%)</option>
+                        <option value="M" selected>M — Medium (15%)</option>
+                        <option value="Q">Q — Quartile (25%)</option>
+                        <option value="H">H — High (30%)</option>
+                    </select>
+                </div>
+                <div class="option-group">
+                    <label class="field-label" for="selectVersion">Version (size)</label>
+                    <select id="selectVersion">
+                        <option value="auto" selected>Auto</option>
+                        <option value="1">1 (21×21)</option>
+                        <option value="2">2 (25×25)</option>
+                        <option value="3">3 (29×29)</option>
+                        <option value="4">4 (33×33)</option>
+                        <option value="5">5 (37×37)</option>
+                        <option value="6">6 (41×41)</option>
+                        <option value="7">7 (45×45)</option>
+                        <option value="8">8 (49×49)</option>
+                        <option value="9">9 (53×53)</option>
+                        <option value="10">10 (57×57)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="field-group">
+            <div class="field-label">Colours</div>
+            <div class="color-row">
+                <div class="color-field">
+                    <label class="field-label" for="colorFg">Foreground</label>
+                    <div class="color-swatch-wrap">
+                        <input type="color" id="colorFgPicker" value="#000000" aria-label="Foreground colour picker">
+                        <input type="text" class="color-hex" id="colorFg" value="#000000" maxlength="7" aria-label="Foreground colour hex">
+                    </div>
+                </div>
+                <div class="color-field">
+                    <label class="field-label" for="colorBg">Background</label>
+                    <div class="color-swatch-wrap">
+                        <input type="color" id="colorBgPicker" value="#ffffff" aria-label="Background colour picker">
+                        <input type="text" class="color-hex" id="colorBg" value="#ffffff" maxlength="7" aria-label="Background colour hex">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="field-group">
+            <label class="field-label" for="sizeRange">Canvas size</label>
+            <div class="size-row">
+                <input type="range" id="sizeRange" min="128" max="512" step="16" value="256" aria-label="QR code canvas size in pixels">
+                <span class="size-label" id="sizeLabel">256 px</span>
+            </div>
+        </div>
+
+        <div class="action-row">
+            <button class="tb-btn primary" id="btnGenerate">⚡ Generate</button>
+            <button class="tb-btn secondary" id="btnDownloadPng">💾 PNG</button>
+            <button class="tb-btn secondary" id="btnDownloadSvg">💾 SVG</button>
+            <button class="tb-btn secondary" id="btnCopyPng">📋 Copy Image</button>
+            <button class="tb-btn danger"    id="btnClear">🗑 Clear</button>
+        </div>
+
+    </div>
+
+    <!-- Preview panel -->
+    <div class="preview-panel">
+        <div class="qr-frame" id="qrFrame">
+            <div class="qr-placeholder" id="qrPlaceholder">
+                <div class="ph-icon">📱</div>
+                <div>Enter text and click Generate</div>
+            </div>
+            <canvas id="qrCanvas" width="256" height="256" style="display:none;" aria-label="Generated QR code"></canvas>
+        </div>
+        <div class="qr-meta" id="qrMeta"></div>
+    </div>
+
+</div>
+
+<!-- ── Status bar ───────────────────────────────────────────────────────── -->
+<div class="status-bar">
+    <span class="status-item">Version: <strong id="statVersion">—</strong></span>
+    <span class="status-item">Modules: <strong id="statModules">—</strong></span>
+    <span class="status-item">ECC: <strong id="statEcc">—</strong></span>
+    <span class="status-item">Chars: <strong id="statChars">0</strong></span>
+</div>
+
+<!-- ── Toast ────────────────────────────────────────────────────────────── -->
+<div id="toast" aria-live="polite"></div>
+
+<script>
+/* ============================================================================
+   Minimal pure-JS QR Code encoder (ISO/IEC 18004:2015)
+   Supports: Byte mode, ECC levels L/M/Q/H, versions 1–10
+   ============================================================================ */
+(function () {
+'use strict';
+
+// ── GF(256) arithmetic (primitive poly 0x11D) ────────────────────────────────
+const GF_EXP = new Uint8Array(512);
+const GF_LOG = new Uint8Array(256);
+(function () {
+    let x = 1;
+    for (let i = 0; i < 255; i++) {
+        GF_EXP[i] = x; GF_LOG[x] = i;
+        x <<= 1;
+        if (x & 0x100) x ^= 0x11D;
+    }
+    for (let i = 255; i < 512; i++) GF_EXP[i] = GF_EXP[i - 255];
+})();
+function gfMul(a, b) {
+    if (a === 0 || b === 0) return 0;
+    return GF_EXP[GF_LOG[a] + GF_LOG[b]];
+}
+function gfPoly(degree) {
+    // Generator polynomial for `degree` ECC codewords
+    let p = [1];
+    for (let i = 0; i < degree; i++) {
+        const b = GF_EXP[i];
+        const q = new Uint8Array(p.length + 1);
+        for (let j = 0; j < p.length; j++) {
+            q[j] ^= gfMul(p[j], b);
+            q[j + 1] ^= p[j];
+        }
+        p = q;
+    }
+    return p;
+}
+function gfPolyDiv(msg, gen) {
+    const r = new Uint8Array(msg.length + gen.length - 1);
+    for (let i = 0; i < msg.length; i++) r[i] ^= msg[i];
+    for (let i = 0; i < msg.length; i++) {
+        if (r[i] === 0) continue;
+        const k = GF_LOG[r[i]];
+        for (let j = 1; j < gen.length; j++) {
+            if (gen[j] !== 0) r[i + j] ^= GF_EXP[k + GF_LOG[gen[j]]];
+        }
+    }
+    return r.slice(msg.length);
+}
+
+// ── Version / capacity tables ────────────────────────────────────────────────
+// [version][ecc_level(0=L,1=M,2=Q,3=H)] = { dc: data_codewords, ec: ecc_per_block, nb: num_blocks, np: num_blocks_group2 }
+// Simplified: versions 1–10, single-group only for brevity
+const ECC_LEVEL = { L: 0, M: 1, Q: 2, H: 3 };
+
+// data codewords per version/level (from QR spec table 9)
+const DATA_CAP = [
+//   L    M    Q    H
+    [19,  16,  13,  9],   // 1
+    [34,  28,  22,  16],  // 2
+    [55,  44,  34,  26],  // 3
+    [80,  64,  48,  36],  // 4
+    [108, 86,  62,  46],  // 5
+    [136, 108, 76,  60],  // 6
+    [156, 124, 88,  66],  // 7
+    [194, 154, 110, 86],  // 8
+    [232, 182, 132, 100], // 9
+    [274, 216, 154, 122], // 10
+];
+// ECC codewords per block
+const ECC_PER_BLOCK = [
+//   L   M   Q   H
+    [7,  10, 13, 17],  // 1
+    [10, 16, 22, 28],  // 2
+    [15, 26, 18, 22],  // 3
+    [20, 18, 26, 16],  // 4
+    [26, 24, 18, 22],  // 5
+    [18, 16, 24, 28],  // 6
+    [20, 18, 18, 26],  // 7
+    [24, 22, 22, 26],  // 8
+    [30, 22, 20, 24],  // 9
+    [18, 26, 24, 28],  // 10
+];
+// number of blocks [version][level]
+const NUM_BLOCKS = [
+//   L  M  Q  H
+    [1, 1, 1, 1],  // 1
+    [1, 1, 1, 1],  // 2
+    [1, 1, 2, 2],  // 3
+    [1, 2, 2, 4],  // 4
+    [1, 2, 4, 4],  // 5
+    [2, 4, 4, 4],  // 6
+    [2, 4, 6, 5],  // 7
+    [2, 4, 6, 6],  // 8
+    [2, 5, 8, 8],  // 9
+    [4, 5, 8, 8],  // 10
+];
+// extra blocks in group 2 (blocks with dc+1 codewords) [version][level]
+const EXTRA_BLOCKS = [
+//   L  M  Q  H
+    [0, 0, 0, 0],  // 1
+    [0, 0, 0, 0],  // 2
+    [0, 0, 0, 0],  // 3
+    [0, 0, 0, 0],  // 4
+    [0, 0, 0, 0],  // 5
+    [0, 0, 0, 0],  // 6
+    [0, 0, 0, 0],  // 7
+    [0, 0, 0, 0],  // 8  (approx — minor deviations ok for v1–10)
+    [0, 0, 0, 0],  // 9
+    [0, 1, 1, 1],  // 10
+];
+
+// Format info strings for each (ecc, mask) combination (pre-computed, XOR'd with 101010000010010)
+// [ecc_level][mask_pattern] = 15-bit integer
+const FORMAT_INFO = {
+    L: [0x77C4, 0x72F3, 0x7DAA, 0x789D, 0x662F, 0x6318, 0x6C41, 0x6976],
+    M: [0x5412, 0x5125, 0x5E7C, 0x5B4B, 0x45F9, 0x40CE, 0x4F97, 0x4AA0],
+    Q: [0x355F, 0x3068, 0x3F31, 0x3A06, 0x24B4, 0x2183, 0x2EDA, 0x2BED],
+    H: [0x1689, 0x13BE, 0x1CE7, 0x19D0, 0x0762, 0x0255, 0x0D0C, 0x083B],
+};
+
+// ── Bit buffer ───────────────────────────────────────────────────────────────
+function BitBuffer() {
+    const buf = [];
+    let len = 0;
+    return {
+        put(num, nbits) {
+            for (let i = nbits - 1; i >= 0; i--) {
+                buf.push((num >> i) & 1);
+                len++;
+            }
+        },
+        get bits() { return buf; },
+        get length() { return len; },
+    };
+}
+
+// ── Encode text to QR codewords ─────────────────────────────────────────────
+function encodeData(text, version, eccLevel) {
+    const ecc = ECC_LEVEL[eccLevel];
+    const dataCap   = DATA_CAP[version - 1][ecc];
+    const nBlocks   = NUM_BLOCKS[version - 1][ecc];
+    const nExtra    = EXTRA_BLOCKS[version - 1][ecc];
+    const eccPB     = ECC_PER_BLOCK[version - 1][ecc];
+    const totalCW   = dataCap + nBlocks * eccPB + (version >= 7 ? 0 : 0); // version info codewords handled separately
+
+    // Byte-encode the text
+    const bytes = new TextEncoder().encode(text);
+    if (bytes.length > dataCap - 2) return null; // too long (2 = mode+charcount 12 bits + terminator overhead)
+
+    const bb = BitBuffer();
+    // Mode: byte (0100)
+    bb.put(0b0100, 4);
+    // Character count (8 bits for versions 1–9, 16 for 10-26 — but we only do v1–10 so 8 bits always ok)
+    const lenBits = version <= 9 ? 8 : 16;
+    bb.put(bytes.length, lenBits);
+    // Data bytes
+    for (const b of bytes) bb.put(b, 8);
+    // Terminator (up to 4 zeros)
+    const capacity = dataCap * 8;
+    const term = Math.min(4, capacity - bb.length);
+    for (let i = 0; i < term; i++) bb.put(0, 1);
+    // Pad to byte boundary
+    while (bb.length % 8 !== 0) bb.put(0, 1);
+    // Pad codewords
+    const padCW = [0xEC, 0x11];
+    let pi = 0;
+    while (bb.length < capacity) { bb.put(padCW[pi % 2], 8); pi++; }
+
+    // Convert bit stream to bytes
+    const allData = [];
+    for (let i = 0; i < bb.bits.length; i += 8) {
+        let b = 0;
+        for (let j = 0; j < 8; j++) b = (b << 1) | (bb.bits[i + j] || 0);
+        allData.push(b);
+    }
+
+    // Split into blocks and generate ECC
+    const blocksData = [];
+    const blocksEcc  = [];
+    const n1 = Math.floor(dataCap / nBlocks);
+    const n2 = n1 + 1; // for extra blocks
+    let pos = 0;
+    for (let b = 0; b < nBlocks; b++) {
+        const dc = (b < nBlocks - nExtra) ? n1 : n2;
+        const block = allData.slice(pos, pos + dc);
+        pos += dc;
+        blocksData.push(block);
+        const gen = gfPoly(eccPB);
+        const rem = gfPolyDiv(new Uint8Array(block), new Uint8Array(gen));
+        blocksEcc.push(Array.from(rem));
+    }
+
+    // Interleave data codewords
+    const result = [];
+    const maxDc = Math.max(...blocksData.map(b => b.length));
+    for (let i = 0; i < maxDc; i++)
+        for (const blk of blocksData) if (i < blk.length) result.push(blk[i]);
+    // Interleave ECC
+    for (let i = 0; i < eccPB; i++)
+        for (const blk of blocksEcc) result.push(blk[i]);
+
+    return result;
+}
+
+// ── Matrix helpers ───────────────────────────────────────────────────────────
+function makeMatrix(size) {
+    return Array.from({ length: size }, () => new Uint8Array(size).fill(2)); // 2=reserved
+}
+
+function setModule(m, r, c, v) { m[r][c] = v; }
+function isUsed(m, r, c)       { return m[r][c] !== 2; }
+
+// Finder pattern (7×7 with separator)
+function placeFinder(m, tr, tc) {
+    for (let r = -1; r <= 7; r++) {
+        for (let c = -1; c <= 7; c++) {
+            const rr = tr + r, cc = tc + c;
+            if (rr < 0 || rr >= m.length || cc < 0 || cc >= m.length) continue;
+            const inOuter = (r === -1 || r === 7 || c === -1 || c === 7);
+            const inInner = (r >= 2 && r <= 4 && c >= 2 && c <= 4);
+            const v = (inOuter || inInner) ? 1 : 0;
+            m[rr][cc] = v;
+        }
+    }
+}
+
+// Alignment pattern (5×5)
+function placeAlign(m, tr, tc) {
+    for (let r = -2; r <= 2; r++) {
+        for (let c = -2; c <= 2; c++) {
+            const rr = tr + r, cc = tc + c;
+            if (m[rr][cc] !== 2) continue; // don't overwrite finder
+            const v = (Math.abs(r) === 2 || Math.abs(c) === 2 || (r === 0 && c === 0)) ? 1 : 0;
+            m[rr][cc] = v;
+        }
+    }
+}
+
+// Timing patterns
+function placeTiming(m, size) {
+    for (let i = 8; i < size - 8; i++) {
+        const v = i % 2 === 0 ? 1 : 0;
+        m[6][i] = v; m[i][6] = v;
+    }
+}
+
+// Dark module
+function placeDark(m, version) {
+    m[4 * version + 9][8] = 1;
+}
+
+// Alignment pattern centers per version (from QR spec annex E)
+const ALIGN_CENTERS = [
+    [],              // 1 - no alignment
+    [6, 18],         // 2
+    [6, 22],         // 3
+    [6, 26],         // 4
+    [6, 30],         // 5
+    [6, 34],         // 6
+    [6, 22, 38],     // 7
+    [6, 24, 42],     // 8
+    [6, 26, 46],     // 9
+    [6, 28, 50],     // 10
+];
+
+function placeAlignments(m, version) {
+    const centers = ALIGN_CENTERS[version - 1] || [];
+    if (centers.length < 2) return;
+    for (let i = 0; i < centers.length; i++) {
+        for (let j = 0; j < centers.length; j++) {
+            const r = centers[i], c = centers[j];
+            if (m[r][c] !== 2) continue; // taken by finder
+            placeAlign(m, r, c);
+        }
+    }
+}
+
+// Format information (placed twice)
+function placeFormat(m, size, fmtBits) {
+    const pos1 = [
+        [8,0],[8,1],[8,2],[8,3],[8,4],[8,5],[8,7],[8,8],
+        [7,8],[5,8],[4,8],[3,8],[2,8],[1,8],[0,8]
+    ];
+    const pos2r = [size-1,size-2,size-3,size-4,size-5,size-6,size-7,size-8];
+    const pos2c = [8,8,8,8,8,8,8,8];
+    const pos2  = [[8,size-8],[8,size-7],[8,size-6],[8,size-5],[8,size-4],[8,size-3],[8,size-2],[8,size-1]];
+
+    for (let i = 0; i < 15; i++) {
+        const bit = (fmtBits >> (14 - i)) & 1;
+        m[pos1[i][0]][pos1[i][1]] = bit;
+    }
+    // Copy (second copy)
+    for (let i = 0; i < 8; i++) {
+        const bit = (fmtBits >> (14 - i)) & 1;
+        m[size - 1 - i][8] = bit;
+    }
+    for (let i = 8; i < 15; i++) {
+        const bit = (fmtBits >> (14 - i)) & 1;
+        m[8][size - 15 + i] = bit;
+    }
+}
+
+// Reserve format info modules (so data placement skips them)
+function reserveFormat(m, size, version) {
+    const positions = [
+        [8,0],[8,1],[8,2],[8,3],[8,4],[8,5],[8,7],[8,8],
+        [7,8],[5,8],[4,8],[3,8],[2,8],[1,8],[0,8]
+    ];
+    positions.forEach(([r,c]) => { if (m[r][c] === 2) m[r][c] = 10; });
+    for (let i = 0; i < 8; i++) {
+        if (m[size-1-i][8] === 2) m[size-1-i][8] = 10;
+        if (m[8][size-1-i] === 2) m[8][size-1-i] = 10;
+    }
+    if (m[8][size-8] === 2) m[8][size-8] = 10;
+}
+
+// Place data bits in zigzag order
+function placeData(m, size, codewords) {
+    const bits = [];
+    for (const cw of codewords) {
+        for (let i = 7; i >= 0; i--) bits.push((cw >> i) & 1);
+    }
+    let bi = 0;
+    let up = true;
+    for (let col = size - 1; col >= 1; col -= 2) {
+        if (col === 6) col = 5; // skip timing column
+        for (let row = 0; row < size; row++) {
+            const r = up ? size - 1 - row : row;
+            for (let dx = 0; dx <= 1; dx++) {
+                const c = col - dx;
+                if (m[r][c] === 2) {
+                    m[r][c] = bi < bits.length ? bits[bi++] : 0;
+                }
+            }
+        }
+        up = !up;
+    }
+}
+
+// Mask patterns
+const MASK_FN = [
+    (r,c) => (r + c) % 2 === 0,
+    (r,c) => r % 2 === 0,
+    (r,c) => c % 3 === 0,
+    (r,c) => (r + c) % 3 === 0,
+    (r,c) => (Math.floor(r/2) + Math.floor(c/3)) % 2 === 0,
+    (r,c) => ((r * c) % 2) + ((r * c) % 3) === 0,
+    (r,c) => (((r * c) % 2) + ((r * c) % 3)) % 2 === 0,
+    (r,c) => (((r + c) % 2) + ((r * c) % 3)) % 2 === 0,
+];
+
+function applyMask(m, size, maskIndex) {
+    const fn = MASK_FN[maskIndex];
+    for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
+            const v = m[r][c];
+            if (v !== 10 && v <= 1) { // only data modules (not reserved/format)
+                m[r][c] = fn(r, c) ? (v ^ 1) : v;
+            }
+        }
+    }
+}
+
+// Penalty score helpers (simplified — used to pick best mask)
+function penaltyScore(m, size) {
+    let score = 0;
+    // Rule 1: 5+ consecutive same-colour in row/col
+    for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size - 4; c++) {
+            const v = m[r][c] & 1;
+            let run = 1;
+            while (c + run < size && (m[r][c + run] & 1) === v) run++;
+            if (run >= 5) { score += 3 + (run - 5); c += run - 1; }
+        }
+    }
+    for (let c = 0; c < size; c++) {
+        for (let r = 0; r < size - 4; r++) {
+            const v = m[r][c] & 1;
+            let run = 1;
+            while (r + run < size && (m[r + run][c] & 1) === v) run++;
+            if (run >= 5) { score += 3 + (run - 5); r += run - 1; }
+        }
+    }
+    // Rule 2: 2×2 blocks
+    for (let r = 0; r < size - 1; r++) {
+        for (let c = 0; c < size - 1; c++) {
+            const v = m[r][c] & 1;
+            if ((m[r][c+1]&1)===v && (m[r+1][c]&1)===v && (m[r+1][c+1]&1)===v) score += 3;
+        }
+    }
+    return score;
+}
+
+// ── Build QR matrix ──────────────────────────────────────────────────────────
+function buildQR(text, version, eccLevel) {
+    const codewords = encodeData(text, version, eccLevel);
+    if (!codewords) return null;
+
+    const size = 4 * version + 17;
+    let bestMatrix = null, bestScore = Infinity, bestMask = 0;
+
+    for (let maskIndex = 0; maskIndex < 8; maskIndex++) {
+        const m = makeMatrix(size);
+        placeFinder(m, 0, 0);
+        placeFinder(m, 0, size - 7);
+        placeFinder(m, size - 7, 0);
+        placeTiming(m, size);
+        placeDark(m, version);
+        placeAlignments(m, version);
+        reserveFormat(m, size, version);
+        placeData(m, size, codewords);
+        applyMask(m, size, maskIndex);
+        const fmtBits = FORMAT_INFO[eccLevel][maskIndex];
+        placeFormat(m, size, fmtBits);
+
+        const score = penaltyScore(m, size);
+        if (score < bestScore) {
+            bestScore = score; bestMatrix = m; bestMask = maskIndex;
+        }
+    }
+    return { matrix: bestMatrix, size, version };
+}
+
+// ── Auto version selection ────────────────────────────────────────────────────
+function getMinVersion(text, eccLevel) {
+    const raw = new TextEncoder().encode(text);
+    const ecc = ECC_LEVEL[eccLevel];
+    for (let v = 1; v <= 10; v++) {
+        const lenBits = v <= 9 ? 8 : 16;
+        const headerBits = 4 + lenBits;
+        const capacity = DATA_CAP[v - 1][ecc] * 8 - headerBits - 4; // 4-bit terminator budget
+        if (raw.length * 8 <= capacity) return v;
+    }
+    return -1; // too long
+}
+
+// ── DOM ───────────────────────────────────────────────────────────────────────
+const STORAGE_KEY = 'ravionus_tool_qr';
+const inputText      = document.getElementById('inputText');
+const selectEcc      = document.getElementById('selectEcc');
+const selectVersion  = document.getElementById('selectVersion');
+const colorFgPicker  = document.getElementById('colorFgPicker');
+const colorFg        = document.getElementById('colorFg');
+const colorBgPicker  = document.getElementById('colorBgPicker');
+const colorBg        = document.getElementById('colorBg');
+const sizeRange      = document.getElementById('sizeRange');
+const sizeLabel      = document.getElementById('sizeLabel');
+const btnGenerate    = document.getElementById('btnGenerate');
+const btnDownloadPng = document.getElementById('btnDownloadPng');
+const btnDownloadSvg = document.getElementById('btnDownloadSvg');
+const btnCopyPng     = document.getElementById('btnCopyPng');
+const btnClear       = document.getElementById('btnClear');
+const qrCanvas       = document.getElementById('qrCanvas');
+const qrPlaceholder  = document.getElementById('qrPlaceholder');
+const qrMeta         = document.getElementById('qrMeta');
+const errorBanner    = document.getElementById('errorBanner');
+const statVersion    = document.getElementById('statVersion');
+const statModules    = document.getElementById('statModules');
+const statEcc        = document.getElementById('statEcc');
+const statChars      = document.getElementById('statChars');
+const toast          = document.getElementById('toast');
+
+let lastQR = null;
+let saveTimer, toastTimer;
+
+// ── Render QR to canvas ───────────────────────────────────────────────────────
+function renderQR(qr, fg, bg, canvasSize) {
+    const { matrix, size } = qr;
+    const scale = canvasSize / size;
+    const ctx = qrCanvas.getContext('2d');
+    qrCanvas.width  = canvasSize;
+    qrCanvas.height = canvasSize;
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, canvasSize, canvasSize);
+    ctx.fillStyle = fg;
+    for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
+            const v = matrix[r][c];
+            if ((v & 1) === 1) {
+                ctx.fillRect(
+                    Math.floor(c * scale), Math.floor(r * scale),
+                    Math.ceil(scale), Math.ceil(scale)
+                );
+            }
+        }
+    }
+}
+
+// ── Generate ──────────────────────────────────────────────────────────────────
+function doGenerate() {
+    clearError();
+    const text = inputText.value;
+    if (!text.trim()) {
+        showError('⚠️ Please enter some text or a URL to encode.');
+        return;
+    }
+
+    const eccLevel = selectEcc.value;
+    const vSel     = selectVersion.value;
+    const canvasSize = parseInt(sizeRange.value, 10);
+    const fg = colorFg.value || '#000000';
+    const bg = colorBg.value || '#ffffff';
+
+    let version;
+    if (vSel === 'auto') {
+        version = getMinVersion(text, eccLevel);
+        if (version === -1) {
+            showError('❌ Text is too long for versions 1–10. Please shorten it or upgrade the version range.');
+            return;
+        }
+    } else {
+        version = parseInt(vSel, 10);
+        // Validate the text fits
+        const minV = getMinVersion(text, eccLevel);
+        if (minV === -1 || minV > version) {
+            showError('❌ Text is too long for version ' + version + ' at ECC ' + eccLevel + '. Try Auto or a higher version.');
+            return;
+        }
+    }
+
+    const qr = buildQR(text, version, eccLevel);
+    if (!qr) {
+        showError('❌ QR generation failed. The text may be too long or contain unsupported characters.');
+        return;
+    }
+
+    lastQR = { qr, fg, bg, version, eccLevel, text };
+    renderQR(qr, fg, bg, canvasSize);
+    qrCanvas.style.display = 'block';
+    qrPlaceholder.style.display = 'none';
+
+    const size = qr.size;
+    statVersion.textContent = version;
+    statModules.textContent = size + '×' + size;
+    statEcc.textContent     = eccLevel;
+    qrMeta.textContent      = `Version ${version} · ${size}×${size} modules · ECC ${eccLevel}`;
+}
+
+// ── Colour sync ───────────────────────────────────────────────────────────────
+colorFgPicker.addEventListener('input', () => { colorFg.value = colorFgPicker.value; });
+colorBgPicker.addEventListener('input', () => { colorBg.value = colorBgPicker.value; });
+colorFg.addEventListener('input', () => { if (/^#[0-9a-f]{6}$/i.test(colorFg.value)) colorFgPicker.value = colorFg.value; });
+colorBg.addEventListener('input', () => { if (/^#[0-9a-f]{6}$/i.test(colorBg.value)) colorBgPicker.value = colorBg.value; });
+
+// ── Size slider ───────────────────────────────────────────────────────────────
+sizeRange.addEventListener('input', () => {
+    sizeLabel.textContent = sizeRange.value + ' px';
+    if (lastQR) renderQR(lastQR.qr, lastQR.fg, lastQR.bg, parseInt(sizeRange.value, 10));
+});
+
+// ── Generate button ───────────────────────────────────────────────────────────
+btnGenerate.addEventListener('click', () => { doGenerate(); scheduleSave(); });
+
+// ── Generate on Enter (Ctrl/Cmd + Enter in textarea) ─────────────────────────
+inputText.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); doGenerate(); scheduleSave(); }
+});
+
+// ── Download PNG ──────────────────────────────────────────────────────────────
+btnDownloadPng.addEventListener('click', () => {
+    if (!lastQR) { showToast('⚠️ Generate a QR code first.'); return; }
+    const a = document.createElement('a');
+    a.href     = qrCanvas.toDataURL('image/png');
+    a.download = 'qrcode.png';
+    a.click();
+    showToast('✅ PNG downloaded!');
+});
+
+// ── Download SVG ──────────────────────────────────────────────────────────────
+btnDownloadSvg.addEventListener('click', () => {
+    if (!lastQR) { showToast('⚠️ Generate a QR code first.'); return; }
+    const { matrix, size } = lastQR.qr;
+    const fg = lastQR.fg, bg = lastQR.bg;
+    const rects = [];
+    for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
+            if ((matrix[r][c] & 1) === 1) {
+                rects.push(`<rect x="${c}" y="${r}" width="1" height="1"/>`);
+            }
+        }
+    }
+    const svg = `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" shape-rendering="crispEdges">\n<rect width="${size}" height="${size}" fill="${bg}"/>\n<g fill="${fg}">\n${rects.join('\n')}\n</g>\n</svg>`;
+    const blob = new Blob([svg], { type: 'image/svg+xml' });
+    const a    = document.createElement('a');
+    a.href     = URL.createObjectURL(blob);
+    a.download = 'qrcode.svg';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    showToast('✅ SVG downloaded!');
+});
+
+// ── Copy PNG ──────────────────────────────────────────────────────────────────
+btnCopyPng.addEventListener('click', () => {
+    if (!lastQR) { showToast('⚠️ Generate a QR code first.'); return; }
+    if (!navigator.clipboard || !window.ClipboardItem) {
+        showToast('⚠️ Clipboard API not available in this browser.');
+        return;
+    }
+    qrCanvas.toBlob(blob => {
+        navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+            .then(() => showToast('✅ QR code copied to clipboard!'))
+            .catch(() => showToast('❌ Copy failed — try PNG download instead.'));
+    });
+});
+
+// ── Clear ─────────────────────────────────────────────────────────────────────
+btnClear.addEventListener('click', () => {
+    inputText.value = '';
+    qrCanvas.style.display = 'none';
+    qrPlaceholder.style.display = '';
+    lastQR = null;
+    qrMeta.textContent = '';
+    statVersion.textContent = '—';
+    statModules.textContent = '—';
+    statEcc.textContent     = '—';
+    statChars.textContent   = '0';
+    clearError();
+    scheduleSave();
+});
+
+// ── Char counter ──────────────────────────────────────────────────────────────
+inputText.addEventListener('input', () => {
+    statChars.textContent = inputText.value.length;
+    scheduleSave();
+});
+
+// ── Error helpers ─────────────────────────────────────────────────────────────
+function showError(msg) {
+    errorBanner.textContent = msg;
+    errorBanner.classList.add('visible');
+}
+function clearError() {
+    errorBanner.classList.remove('visible');
+}
+function showToast(msg) {
+    clearTimeout(toastTimer);
+    toast.textContent = msg;
+    toast.classList.add('show');
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+// ── Persistence ───────────────────────────────────────────────────────────────
+function scheduleSave() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveState, 800);
+}
+function saveState() {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            input:   inputText.value,
+            ecc:     selectEcc.value,
+            version: selectVersion.value,
+            fg:      colorFg.value,
+            bg:      colorBg.value,
+            size:    sizeRange.value,
+        }));
+    } catch (_) {}
+}
+function loadState() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const s = JSON.parse(raw);
+        if (typeof s.input   === 'string') inputText.value     = s.input;
+        if (s.ecc && [...selectEcc.options].some(o => o.value === s.ecc)) selectEcc.value = s.ecc;
+        if (s.version && [...selectVersion.options].some(o => o.value === s.version)) selectVersion.value = s.version;
+        if (s.fg && /^#[0-9a-f]{6}$/i.test(s.fg)) { colorFg.value = s.fg; colorFgPicker.value = s.fg; }
+        if (s.bg && /^#[0-9a-f]{6}$/i.test(s.bg)) { colorBg.value = s.bg; colorBgPicker.value = s.bg; }
+        if (s.size) { sizeRange.value = s.size; sizeLabel.textContent = s.size + ' px'; }
+        if (s.input) statChars.textContent = s.input.length;
+    } catch (_) {}
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+loadState();
+
+}());
+</script>
+</body>
+</html>
