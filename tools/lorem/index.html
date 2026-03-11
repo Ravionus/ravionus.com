@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+    <title>Lorem Ipsum Generator — Ravionus Dev Tools</title>
+    <meta name="description" content="Generate lorem ipsum placeholder text by paragraphs, sentences, or words with optional HTML tags. No server, no sign-up.">
+    <link rel="canonical" href="https://ravionus.com/tools/lorem/">
+    <meta property="og:title" content="Lorem Ipsum Generator — Ravionus Dev Tools">
+    <meta property="og:description" content="Generate lorem ipsum placeholder text by paragraphs, sentences, or words with optional HTML tags. No server, no sign-up.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ravionus.com/tools/lorem/">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none';">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0a0f;     --surface: #12121a;   --surface2: #0e0e16;
+            --border: #1e1e2e; --border2: #2a2a3e;
+            --text: #e2e2f0;   --muted: #7878a0;
+            --purple: #a855f7; --cyan: #22d3ee;
+            --green: #22c55e;  --red: #ef4444;
+            --accent-g: linear-gradient(135deg, #a855f7, #22d3ee);
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Nav ── */
+        nav {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+        nav a { color: var(--muted); text-decoration: none; transition: color 0.15s; }
+        nav a:hover { color: var(--text); }
+        .nav-sep { color: var(--border2); }
+        .nav-links { margin-left: auto; display: flex; gap: 16px; }
+        .nav-links a { font-size: 0.8rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+        .nav-links a:hover { color: var(--cyan); }
+
+        /* ── Page Header ── */
+        .page-header {
+            padding: 24px 20px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .page-header h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            background: var(--accent-g);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 6px;
+        }
+        .page-header p {
+            color: var(--muted);
+            font-size: 0.875rem;
+            max-width: 640px;
+        }
+
+        /* ── Toolbar ── */
+        .toolbar {
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface2);
+        }
+        .tb-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            border: 1px solid var(--border2);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text);
+            font-size: 0.82rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s, color 0.15s;
+            font-family: inherit;
+        }
+        .tb-btn:hover { background: var(--surface); }
+        .tb-btn.primary {
+            background: linear-gradient(135deg, #a855f7, #7c3aed);
+            border-color: transparent;
+            color: #fff;
+        }
+        .tb-btn.primary:hover { opacity: 0.9; }
+        .tb-btn.danger { color: var(--red); border-color: rgba(239,68,68,0.3); }
+        .tb-btn.danger:hover { background: rgba(239,68,68,0.1); }
+        .tb-sep { width: 1px; height: 24px; background: var(--border); margin: 0 4px; }
+        .tb-spacer { flex: 1; }
+
+        button:focus-visible, .tb-btn:focus-visible, .mob-tab:focus-visible {
+            outline: 2px solid var(--cyan);
+            outline-offset: 2px;
+        }
+
+        /* ── Main Layout ── */
+        .editor-layout {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+            height: calc(100vh - 230px);
+        }
+
+        /* ── Pane ── */
+        .pane {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+        }
+        .pane-header {
+            padding: 8px 14px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface2);
+            flex-shrink: 0;
+        }
+        .pane-divider {
+            width: 4px;
+            background: var(--border);
+            flex-shrink: 0;
+        }
+
+        /* ── Settings Pane ── */
+        .settings-body {
+            padding: 18px 16px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .setting-group { margin-bottom: 22px; }
+        .setting-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 10px;
+        }
+
+        /* Radio options */
+        .radio-group { display: flex; flex-direction: column; gap: 6px; }
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: border-color 0.15s, background 0.15s;
+        }
+        .radio-option:hover { border-color: var(--border2); background: var(--surface); }
+        .radio-option.selected {
+            border-color: var(--purple);
+            background: rgba(168,85,247,0.08);
+        }
+        .radio-option input[type=radio] {
+            accent-color: var(--purple);
+            width: 15px; height: 15px;
+            cursor: pointer; flex-shrink: 0;
+        }
+        .opt-label { font-size: 0.875rem; font-weight: 500; flex: 1; }
+        .opt-example { font-size: 0.72rem; color: var(--muted); }
+
+        /* Count row */
+        .count-row { display: flex; align-items: center; gap: 12px; }
+        .count-input {
+            width: 84px;
+            padding: 7px 10px;
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            border-radius: 6px;
+            color: var(--text);
+            font-family: var(--font-mono);
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-align: center;
+        }
+        .count-input:focus {
+            outline: 2px solid var(--cyan);
+            outline-offset: 2px;
+            border-color: var(--cyan);
+        }
+        .count-unit { color: var(--muted); font-size: 0.875rem; }
+        .count-hint { font-size: 0.72rem; color: var(--muted); margin-top: 6px; }
+
+        /* Toggle rows */
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: border-color 0.15s, background 0.15s;
+        }
+        .toggle-row:hover { border-color: var(--border2); background: var(--surface); }
+        .toggle-row.checked {
+            border-color: var(--purple);
+            background: rgba(168,85,247,0.08);
+        }
+        .toggle-row input[type=checkbox] {
+            accent-color: var(--purple);
+            width: 15px; height: 15px;
+            cursor: pointer; flex-shrink: 0;
+        }
+        .toggle-group { display: flex; flex-direction: column; gap: 6px; }
+
+        /* ── Output Pane ── */
+        .output-body { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+        #outputArea {
+            flex: 1;
+            width: 100%;
+            resize: none;
+            background: var(--surface2);
+            border: none;
+            outline: none;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            line-height: 1.7;
+            padding: 16px;
+            overflow-y: auto;
+        }
+        #outputArea::placeholder { color: var(--muted); }
+        .output-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            color: var(--muted);
+            gap: 12px;
+            padding: 24px;
+        }
+        .output-placeholder .ph-icon { font-size: 2.5rem; opacity: 0.4; }
+        .output-placeholder .ph-text { font-size: 0.875rem; }
+
+        /* ── Status Bar ── */
+        .status-bar {
+            padding: 6px 16px;
+            display: flex;
+            gap: 20px;
+            font-size: 0.75rem;
+            color: var(--muted);
+            border-top: 1px solid var(--border);
+            background: var(--surface2);
+            flex-wrap: wrap;
+        }
+        .stat { display: flex; align-items: center; gap: 5px; }
+        .stat-val { color: var(--cyan); font-weight: 600; font-family: var(--font-mono); }
+
+        /* ── Toast ── */
+        #toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            border-radius: 8px;
+            padding: 10px 18px;
+            font-size: 0.85rem;
+            color: var(--text);
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity 0.2s, transform 0.2s;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        #toast.show { opacity: 1; transform: translateY(0); }
+
+        /* ── Mobile Tabs ── */
+        .mobile-tabs { display: none; border-bottom: 1px solid var(--border); }
+        .mob-tab {
+            flex: 1;
+            padding: 10px;
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: inherit;
+            border-bottom: 2px solid transparent;
+            transition: color 0.15s, border-color 0.15s;
+        }
+        .mob-tab.active { color: var(--purple); border-bottom-color: var(--purple); }
+
+        @media (max-width: 700px) {
+            .mobile-tabs { display: flex; }
+            .editor-layout { height: auto; flex-direction: column; }
+            .pane { display: none; }
+            .pane.mob-visible { display: flex; min-height: 400px; }
+            .pane-divider { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a href="../../">Ravionus</a>
+        <span class="nav-sep">›</span>
+        <a href="../../tools/">Dev Tools</a>
+        <span class="nav-sep">›</span>
+        <span>Lorem Ipsum Generator</span>
+        <div class="nav-links">
+            <a href="../../learn/">✨ Learn</a>
+            <a href="../../tools/">🛠️ Tools</a>
+            <a href="../../playground/">🧪 Playgrounds</a>
+        </div>
+    </nav>
+
+    <header class="page-header">
+        <h1>📄 Lorem Ipsum Generator</h1>
+        <p>Generate classic lorem ipsum placeholder text by paragraphs, sentences, or words. Optionally wrap output in HTML paragraph tags for direct use in templates. Everything runs in your browser — no data leaves your device.</p>
+    </header>
+
+    <div class="toolbar">
+        <button class="tb-btn primary" id="btnGenerate">⚡ Generate</button>
+        <button class="tb-btn" id="btnCopy">📋 Copy</button>
+        <div class="tb-sep"></div>
+        <button class="tb-btn" id="btnDownload">⬇️ Download</button>
+        <div class="tb-spacer"></div>
+        <button class="tb-btn danger" id="btnClear">🗑 Clear</button>
+    </div>
+
+    <div class="mobile-tabs">
+        <button class="mob-tab active" id="tabSettings">⚙️ Settings</button>
+        <button class="mob-tab" id="tabOutput">📤 Output</button>
+    </div>
+
+    <div class="editor-layout">
+
+        <!-- Settings pane -->
+        <div class="pane mob-visible" id="paneSettings">
+            <div class="pane-header">Settings</div>
+            <div class="settings-body">
+
+                <!-- Unit -->
+                <div class="setting-group">
+                    <div class="setting-label">Generate by</div>
+                    <div class="radio-group" id="unitGroup">
+                        <label class="radio-option selected">
+                            <input type="radio" name="loremUnit" value="paragraphs" checked>
+                            <span class="opt-label">Paragraphs</span>
+                            <span class="opt-example">3–6 sentences each</span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="loremUnit" value="sentences">
+                            <span class="opt-label">Sentences</span>
+                            <span class="opt-example">8–20 words each</span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="loremUnit" value="words">
+                            <span class="opt-label">Words</span>
+                            <span class="opt-example">Space-separated</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Count -->
+                <div class="setting-group">
+                    <div class="setting-label">Count</div>
+                    <div class="count-row">
+                        <input type="number" id="countInput" class="count-input"
+                               value="3" min="1" max="100"
+                               aria-label="Number of units to generate">
+                        <span class="count-unit" id="countUnit">paragraphs</span>
+                    </div>
+                    <div class="count-hint" id="countHint">Between 1 and 20</div>
+                </div>
+
+                <!-- Options -->
+                <div class="setting-group">
+                    <div class="setting-label">Options</div>
+                    <div class="toggle-group">
+                        <label class="toggle-row checked" id="loremStartRow">
+                            <input type="checkbox" id="chkLoremStart" checked
+                                   aria-label="Start with Lorem ipsum dolor sit amet">
+                            <span class="opt-label">Start with "Lorem ipsum…"</span>
+                        </label>
+                        <label class="toggle-row" id="htmlTagsRow">
+                            <input type="checkbox" id="chkHtmlTags"
+                                   aria-label="Wrap paragraphs in HTML p tags">
+                            <span class="opt-label">Wrap in &lt;p&gt; tags</span>
+                        </label>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="pane-divider"></div>
+
+        <!-- Output pane -->
+        <div class="pane" id="paneOutput">
+            <div class="pane-header">Output</div>
+            <div class="output-body" id="outputBody">
+                <div class="output-placeholder" id="outputPlaceholder">
+                    <div class="ph-icon">📄</div>
+                    <div class="ph-text">Click ⚡ Generate to create placeholder text</div>
+                </div>
+                <textarea id="outputArea" style="display:none"
+                          aria-label="Generated lorem ipsum text"
+                          readonly></textarea>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="status-bar">
+        <span class="stat">Paragraphs: <span class="stat-val" id="statParas">0</span></span>
+        <span class="stat">Sentences: <span class="stat-val" id="statSents">0</span></span>
+        <span class="stat">Words: <span class="stat-val" id="statWords">0</span></span>
+        <span class="stat">Characters: <span class="stat-val" id="statChars">0</span></span>
+    </div>
+
+    <div id="toast" aria-live="polite"></div>
+
+    <script>
+    (function () {
+        'use strict';
+
+        const STORAGE_KEY = 'ravionus_tool_lorem';
+
+        // ── Lorem ipsum word pool ─────────────────────────────────────────────
+        // Classic lorem ipsum corpus split into distinct words
+        const WORDS = (
+            'lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor ' +
+            'incididunt ut labore et dolore magna aliqua enim ad minim veniam quis nostrud ' +
+            'exercitation ullamco laboris nisi aliquip ex ea commodo consequat duis aute ' +
+            'irure reprehenderit voluptate velit esse cillum eu fugiat nulla pariatur excepteur ' +
+            'sint occaecat cupidatat non proident culpa qui officia deserunt mollit anim id est ' +
+            'laborum sed perspiciatis unde omnis natus error rem aperiam eaque ipsa quae ab illo ' +
+            'inventore veritatis quasi architecto beatae vitae dicta sunt explicabo nemo ipsam ' +
+            'quia voluptas aspernatur aut odit fugit magni dolores ratione sequi nesciunt neque ' +
+            'porro quisquam dolorem adipisci velit numquam eius modi tempora incidunt labore ' +
+            'dolorem magnam quaerat etiam tenetur sapiente delectus reiciendis voluptatum ' +
+            'maiores alias perferendis doloribus asperiores repellat provident similique ' +
+            'dignissimos blanditiis praesentium voluptatum deleniti atque corrupti quos dolores ' +
+            'quas molestias excepturi occaecati cupiditate provident similique sunt in culpa ' +
+            'quid maxime placeat facere possimus omnis voluptas assumenda repudiandae ' +
+            'temporibus autem quibusdam officiis debitis rerum necessitatibus saepe eveniet ' +
+            'voluptates repudiandae recusandae itaque earum hic tenetur sapiente delectus '
+        ).trim().split(/\s+/);
+
+        // First sentence of classic lorem ipsum
+        const LOREM_START = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.';
+
+        // ── Elements ──────────────────────────────────────────────────────────
+        const countInput        = document.getElementById('countInput');
+        const countUnit         = document.getElementById('countUnit');
+        const countHint         = document.getElementById('countHint');
+        const chkLoremStart     = document.getElementById('chkLoremStart');
+        const loremStartRow     = document.getElementById('loremStartRow');
+        const chkHtmlTags       = document.getElementById('chkHtmlTags');
+        const htmlTagsRow       = document.getElementById('htmlTagsRow');
+        const btnGenerate       = document.getElementById('btnGenerate');
+        const btnCopy           = document.getElementById('btnCopy');
+        const btnDownload       = document.getElementById('btnDownload');
+        const btnClear          = document.getElementById('btnClear');
+        const outputPlaceholder = document.getElementById('outputPlaceholder');
+        const outputArea        = document.getElementById('outputArea');
+        const statParas         = document.getElementById('statParas');
+        const statSents         = document.getElementById('statSents');
+        const statWords         = document.getElementById('statWords');
+        const statChars         = document.getElementById('statChars');
+        const toast             = document.getElementById('toast');
+        const tabSettings       = document.getElementById('tabSettings');
+        const tabOutput         = document.getElementById('tabOutput');
+        const paneSettings      = document.getElementById('paneSettings');
+        const paneOutput        = document.getElementById('paneOutput');
+
+        let currentText  = '';
+        let toastTimer   = null;
+        let saveTimer    = null;
+
+        // ── Limits per unit ───────────────────────────────────────────────────
+        const LIMITS = {
+            paragraphs: { min: 1, max: 20 },
+            sentences:  { min: 1, max: 100 },
+            words:      { min: 1, max: 1000 }
+        };
+
+        // ── RNG helpers ───────────────────────────────────────────────────────
+        function randInt(min, max) {
+            // min inclusive, max inclusive
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function pickWord() {
+            return WORDS[Math.floor(Math.random() * WORDS.length)];
+        }
+
+        // ── Generate a sentence (8–20 words, capitalised, end with period) ────
+        function makeSentence(forceLoremStart) {
+            if (forceLoremStart) return LOREM_START;
+            const len = randInt(8, 20);
+            const words = [];
+            for (let i = 0; i < len; i++) words.push(pickWord());
+            words[0] = words[0].charAt(0).toUpperCase() + words[0].slice(1);
+            // Occasionally add a comma after the 3rd–5th word for variety
+            const commaPos = randInt(3, 5);
+            if (commaPos < words.length - 2) {
+                words[commaPos] = words[commaPos] + ',';
+            }
+            return words.join(' ') + '.';
+        }
+
+        // ── Generate a paragraph (3–6 sentences) ─────────────────────────────
+        function makeParagraph(forceLoremStart) {
+            const sentCount = randInt(3, 6);
+            const sentences = [];
+            for (let i = 0; i < sentCount; i++) {
+                sentences.push(makeSentence(forceLoremStart && i === 0));
+            }
+            return sentences.join(' ');
+        }
+
+        // ── Main generate ─────────────────────────────────────────────────────
+        function generate() {
+            const unit  = getUnit();
+            const count = getCount();
+            const startLorem = chkLoremStart.checked;
+            const htmlTags   = chkHtmlTags.checked;
+
+            let lines = [];
+
+            if (unit === 'paragraphs') {
+                for (let i = 0; i < count; i++) {
+                    const para = makeParagraph(startLorem && i === 0);
+                    lines.push(htmlTags ? '<p>' + para + '</p>' : para);
+                }
+                currentText = lines.join('\n\n');
+            } else if (unit === 'sentences') {
+                for (let i = 0; i < count; i++) {
+                    lines.push(makeSentence(startLorem && i === 0));
+                }
+                currentText = lines.join('\n');
+            } else {
+                // words
+                const words = [];
+                if (startLorem) {
+                    // prepend canonical lorem ipsum words
+                    const canonical = LOREM_START.replace(/[.,]/g, '').toLowerCase().split(' ');
+                    canonical.forEach(function (w) { if (words.length < count) words.push(w); });
+                }
+                while (words.length < count) words.push(pickWord());
+                currentText = words.join(' ');
+            }
+
+            showOutput(currentText);
+            updateStats(currentText, unit);
+            saveState();
+        }
+
+        // ── Show / hide output ────────────────────────────────────────────────
+        function showOutput(text) {
+            outputPlaceholder.style.display = 'none';
+            outputArea.style.display = 'block';
+            outputArea.value = text;
+        }
+
+        function clearOutput() {
+            currentText = '';
+            outputArea.style.display = 'none';
+            outputPlaceholder.style.display = '';
+            resetStats();
+            saveState();
+        }
+
+        // ── Stats ─────────────────────────────────────────────────────────────
+        function updateStats(text, unit) {
+            if (!text) { resetStats(); return; }
+            const cleanText = text.replace(/<\/?p>/g, '');
+            const words     = cleanText.trim().split(/\s+/).filter(Boolean);
+            // count paragraphs (blank-line separated) or single block
+            const paras     = unit === 'paragraphs'
+                ? text.split(/\n\n+/).filter(Boolean).length
+                : (unit === 'sentences' ? 0 : 0);
+            const sents     = (cleanText.match(/[.!?]+/g) || []).length;
+
+            statParas.textContent = String(paras);
+            statSents.textContent = String(sents);
+            statWords.textContent = String(words.length);
+            statChars.textContent = String(cleanText.replace(/\s/g, '').length);
+        }
+
+        function resetStats() {
+            statParas.textContent = '0';
+            statSents.textContent = '0';
+            statWords.textContent = '0';
+            statChars.textContent = '0';
+        }
+
+        // ── Accessors ─────────────────────────────────────────────────────────
+        function getUnit() {
+            return document.querySelector('input[name="loremUnit"]:checked')?.value || 'paragraphs';
+        }
+
+        function getCount() {
+            const unit = getUnit();
+            const lim  = LIMITS[unit];
+            let v = parseInt(countInput.value, 10);
+            if (isNaN(v) || v < lim.min) v = lim.min;
+            if (v > lim.max) v = lim.max;
+            return v;
+        }
+
+        // ── Toolbar ───────────────────────────────────────────────────────────
+        btnGenerate.addEventListener('click', generate);
+
+        btnCopy.addEventListener('click', async function () {
+            if (!currentText) { showToast('⚠️ Nothing to copy — generate first'); return; }
+            try {
+                await navigator.clipboard.writeText(currentText);
+                showToast('✅ Copied!');
+            } catch (_) {
+                showToast('❌ Copy failed — try selecting and pressing Ctrl+C');
+            }
+        });
+
+        btnDownload.addEventListener('click', function () {
+            if (!currentText) { showToast('⚠️ Nothing to download — generate first'); return; }
+            const ext  = chkHtmlTags.checked ? 'html' : 'txt';
+            const blob = new Blob([currentText], { type: 'text/plain' });
+            const url  = URL.createObjectURL(blob);
+            const a    = document.createElement('a');
+            a.href     = url;
+            a.download = 'lorem-ipsum-' + Date.now() + '.' + ext;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('✅ Downloaded!');
+        });
+
+        btnClear.addEventListener('click', function () {
+            clearOutput();
+            showToast('🗑 Cleared');
+        });
+
+        // ── Settings change ───────────────────────────────────────────────────
+        document.querySelectorAll('input[name="loremUnit"]').forEach(function (r) {
+            r.addEventListener('change', function () {
+                syncRadioStyles();
+                updateCountConstraints();
+                if (currentText) generate();
+                else scheduleSave();
+            });
+        });
+
+        chkLoremStart.addEventListener('change', function () {
+            loremStartRow.classList.toggle('checked', chkLoremStart.checked);
+            if (currentText) generate();
+            else scheduleSave();
+        });
+
+        chkHtmlTags.addEventListener('change', function () {
+            htmlTagsRow.classList.toggle('checked', chkHtmlTags.checked);
+            if (currentText) generate();
+            else scheduleSave();
+        });
+
+        countInput.addEventListener('change', function () {
+            const unit = getUnit();
+            const lim  = LIMITS[unit];
+            let v = parseInt(this.value, 10);
+            if (isNaN(v) || v < lim.min) v = lim.min;
+            if (v > lim.max) v = lim.max;
+            this.value = v;
+            scheduleSave();
+        });
+
+        function updateCountConstraints() {
+            const unit = getUnit();
+            const lim  = LIMITS[unit];
+            countUnit.textContent = unit;
+            countHint.textContent = 'Between ' + lim.min + ' and ' + lim.max;
+            let v = parseInt(countInput.value, 10);
+            if (isNaN(v) || v < lim.min) countInput.value = lim.min;
+            if (v > lim.max) countInput.value = lim.max;
+        }
+
+        function syncRadioStyles() {
+            document.querySelectorAll('input[name="loremUnit"]').forEach(function (r) {
+                r.closest('.radio-option').classList.toggle('selected', r.checked);
+            });
+        }
+
+        // ── Mobile tabs ───────────────────────────────────────────────────────
+        tabSettings.addEventListener('click', function () {
+            tabSettings.classList.add('active');
+            tabOutput.classList.remove('active');
+            paneSettings.classList.add('mob-visible');
+            paneOutput.classList.remove('mob-visible');
+        });
+        tabOutput.addEventListener('click', function () {
+            tabOutput.classList.add('active');
+            tabSettings.classList.remove('active');
+            paneOutput.classList.add('mob-visible');
+            paneSettings.classList.remove('mob-visible');
+        });
+
+        // ── Toast ─────────────────────────────────────────────────────────────
+        function showToast(msg) {
+            clearTimeout(toastTimer);
+            toast.textContent = msg;
+            toast.classList.add('show');
+            toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 2500);
+        }
+
+        // ── Persistence ───────────────────────────────────────────────────────
+        function scheduleSave() {
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(saveState, 800);
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                    unit:       getUnit(),
+                    count:      countInput.value,
+                    loremStart: chkLoremStart.checked,
+                    htmlTags:   chkHtmlTags.checked,
+                    text:       currentText
+                }));
+            } catch (_) {}
+        }
+
+        function restoreState() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return;
+                const s = JSON.parse(raw);
+                if (s.unit) {
+                    const r = document.querySelector('input[name="loremUnit"][value="' + s.unit + '"]');
+                    if (r) r.checked = true;
+                }
+                if (s.count !== undefined) countInput.value = s.count;
+                if (s.loremStart !== undefined) {
+                    chkLoremStart.checked = !!s.loremStart;
+                    loremStartRow.classList.toggle('checked', chkLoremStart.checked);
+                }
+                if (s.htmlTags !== undefined) {
+                    chkHtmlTags.checked = !!s.htmlTags;
+                    htmlTagsRow.classList.toggle('checked', chkHtmlTags.checked);
+                }
+                if (s.text) {
+                    currentText = s.text;
+                    showOutput(currentText);
+                    updateStats(currentText, s.unit || 'paragraphs');
+                }
+                syncRadioStyles();
+                updateCountConstraints();
+            } catch (_) {}
+        }
+
+        // ── Init ──────────────────────────────────────────────────────────────
+        restoreState();
+
+    }());
+    </script>
+</body>
+</html>
