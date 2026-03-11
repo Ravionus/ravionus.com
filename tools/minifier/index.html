@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+    <title>Minifier — Ravionus Dev Tools</title>
+    <meta name="description" content="Minify JavaScript, CSS, HTML, and JSON for production. Removes whitespace, comments, and redundant syntax. No server, no sign-up.">
+    <link rel="canonical" href="https://ravionus.com/tools/minifier/">
+    <meta property="og:title" content="Minifier — Ravionus Dev Tools">
+    <meta property="og:description" content="Minify JavaScript, CSS, HTML, and JSON for production. Removes whitespace, comments, and redundant syntax. No server, no sign-up.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ravionus.com/tools/minifier/">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none';">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0a0f;     --surface: #12121a;   --surface2: #0e0e16;
+            --border: #1e1e2e; --border2: #2a2a3e;
+            --text: #e2e2f0;   --muted: #7878a0;
+            --purple: #a855f7; --cyan: #22d3ee;
+            --green: #22c55e;  --red: #ef4444;
+            --accent-g: linear-gradient(135deg, #a855f7, #22d3ee);
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+        }
+
+        html, body { height: 100%; overflow: hidden; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Nav ── */
+        nav {
+            border-bottom: 1px solid var(--border);
+            background: rgba(10,10,15,.95);
+            backdrop-filter: blur(12px);
+            flex-shrink: 0;
+        }
+        .nav-inner {
+            padding: 0 20px; height: 52px;
+            display: flex; align-items: center; justify-content: space-between; gap: 12px;
+        }
+        .nav-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+        .nav-logo {
+            font-size: 1.1rem; font-weight: 800; text-decoration: none;
+            background: var(--accent-g); -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent; letter-spacing: -.5px; flex-shrink: 0;
+        }
+        .nav-sep { color: var(--border2); flex-shrink: 0; }
+        .nav-breadcrumb { font-size: .82rem; color: var(--muted); }
+        .nav-breadcrumb a { color: var(--muted); text-decoration: none; }
+        .nav-breadcrumb a:hover { color: var(--text); }
+        .nav-breadcrumb .current { color: var(--text); font-weight: 600; }
+        .nav-links { display: flex; gap: 4px; flex-shrink: 0; }
+        .nav-link {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 5px 10px; border-radius: 7px; font-size: .8rem; font-weight: 500;
+            text-decoration: none; color: var(--muted); transition: color .15s, background .15s;
+        }
+        .nav-link:hover { color: var(--text); background: rgba(255,255,255,.06); }
+
+        /* ── Page header ── */
+        .page-header {
+            padding: 18px 20px 14px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .page-header h1 {
+            font-size: 1.35rem; font-weight: 800; letter-spacing: -.5px;
+            background: var(--accent-g); -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent; margin-bottom: 5px;
+        }
+        .page-header p { font-size: .85rem; color: var(--muted); max-width: 680px; }
+
+        /* ── Toolbar ── */
+        .toolbar {
+            padding: 10px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; gap: 8px;
+            flex-shrink: 0; flex-wrap: wrap;
+        }
+        .tb-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 7px 14px; border-radius: 8px; border: none;
+            font-size: .82rem; font-weight: 600; font-family: inherit;
+            cursor: pointer; transition: opacity .15s, transform .1s;
+        }
+        .tb-btn:hover { opacity: .88; }
+        .tb-btn:active { transform: scale(.97); }
+        .tb-btn.primary { background: var(--purple); color: #fff; }
+        .tb-btn.secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border2); }
+        .tb-btn.danger { background: rgba(239,68,68,.15); color: var(--red); border: 1px solid rgba(239,68,68,.3); }
+        .tb-spacer { flex: 1; }
+
+        /* ── Language tabs ── */
+        .lang-tabs {
+            display: flex; gap: 4px; flex-wrap: wrap;
+        }
+        .lang-tab {
+            padding: 5px 12px; border-radius: 7px; border: 1px solid var(--border2);
+            font-size: .78rem; font-weight: 600; font-family: inherit;
+            background: var(--surface2); color: var(--muted);
+            cursor: pointer; transition: color .15s, background .15s, border-color .15s;
+        }
+        .lang-tab:hover { color: var(--text); }
+        .lang-tab.active {
+            background: rgba(168,85,247,.15); color: var(--purple); border-color: rgba(168,85,247,.4);
+        }
+
+        /* ── Editor layout ── */
+        .editor-layout {
+            display: flex; flex: 1; overflow: hidden;
+        }
+        .pane {
+            flex: 1; display: flex; flex-direction: column; overflow: hidden;
+        }
+        .pane-label {
+            padding: 8px 16px; font-size: .75rem; font-weight: 600; letter-spacing: .05em;
+            text-transform: uppercase; color: var(--muted);
+            border-bottom: 1px solid var(--border); background: var(--surface2);
+            flex-shrink: 0;
+        }
+        .pane-divider {
+            width: 3px; background: var(--border); flex-shrink: 0;
+        }
+        textarea {
+            flex: 1; padding: 14px 16px;
+            background: var(--surface2); color: var(--text);
+            border: none; outline: none; resize: none;
+            font-family: var(--font-mono); font-size: .85rem; line-height: 1.6;
+            tab-size: 2;
+        }
+        textarea:focus { background: var(--surface); }
+        textarea[readonly] { color: #b8c0d0; }
+        textarea::placeholder { color: var(--muted); }
+
+        /* ── Banners ── */
+        .error-banner, .success-banner {
+            display: none; padding: 8px 20px; font-size: .82rem; font-weight: 500;
+            flex-shrink: 0;
+        }
+        .error-banner.visible   { display: flex; align-items: center; gap: 8px; background: rgba(239,68,68,.1); color: var(--red); }
+        .success-banner.visible { display: flex; align-items: center; gap: 8px; background: rgba(34,197,94,.08); color: var(--green); }
+
+        /* ── Status bar ── */
+        .status-bar {
+            padding: 5px 20px;
+            border-top: 1px solid var(--border);
+            background: var(--surface2);
+            display: flex; gap: 20px; font-size: .75rem; color: var(--muted);
+            flex-shrink: 0; flex-wrap: wrap;
+        }
+        .status-item strong { color: var(--text); }
+        .saving-dot {
+            display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+            background: var(--green); margin-left: 4px; animation: pulse 1s ease-in-out infinite;
+        }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+        /* ── Toast ── */
+        #toast {
+            position: fixed; bottom: 24px; right: 24px;
+            padding: 10px 18px; border-radius: 10px; background: var(--surface);
+            border: 1px solid var(--border2); color: var(--text); font-size: .82rem; font-weight: 500;
+            box-shadow: 0 8px 32px rgba(0,0,0,.5);
+            opacity: 0; transform: translateY(8px); pointer-events: none;
+            transition: opacity .2s, transform .2s;
+        }
+        #toast.show { opacity: 1; transform: translateY(0); }
+
+        /* ── Focus-visible ── */
+        button:focus-visible, .tb-btn:focus-visible, .lang-tab:focus-visible {
+            outline: 2px solid var(--cyan); outline-offset: 2px;
+        }
+
+        /* ── Mobile ── */
+        .mobile-tabs { display: none; }
+        @media (max-width: 700px) {
+            html, body { height: auto; overflow: auto; }
+            .editor-layout { flex-direction: column; }
+            .pane-divider { width: auto; height: 3px; }
+            .pane { min-height: 240px; }
+
+            .mobile-tabs {
+                display: flex; border-bottom: 1px solid var(--border);
+                flex-shrink: 0;
+            }
+            .mob-tab {
+                flex: 1; padding: 10px; border: none; border-bottom: 2px solid transparent;
+                background: var(--surface2); color: var(--muted);
+                font-family: inherit; font-size: .82rem; font-weight: 600; cursor: pointer;
+                transition: color .15s, border-color .15s;
+            }
+            .mob-tab.active { color: var(--purple); border-bottom-color: var(--purple); }
+            .pane { display: none; }
+            .pane.mob-visible { display: flex; }
+
+            .mob-tab:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+            .status-bar { gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ── Nav ──────────────────────────────────────────────────────────────── -->
+<nav>
+    <div class="nav-inner">
+        <div class="nav-left">
+            <a href="../../" class="nav-logo">Ravionus</a>
+            <span class="nav-sep">›</span>
+            <span class="nav-breadcrumb">
+                <a href="../../tools/">Dev Tools</a>
+                <span class="nav-sep"> › </span>
+                <span class="current">Minifier</span>
+            </span>
+        </div>
+        <div class="nav-links" role="navigation" aria-label="Site navigation">
+            <a href="../../learn/" class="nav-link">✨ Learn</a>
+            <a href="../../tools/" class="nav-link">🛠️ Tools</a>
+            <a href="../../playground/" class="nav-link">🧪 Playgrounds</a>
+        </div>
+    </div>
+</nav>
+
+<!-- ── Page header ──────────────────────────────────────────────────────── -->
+<header class="page-header">
+    <h1>📦 Minifier</h1>
+    <p>Minify JavaScript, CSS, HTML, and JSON for production. Strips comments, whitespace, and redundant syntax to shrink file size. All processing runs in your browser — no data leaves your device.</p>
+</header>
+
+<!-- ── Toolbar ──────────────────────────────────────────────────────────── -->
+<div class="toolbar">
+    <!-- Language selector -->
+    <div class="lang-tabs" role="group" aria-label="Language">
+        <button class="lang-tab active" data-lang="json"  id="tabJson">JSON</button>
+        <button class="lang-tab"        data-lang="css"   id="tabCss">CSS</button>
+        <button class="lang-tab"        data-lang="html"  id="tabHtml">HTML</button>
+        <button class="lang-tab"        data-lang="js"    id="tabJs">JS</button>
+    </div>
+
+    <div class="tb-spacer"></div>
+
+    <button class="tb-btn primary" id="btnMinify">⚡ Minify</button>
+    <button class="tb-btn secondary" id="btnSample">📄 Sample</button>
+    <button class="tb-btn secondary" id="btnCopy">📋 Copy</button>
+    <button class="tb-btn secondary" id="btnDownload">💾 Download</button>
+    <button class="tb-btn danger"    id="btnClear">🗑 Clear</button>
+</div>
+
+<!-- ── Error / Success banners ──────────────────────────────────────────── -->
+<div class="error-banner"   id="errorBanner"   role="alert"></div>
+<div class="success-banner" id="successBanner" aria-live="polite"></div>
+
+<!-- ── Mobile tab switcher ──────────────────────────────────────────────── -->
+<div class="mobile-tabs">
+    <button class="mob-tab active" id="tabInput">📥 Input</button>
+    <button class="mob-tab"        id="tabOutput">📤 Output</button>
+</div>
+
+<!-- ── Editor layout ────────────────────────────────────────────────────── -->
+<div class="editor-layout">
+    <div class="pane mob-visible" id="paneInput">
+        <div class="pane-label">Input</div>
+        <textarea id="inputArea"
+                  aria-label="Source code to minify"
+                  placeholder='Paste your JSON, CSS, HTML, or JS here…'
+                  spellcheck="false"></textarea>
+    </div>
+    <div class="pane-divider"></div>
+    <div class="pane" id="paneOutput">
+        <div class="pane-label">Output — Minified</div>
+        <textarea id="outputArea"
+                  aria-label="Minified output"
+                  readonly
+                  placeholder="Minified result will appear here…"
+                  spellcheck="false"></textarea>
+    </div>
+</div>
+
+<!-- ── Status bar ───────────────────────────────────────────────────────── -->
+<div class="status-bar">
+    <span class="status-item">Language: <strong id="statLang">JSON</strong></span>
+    <span class="status-item">Input: <strong id="statIn">0 B</strong></span>
+    <span class="status-item">Output: <strong id="statOut">0 B</strong></span>
+    <span class="status-item">Saving: <strong id="statSaving">—</strong></span>
+</div>
+
+<!-- ── Toast ────────────────────────────────────────────────────────────── -->
+<div id="toast" aria-live="polite"></div>
+
+<script>
+(function () {
+    'use strict';
+
+    const STORAGE_KEY = 'ravionus_tool_minifier';
+
+    // ── DOM refs ─────────────────────────────────────────────────────────────
+    const inputArea    = document.getElementById('inputArea');
+    const outputArea   = document.getElementById('outputArea');
+    const errorBanner  = document.getElementById('errorBanner');
+    const successBanner= document.getElementById('successBanner');
+    const statLang     = document.getElementById('statLang');
+    const statIn       = document.getElementById('statIn');
+    const statOut      = document.getElementById('statOut');
+    const statSaving   = document.getElementById('statSaving');
+    const toast        = document.getElementById('toast');
+    const btnMinify    = document.getElementById('btnMinify');
+    const btnSample    = document.getElementById('btnSample');
+    const btnCopy      = document.getElementById('btnCopy');
+    const btnDownload  = document.getElementById('btnDownload');
+    const btnClear     = document.getElementById('btnClear');
+    const tabInput     = document.getElementById('tabInput');
+    const tabOutput    = document.getElementById('tabOutput');
+    const paneInput    = document.getElementById('paneInput');
+    const paneOutput   = document.getElementById('paneOutput');
+
+    let currentLang = 'json';
+    let saveTimer, toastTimer;
+
+    // ── Samples ──────────────────────────────────────────────────────────────
+    const SAMPLES = {
+        json: `{
+    "name": "my-app",
+    "version": "1.0.0",
+    "description": "A sample application",
+    "scripts": {
+        "start": "node index.js",
+        "test": "jest"
+    },
+    "dependencies": {
+        "express": "^4.18.0",
+        "lodash": "^4.17.21"
+    }
+}`,
+        css: `/* Main stylesheet */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
+    background-color: #ffffff;
+    color: #333333;
+}
+
+/* Header styles */
+header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    background: #0a0a0f;
+    border-bottom: 1px solid #1e1e2e;
+}
+
+h1,
+h2,
+h3 {
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+@media (max-width: 768px) {
+    header {
+        flex-direction: column;
+        gap: 12px;
+    }
+}`,
+        html: `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sample Page</title>
+    <!-- Main styles -->
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <!-- Header -->
+    <header>
+      <h1>Hello World</h1>
+      <nav>
+        <a href="/">Home</a>
+        <a href="/about">About</a>
+      </nav>
+    </header>
+    <!-- Main content -->
+    <main>
+      <p>This is a sample HTML page with some   extra   spaces and comments.</p>
+    </main>
+  </body>
+</html>`,
+        js: `// Utility functions
+function add(a, b) {
+    // Return sum
+    return a + b;
+}
+
+/**
+ * Greet a user by name.
+ * @param {string} name
+ */
+function greet(name) {
+    const message = "Hello, " + name + "!";
+    console.log(message);
+    return message;
+}
+
+/* Main entry point */
+const result = add(2, 3);
+console.log("Result:", result);
+greet("World");`
+    };
+
+    // ── Minifier logic ────────────────────────────────────────────────────────
+
+    /**
+     * Minify JSON: parse → re-stringify without whitespace.
+     */
+    function minifyJson(src) {
+        const parsed = JSON.parse(src); // throws on invalid JSON
+        return JSON.stringify(parsed);
+    }
+
+    /**
+     * Minify CSS: remove comments, collapse whitespace around structural chars.
+     */
+    function minifyCss(src) {
+        // Remove /* ... */ comments
+        let out = src.replace(/\/\*[\s\S]*?\*\//g, '');
+        // Collapse runs of whitespace (including newlines) to a single space
+        out = out.replace(/\s+/g, ' ');
+        // Remove spaces around structural chars: { } ; : , > + ~ ( )
+        out = out.replace(/\s*([{}:;,>+~()])\s*/g, '$1');
+        // Remove trailing semicolons before }
+        out = out.replace(/;}/g, '}');
+        // Remove leading whitespace
+        out = out.trim();
+        return out;
+    }
+
+    /**
+     * Minify HTML: strip comments, collapse whitespace between tags,
+     * collapse inline whitespace runs.
+     */
+    function minifyHtml(src) {
+        // Remove <!-- ... --> comments (but not IE conditionals <!--[if ...)
+        let out = src.replace(/<!--(?!\[if)[\s\S]*?-->/g, '');
+        // Collapse multiple whitespace (including newlines) between > and < to a single space
+        out = out.replace(/>\s+</g, '><');
+        // Collapse multiple spaces inside tags / text runs to a single space
+        out = out.replace(/[ \t]{2,}/g, ' ');
+        // Remove leading/trailing whitespace within attribute values is preserved intentionally.
+        // Trim the document
+        out = out.trim();
+        return out;
+    }
+
+    /**
+     * Minify JS: strip line and block comments, collapse whitespace,
+     * and remove newlines around operators/punctuation where safe.
+     *
+     * NOTE: This is a best-effort, regex-based minifier suitable for
+     * simple scripts. For production use with complex JS, a proper AST-
+     * based tool (Terser, esbuild) is recommended. The tool clearly labels
+     * output as "best-effort" when JS mode is selected.
+     */
+    function minifyJs(src) {
+        // Preserve string literals so we don't corrupt quoted content.
+        // We collect strings and replace them with placeholders.
+        const strings = [];
+        let out = src;
+
+        // Replace template literals, double-quoted, single-quoted strings with placeholders
+        function stash(match) {
+            const idx = strings.length;
+            strings.push(match);
+            return `\x00STR${idx}\x00`;
+        }
+
+        // Template literals (handle nested ${ } up to one level)
+        out = out.replace(/`(?:[^`\\]|\\.|\$\{[^}]*\})*`/g, stash);
+        // Double-quoted strings
+        out = out.replace(/"(?:[^"\\]|\\.)*"/g, stash);
+        // Single-quoted strings
+        out = out.replace(/'(?:[^'\\]|\\.)*'/g, stash);
+
+        // Remove block comments /* ... */  (but not /*! preserved banners)
+        out = out.replace(/\/\*[^!][\s\S]*?\*\//g, ' ');
+        out = out.replace(/\/\*![\s\S]*?\*\//g, m => m); // keep /*! ... */
+        // Remove line comments //
+        out = out.replace(/\/\/[^\n]*/g, '');
+
+        // Collapse whitespace
+        out = out.replace(/[ \t\r\n]+/g, ' ');
+
+        // Remove spaces adjacent to operators and punctuation
+        out = out.replace(/\s*([=+\-*/%&|^!<>?:,;{}()[\]])\s*/g, '$1');
+        // But re-add space after keywords that require it (return, var, let, const, etc.)
+        out = out.replace(/\b(return|var|let|const|function|if|else|for|while|do|switch|case|new|typeof|instanceof|in|of|throw|delete|void|yield|await|async|class|extends|import|export|from|default)\b/g, ' $1 ');
+        // Collapse any double-spaces created
+        out = out.replace(/  +/g, ' ');
+        out = out.trim();
+
+        // Restore strings
+        out = out.replace(/\x00STR(\d+)\x00/g, (_, i) => strings[+i]);
+
+        return out;
+    }
+
+    function minify(lang, src) {
+        switch (lang) {
+            case 'json': return minifyJson(src);
+            case 'css':  return minifyCss(src);
+            case 'html': return minifyHtml(src);
+            case 'js':   return minifyJs(src);
+            default: throw new Error('Unknown language');
+        }
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    function showError(msg) {
+        errorBanner.textContent = msg;
+        errorBanner.classList.add('visible');
+        successBanner.classList.remove('visible');
+    }
+    function showSuccess(msg) {
+        successBanner.textContent = msg;
+        successBanner.classList.add('visible');
+        errorBanner.classList.remove('visible');
+    }
+    function clearBanners() {
+        errorBanner.classList.remove('visible');
+        successBanner.classList.remove('visible');
+    }
+    function showToast(msg) {
+        clearTimeout(toastTimer);
+        toast.textContent = msg;
+        toast.classList.add('show');
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+    function fmtBytes(n) {
+        if (n < 1024) return n + ' B';
+        return (n / 1024).toFixed(1) + ' KB';
+    }
+    function updateStats() {
+        const inBytes  = new TextEncoder().encode(inputArea.value).length;
+        const outBytes = new TextEncoder().encode(outputArea.value).length;
+        statIn.textContent  = fmtBytes(inBytes);
+        statOut.textContent = fmtBytes(outBytes);
+    }
+
+    // ── Language switching ────────────────────────────────────────────────────
+    document.querySelectorAll('.lang-tab').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.lang-tab').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentLang = btn.dataset.lang;
+            statLang.textContent = currentLang.toUpperCase();
+            clearBanners();
+            updateStats();
+            scheduleSave();
+        });
+    });
+
+    // ── Minify button ─────────────────────────────────────────────────────────
+    btnMinify.addEventListener('click', () => {
+        clearBanners();
+        const src = inputArea.value.trim();
+        if (!src) {
+            showError('⚠️ Please paste some code in the input panel first.');
+            return;
+        }
+        try {
+            const result = minify(currentLang, src);
+            outputArea.value = result;
+            const inBytes  = new TextEncoder().encode(src).length;
+            const outBytes = new TextEncoder().encode(result).length;
+            const pct = inBytes > 0 ? Math.round((1 - outBytes / inBytes) * 100) : 0;
+            const note = currentLang === 'js' ? ' (best-effort — use Terser/esbuild for production JS)' : '';
+            showSuccess(`✅ Minified! ${fmtBytes(inBytes)} → ${fmtBytes(outBytes)} (${pct}% reduction)${note}`);
+            updateStats();
+        } catch (e) {
+            outputArea.value = '';
+            updateStats();
+            showError('❌ ' + (e.message || 'Minification failed'));
+        }
+    });
+
+    // ── Sample ────────────────────────────────────────────────────────────────
+    btnSample.addEventListener('click', () => {
+        inputArea.value = SAMPLES[currentLang] || '';
+        outputArea.value = '';
+        clearBanners();
+        updateStats();
+        scheduleSave();
+    });
+
+    // ── Copy ──────────────────────────────────────────────────────────────────
+    btnCopy.addEventListener('click', () => {
+        const val = outputArea.value;
+        if (!val) { showToast('⚠️ Nothing to copy — minify first.'); return; }
+        navigator.clipboard.writeText(val)
+            .then(() => showToast('✅ Copied to clipboard!'))
+            .catch(() => {
+                // Fallback for browsers without clipboard API
+                outputArea.select();
+                document.execCommand('copy');
+                showToast('✅ Copied!');
+            });
+    });
+
+    // ── Download ──────────────────────────────────────────────────────────────
+    btnDownload.addEventListener('click', () => {
+        const val = outputArea.value;
+        if (!val) { showToast('⚠️ Nothing to download — minify first.'); return; }
+        const ext  = { json: 'json', css: 'css', html: 'html', js: 'js' }[currentLang] || 'txt';
+        const mime = { json: 'application/json', css: 'text/css', html: 'text/html', js: 'text/javascript' }[currentLang] || 'text/plain';
+        const blob = new Blob([val], { type: mime });
+        const a    = document.createElement('a');
+        a.href     = URL.createObjectURL(blob);
+        a.download = `minified.min.${ext}`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        showToast('✅ Download started!');
+    });
+
+    // ── Clear ─────────────────────────────────────────────────────────────────
+    btnClear.addEventListener('click', () => {
+        inputArea.value  = '';
+        outputArea.value = '';
+        clearBanners();
+        updateStats();
+        scheduleSave();
+    });
+
+    // ── Input → live stats + save ─────────────────────────────────────────────
+    inputArea.addEventListener('input', () => {
+        updateStats();
+        scheduleSave();
+    });
+
+    // ── Mobile tabs ───────────────────────────────────────────────────────────
+    tabInput.addEventListener('click', () => {
+        tabInput.classList.add('active');
+        tabOutput.classList.remove('active');
+        paneInput.classList.add('mob-visible');
+        paneOutput.classList.remove('mob-visible');
+    });
+    tabOutput.addEventListener('click', () => {
+        tabOutput.classList.add('active');
+        tabInput.classList.remove('active');
+        paneOutput.classList.add('mob-visible');
+        paneInput.classList.remove('mob-visible');
+    });
+
+    // ── Persistence ───────────────────────────────────────────────────────────
+    function scheduleSave() {
+        clearTimeout(saveTimer);
+        statSaving.innerHTML = 'Saving…<span class="saving-dot"></span>';
+        saveTimer = setTimeout(saveState, 800);
+    }
+    function saveState() {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                lang:  currentLang,
+                input: inputArea.value
+            }));
+            statSaving.textContent = 'Saved';
+        } catch (_) { statSaving.textContent = '—'; }
+    }
+    function loadState() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return;
+            const s = JSON.parse(raw);
+            if (s.lang && ['json','css','html','js'].includes(s.lang)) {
+                currentLang = s.lang;
+                document.querySelectorAll('.lang-tab').forEach(b => {
+                    b.classList.toggle('active', b.dataset.lang === currentLang);
+                });
+                statLang.textContent = currentLang.toUpperCase();
+            }
+            if (typeof s.input === 'string') {
+                inputArea.value = s.input;
+            }
+        } catch (_) {}
+    }
+
+    // ── Init ──────────────────────────────────────────────────────────────────
+    loadState();
+    updateStats();
+
+}());
+</script>
+</body>
+</html>
