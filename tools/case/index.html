@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+    <title>Case Converter — Ravionus Dev Tools</title>
+    <meta name="description" content="Convert text between UPPERCASE, lowercase, camelCase, snake_case, kebab-case, and more instantly. No server, no sign-up.">
+    <link rel="canonical" href="https://ravionus.com/tools/case/">
+    <meta property="og:title" content="Case Converter — Ravionus Dev Tools">
+    <meta property="og:description" content="Convert text between UPPERCASE, lowercase, camelCase, snake_case, kebab-case, and more instantly. No server, no sign-up.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ravionus.com/tools/case/">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none';">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0a0f;     --surface: #12121a;   --surface2: #0e0e16;
+            --border: #1e1e2e; --border2: #2a2a3e;
+            --text: #e2e2f0;   --muted: #7878a0;
+            --purple: #a855f7; --cyan: #22d3ee;
+            --green: #22c55e;  --red: #ef4444;
+            --accent-g: linear-gradient(135deg, #a855f7, #22d3ee);
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Nav ── */
+        nav {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+        nav a { color: var(--muted); text-decoration: none; transition: color 0.15s; }
+        nav a:hover { color: var(--text); }
+        .nav-sep { color: var(--border2); }
+        .nav-links { margin-left: auto; display: flex; gap: 16px; }
+        .nav-links a { font-size: 0.8rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+        .nav-links a:hover { color: var(--cyan); }
+
+        /* ── Page Header ── */
+        .page-header {
+            padding: 24px 20px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .page-header h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            background: var(--accent-g);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 6px;
+        }
+        .page-header p {
+            color: var(--muted);
+            font-size: 0.875rem;
+            max-width: 680px;
+        }
+
+        /* ── Toolbar ── */
+        .toolbar {
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface2);
+        }
+        .tb-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            border: 1px solid var(--border2);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text);
+            font-size: 0.82rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s, color 0.15s;
+            font-family: inherit;
+        }
+        .tb-btn:hover { background: var(--surface); }
+        .tb-btn.primary {
+            background: linear-gradient(135deg, #a855f7, #7c3aed);
+            border-color: transparent;
+            color: #fff;
+        }
+        .tb-btn.primary:hover { opacity: 0.9; }
+        .tb-btn.danger { color: var(--red); border-color: rgba(239,68,68,0.3); }
+        .tb-btn.danger:hover { background: rgba(239,68,68,0.1); }
+        .tb-sep { width: 1px; height: 24px; background: var(--border); margin: 0 4px; }
+        .tb-spacer { flex: 1; }
+
+        button:focus-visible, .tb-btn:focus-visible, .mob-tab:focus-visible {
+            outline: 2px solid var(--cyan);
+            outline-offset: 2px;
+        }
+
+        /* ── Main Layout ── */
+        .editor-layout {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+            height: calc(100vh - 210px);
+        }
+
+        /* ── Pane ── */
+        .pane {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+        }
+        .pane-header {
+            padding: 8px 14px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface2);
+            flex-shrink: 0;
+        }
+        .pane-divider {
+            width: 4px;
+            background: var(--border);
+            flex-shrink: 0;
+        }
+
+        /* ── Input pane ── */
+        #inputArea {
+            flex: 1;
+            resize: none;
+            background: var(--surface2);
+            border: none;
+            outline: none;
+            color: var(--text);
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            line-height: 1.7;
+            padding: 16px;
+        }
+        #inputArea::placeholder { color: var(--muted); }
+
+        /* ── Output pane ── */
+        .output-body {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .output-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            color: var(--muted);
+            gap: 12px;
+            padding: 24px;
+        }
+        .output-placeholder .ph-icon { font-size: 2.5rem; opacity: 0.4; }
+        .output-placeholder .ph-text { font-size: 0.875rem; text-align: center; }
+
+        /* ── Case Grid ── */
+        .case-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 10px;
+            padding: 14px;
+        }
+        .case-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 14px;
+            transition: border-color 0.15s;
+        }
+        .case-card:hover { border-color: var(--border2); }
+        .case-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .case-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+        .copy-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.78rem;
+            padding: 3px 8px;
+            color: var(--muted);
+            font-family: inherit;
+            transition: background 0.15s, border-color 0.15s, color 0.15s;
+        }
+        .copy-btn:hover {
+            background: var(--border2);
+            color: var(--text);
+            border-color: var(--border2);
+        }
+        .case-value {
+            font-family: var(--font-mono);
+            font-size: 0.82rem;
+            color: var(--text);
+            word-break: break-all;
+            line-height: 1.55;
+            min-height: 1.55em;
+        }
+
+        /* ── Status Bar ── */
+        .status-bar {
+            padding: 6px 16px;
+            display: flex;
+            gap: 20px;
+            font-size: 0.75rem;
+            color: var(--muted);
+            border-top: 1px solid var(--border);
+            background: var(--surface2);
+            flex-wrap: wrap;
+        }
+        .stat { display: flex; align-items: center; gap: 5px; }
+        .stat-val { color: var(--cyan); font-weight: 600; font-family: var(--font-mono); }
+
+        /* ── Toast ── */
+        #toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            border-radius: 8px;
+            padding: 10px 18px;
+            font-size: 0.85rem;
+            color: var(--text);
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity 0.2s, transform 0.2s;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        #toast.show { opacity: 1; transform: translateY(0); }
+
+        /* ── Mobile ── */
+        .mobile-tabs { display: none; border-bottom: 1px solid var(--border); }
+        .mob-tab {
+            flex: 1;
+            padding: 10px;
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: inherit;
+            border-bottom: 2px solid transparent;
+            transition: color 0.15s, border-color 0.15s;
+        }
+        .mob-tab.active { color: var(--purple); border-bottom-color: var(--purple); }
+
+        @media (max-width: 700px) {
+            .mobile-tabs { display: flex; }
+            .editor-layout { height: auto; flex-direction: column; }
+            .pane { display: none; }
+            .pane.mob-visible { display: flex; min-height: 300px; }
+            .pane-divider { display: none; }
+            .case-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a href="../../">Ravionus</a>
+        <span class="nav-sep">›</span>
+        <a href="../../tools/">Dev Tools</a>
+        <span class="nav-sep">›</span>
+        <span>Case Converter</span>
+        <div class="nav-links">
+            <a href="../../learn/">✨ Learn</a>
+            <a href="../../tools/">🛠️ Tools</a>
+            <a href="../../playground/">🧪 Playgrounds</a>
+        </div>
+    </nav>
+
+    <header class="page-header">
+        <h1>🔤 Case Converter</h1>
+        <p>Convert text between 12 different case formats simultaneously — UPPERCASE, lowercase, Title Case, camelCase, PascalCase, snake_case, SCREAMING_SNAKE_CASE, kebab-case, dot.case, and more. Results update as you type. Everything runs in your browser — no data leaves your device.</p>
+    </header>
+
+    <div class="toolbar">
+        <button class="tb-btn primary" id="btnCopyAll">📋 Copy All</button>
+        <div class="tb-sep"></div>
+        <button class="tb-btn" id="btnDownload">⬇️ Download</button>
+        <div class="tb-spacer"></div>
+        <button class="tb-btn danger" id="btnClear">🗑 Clear</button>
+    </div>
+
+    <div class="mobile-tabs">
+        <button class="mob-tab active" id="tabInput">📥 Input</button>
+        <button class="mob-tab" id="tabOutput">📤 Output</button>
+    </div>
+
+    <div class="editor-layout">
+
+        <!-- Input pane -->
+        <div class="pane mob-visible" id="paneInput">
+            <div class="pane-header">Input</div>
+            <textarea id="inputArea"
+                      aria-label="Text to convert"
+                      placeholder="Type or paste text here…&#10;&#10;Works with: regular sentences, camelCase, PascalCase,&#10;snake_case, kebab-case, dot.case, and mixed formats."></textarea>
+        </div>
+
+        <div class="pane-divider"></div>
+
+        <!-- Output pane: 12 conversion cards -->
+        <div class="pane" id="paneOutput">
+            <div class="pane-header">Conversions</div>
+            <div class="output-body">
+                <div class="output-placeholder" id="outputPlaceholder">
+                    <div class="ph-icon">🔤</div>
+                    <div class="ph-text">Type or paste text on the left to see<br>12 case conversions simultaneously</div>
+                </div>
+                <div class="case-grid" id="caseGrid" style="display:none"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="status-bar">
+        <span class="stat">Characters: <span class="stat-val" id="statChars">0</span></span>
+        <span class="stat">Words: <span class="stat-val" id="statWords">0</span></span>
+        <span class="stat">Lines: <span class="stat-val" id="statLines">0</span></span>
+    </div>
+
+    <div id="toast" aria-live="polite"></div>
+
+    <script>
+    (function () {
+        'use strict';
+
+        const STORAGE_KEY = 'ravionus_tool_case';
+
+        // ── Conversion helpers ────────────────────────────────────────────────
+
+        function capitalizeFirst(w) {
+            return w ? w[0].toUpperCase() + w.slice(1) : '';
+        }
+
+        /**
+         * Splits any case-formatted string into an array of lowercase words.
+         * Handles: camelCase, PascalCase, snake_case, kebab-case, dot.case,
+         *          spaces, SCREAMING_SNAKE_CASE, and arbitrary separators.
+         */
+        function getWords(text) {
+            if (!text.trim()) return [];
+            // Insert a space before uppercased sequences to handle camelCase / PascalCase
+            const s = text
+                .replace(/([a-z\d])([A-Z])/g, '$1 $2')        // helloWorld → hello World
+                .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2');   // HTMLParser → HTML Parser
+            // Split on every sequence of non-alphanumeric characters
+            return s.split(/[^a-zA-Z0-9]+/)
+                    .filter(Boolean)
+                    .map(w => w.toLowerCase());
+        }
+
+        /** Alternate upper/lower per letter, preserving non-letter characters. */
+        function toAlternating(text) {
+            let n = 0;
+            return text.split('').map(ch => {
+                if (!/[a-zA-Z]/.test(ch)) return ch;
+                return n++ % 2 === 0 ? ch.toUpperCase() : ch.toLowerCase();
+            }).join('');
+        }
+
+        /** Invert the case of every letter, preserving non-letter characters. */
+        function toInverted(text) {
+            return text.split('').map(ch => {
+                if (ch >= 'a' && ch <= 'z') return ch.toUpperCase();
+                if (ch >= 'A' && ch <= 'Z') return ch.toLowerCase();
+                return ch;
+            }).join('');
+        }
+
+        // ── Conversion definitions ────────────────────────────────────────────
+        const CONVERSIONS = [
+            {
+                id: 'upper',
+                label: 'UPPERCASE',
+                fn: ws => ws.join(' ').toUpperCase()
+            },
+            {
+                id: 'lower',
+                label: 'lowercase',
+                fn: ws => ws.join(' ')
+            },
+            {
+                id: 'title',
+                label: 'Title Case',
+                fn: ws => ws.map(capitalizeFirst).join(' ')
+            },
+            {
+                id: 'sentence',
+                label: 'Sentence case',
+                fn: ws => ws.map((w, i) => i === 0 ? capitalizeFirst(w) : w).join(' ')
+            },
+            {
+                id: 'camel',
+                label: 'camelCase',
+                fn: ws => ws.map((w, i) => i === 0 ? w : capitalizeFirst(w)).join('')
+            },
+            {
+                id: 'pascal',
+                label: 'PascalCase',
+                fn: ws => ws.map(capitalizeFirst).join('')
+            },
+            {
+                id: 'snake',
+                label: 'snake_case',
+                fn: ws => ws.join('_')
+            },
+            {
+                id: 'screaming',
+                label: 'SCREAMING_SNAKE_CASE',
+                fn: ws => ws.join('_').toUpperCase()
+            },
+            {
+                id: 'kebab',
+                label: 'kebab-case',
+                fn: ws => ws.join('-')
+            },
+            {
+                id: 'dot',
+                label: 'dot.case',
+                fn: ws => ws.join('.')
+            },
+            {
+                id: 'alt',
+                label: 'aLtErNaTiNg CaSe',
+                fn: (ws, raw) => toAlternating(raw)
+            },
+            {
+                id: 'invert',
+                label: 'iNVERTED cASE',
+                fn: (ws, raw) => toInverted(raw)
+            }
+        ];
+
+        // ── DOM references ────────────────────────────────────────────────────
+        const inputArea         = document.getElementById('inputArea');
+        const outputPlaceholder = document.getElementById('outputPlaceholder');
+        const caseGrid          = document.getElementById('caseGrid');
+        const statChars         = document.getElementById('statChars');
+        const statWords         = document.getElementById('statWords');
+        const statLines         = document.getElementById('statLines');
+        const btnCopyAll        = document.getElementById('btnCopyAll');
+        const btnDownload       = document.getElementById('btnDownload');
+        const btnClear          = document.getElementById('btnClear');
+        const toast             = document.getElementById('toast');
+        const tabInput          = document.getElementById('tabInput');
+        const tabOutput         = document.getElementById('tabOutput');
+        const paneInput         = document.getElementById('paneInput');
+        const paneOutput        = document.getElementById('paneOutput');
+
+        let toastTimer = null;
+
+        // ── Build conversion cards (once, on load) ────────────────────────────
+        function escapeHtml(s) {
+            return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        CONVERSIONS.forEach(conv => {
+            const card = document.createElement('div');
+            card.className = 'case-card';
+            card.setAttribute('data-case-id', conv.id);
+            card.innerHTML =
+                '<div class="case-card-header">' +
+                    '<span class="case-label">' + escapeHtml(conv.label) + '</span>' +
+                    '<button class="copy-btn" aria-label="Copy ' + escapeHtml(conv.label) + '">📋 Copy</button>' +
+                '</div>' +
+                '<div class="case-value" id="case-' + conv.id + '"></div>';
+            caseGrid.appendChild(card);
+
+            card.querySelector('.copy-btn').addEventListener('click', () => {
+                const val = document.getElementById('case-' + conv.id).textContent;
+                if (!val) { showToast('⚠️ Nothing to copy'); return; }
+                navigator.clipboard.writeText(val)
+                    .then(() => showToast('✅ Copied ' + conv.label + '!'))
+                    .catch(() => showToast('❌ Copy failed'));
+            });
+        });
+
+        // ── Core conversion ───────────────────────────────────────────────────
+        function convert() {
+            const raw = inputArea.value;
+
+            if (!raw.trim()) {
+                outputPlaceholder.style.display = '';
+                caseGrid.style.display = 'none';
+                resetStats();
+                return;
+            }
+
+            const words = getWords(raw);
+            CONVERSIONS.forEach(conv => {
+                const el = document.getElementById('case-' + conv.id);
+                if (el) el.textContent = words.length ? conv.fn(words, raw) : '';
+            });
+            outputPlaceholder.style.display = 'none';
+            caseGrid.style.display = '';
+            updateStats(raw);
+        }
+
+        // ── Stats ─────────────────────────────────────────────────────────────
+        function updateStats(text) {
+            statChars.textContent = String(text.length);
+            statWords.textContent = String(text.trim() ? text.trim().split(/\s+/).length : 0);
+            statLines.textContent = String(text ? text.split('\n').length : 0);
+        }
+
+        function resetStats() {
+            statChars.textContent = '0';
+            statWords.textContent = '0';
+            statLines.textContent = '0';
+        }
+
+        // ── Toolbar ───────────────────────────────────────────────────────────
+        btnCopyAll.addEventListener('click', () => {
+            const raw = inputArea.value;
+            if (!raw.trim()) { showToast('⚠️ Type some text first'); return; }
+            const allText = CONVERSIONS.map(conv => {
+                const el = document.getElementById('case-' + conv.id);
+                return conv.label + ': ' + (el ? el.textContent : '');
+            }).join('\n');
+            navigator.clipboard.writeText(allText)
+                .then(() => showToast('✅ All 12 conversions copied!'))
+                .catch(() => showToast('❌ Copy failed'));
+        });
+
+        btnDownload.addEventListener('click', () => {
+            const raw = inputArea.value;
+            if (!raw.trim()) { showToast('⚠️ Type some text first'); return; }
+            const lines = ['Input: ' + raw, '', '── Conversions ──', ''];
+            CONVERSIONS.forEach(conv => {
+                const el = document.getElementById('case-' + conv.id);
+                lines.push(conv.label + ': ' + (el ? el.textContent : ''));
+            });
+            const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+            const url  = URL.createObjectURL(blob);
+            const a    = document.createElement('a');
+            a.href     = url;
+            a.download = 'case-converter-' + Date.now() + '.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('✅ Downloaded!');
+        });
+
+        btnClear.addEventListener('click', () => {
+            inputArea.value = '';
+            convert();
+            showToast('🗑 Cleared');
+            saveState();
+        });
+
+        // ── Input: live update + immediate save ───────────────────────────────
+        inputArea.addEventListener('input', () => {
+            convert();
+            saveState();
+        });
+
+        // ── Mobile tabs ───────────────────────────────────────────────────────
+        tabInput.addEventListener('click', () => {
+            tabInput.classList.add('active');
+            tabOutput.classList.remove('active');
+            paneInput.classList.add('mob-visible');
+            paneOutput.classList.remove('mob-visible');
+        });
+
+        tabOutput.addEventListener('click', () => {
+            tabOutput.classList.add('active');
+            tabInput.classList.remove('active');
+            paneOutput.classList.add('mob-visible');
+            paneInput.classList.remove('mob-visible');
+        });
+
+        // ── Toast ─────────────────────────────────────────────────────────────
+        function showToast(msg) {
+            clearTimeout(toastTimer);
+            toast.textContent = msg;
+            toast.classList.add('show');
+            toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        // ── Persistence ───────────────────────────────────────────────────────
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify({ input: inputArea.value }));
+            } catch (_) {}
+        }
+
+        function restoreState() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return;
+                const s = JSON.parse(raw);
+                if (s.input) {
+                    inputArea.value = s.input;
+                    convert();
+                }
+            } catch (_) {}
+        }
+
+        // ── Init ──────────────────────────────────────────────────────────────
+        restoreState();
+
+    }());
+    </script>
+</body>
+</html>
