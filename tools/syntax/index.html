@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+    <title>Syntax Highlighter — Ravionus Dev Tools</title>
+    <meta name="description" content="Highlight code in 20+ programming languages with instant colourised output. Copy as HTML or plain text. No server, no sign-up.">
+    <link rel="canonical" href="https://ravionus.com/tools/syntax/">
+    <meta property="og:title" content="Syntax Highlighter — Ravionus Dev Tools">
+    <meta property="og:description" content="Highlight code in 20+ programming languages with instant colourised output. Copy as HTML or plain text. No server, no sign-up.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ravionus.com/tools/syntax/">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none';">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0a0f;
+            --surface: #12121a;
+            --surface2: #0e0e16;
+            --border: #1e1e2e;
+            --border2: #2a2a3e;
+            --text: #e2e2f0;
+            --muted: #7878a0;
+            --purple: #a855f7;
+            --cyan: #22d3ee;
+            --green: #22c55e;
+            --red: #ef4444;
+            --accent-g: linear-gradient(135deg, #a855f7, #22d3ee);
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Nav ── */
+        nav {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 52px;
+            flex-shrink: 0;
+        }
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+        .breadcrumb a { color: var(--cyan); text-decoration: none; }
+        .breadcrumb a:hover { text-decoration: underline; }
+        .breadcrumb .sep { color: var(--border2); }
+        .breadcrumb .current { color: var(--text); font-weight: 600; }
+        .nav-links {
+            display: flex;
+            gap: 1.25rem;
+        }
+        .nav-links a {
+            font-size: 0.85rem;
+            color: var(--muted);
+            text-decoration: none;
+            white-space: nowrap;
+        }
+        .nav-links a:hover { color: var(--text); }
+
+        /* ── Page header ── */
+        .page-header {
+            padding: 2rem 1.5rem 1rem;
+            max-width: 900px;
+            width: 100%;
+            margin: 0 auto;
+        }
+        .page-header h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            background: var(--accent-g);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+        .page-header p {
+            font-size: 0.95rem;
+            color: var(--muted);
+            max-width: 620px;
+            line-height: 1.6;
+        }
+
+        /* ── Main layout ── */
+        .main-wrap {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 0 1.5rem 2rem;
+            gap: 0.75rem;
+        }
+
+        /* ── Toolbar ── */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .tb-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.45rem 1rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--border2);
+            background: var(--surface);
+            color: var(--text);
+            transition: background 0.15s, border-color 0.15s, color 0.15s;
+            white-space: nowrap;
+        }
+        .tb-btn:hover { background: var(--border); }
+        .tb-btn.primary {
+            background: var(--purple);
+            border-color: var(--purple);
+            color: #fff;
+        }
+        .tb-btn.primary:hover { background: #9333ea; border-color: #9333ea; }
+        .tb-btn.danger { color: var(--red); border-color: var(--red); }
+        .tb-btn.danger:hover { background: rgba(239,68,68,.12); }
+        .tb-btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+        .tb-sep { flex: 1; }
+
+        /* ── Language selector ── */
+        .lang-select {
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            color: var(--text);
+            font-size: 0.875rem;
+            padding: 0.45rem 0.75rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+        }
+        .lang-select:focus { outline: 2px solid var(--cyan); outline-offset: 2px; }
+        .lang-select option { background: var(--surface); }
+
+        /* ── Theme selector ── */
+        .theme-select {
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            color: var(--text);
+            font-size: 0.875rem;
+            padding: 0.45rem 0.75rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+        }
+        .theme-select:focus { outline: 2px solid var(--cyan); outline-offset: 2px; }
+        .theme-select option { background: var(--surface); }
+
+        /* ── Editor layout ── */
+        .editor-layout {
+            display: grid;
+            grid-template-columns: 1fr 4px 1fr;
+            gap: 0;
+            min-height: 460px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--surface2);
+        }
+        .pane {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .pane-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 0.75rem;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            flex-shrink: 0;
+        }
+        .pane-header .ph-btn {
+            background: none;
+            border: 1px solid var(--border2);
+            color: var(--muted);
+            padding: 0.2rem 0.55rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            font-family: inherit;
+            transition: color 0.15s, border-color 0.15s;
+        }
+        .pane-header .ph-btn:hover { color: var(--text); border-color: var(--cyan); }
+        .pane-header .ph-btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+        .pane-divider {
+            background: var(--border);
+            cursor: col-resize;
+            flex-shrink: 0;
+        }
+
+        textarea#codeInput {
+            flex: 1;
+            background: var(--surface2);
+            color: var(--text);
+            border: none;
+            padding: 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            line-height: 1.6;
+            resize: none;
+            outline: none;
+            tab-size: 4;
+            white-space: pre;
+            overflow-wrap: normal;
+            overflow-x: auto;
+        }
+
+        #highlightOutput {
+            flex: 1;
+            overflow: auto;
+            padding: 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            line-height: 1.6;
+            white-space: pre;
+            overflow-wrap: normal;
+            overflow-x: auto;
+            background: var(--surface2);
+        }
+
+        /* ── Highlight placeholder ── */
+        .hl-placeholder {
+            color: var(--muted);
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            padding: 1rem;
+        }
+
+        /* ── Syntax theme tokens ── */
+
+        /* — Dark (default) — */
+        .hl-keyword  { color: #c792ea; }
+        .hl-string   { color: #c3e88d; }
+        .hl-comment  { color: #546e7a; font-style: italic; }
+        .hl-number   { color: #f78c6c; }
+        .hl-function { color: #82aaff; }
+        .hl-operator { color: #89ddff; }
+        .hl-punctuation { color: #89ddff; }
+        .hl-tag      { color: #f07178; }
+        .hl-attr     { color: #ffcb6b; }
+        .hl-value    { color: #c3e88d; }
+        .hl-builtin  { color: #ffcb6b; }
+        .hl-type     { color: #ffcb6b; }
+        .hl-regex    { color: #f2ff00; }
+        .hl-plain    { color: #e2e2f0; }
+
+        /* — Monokai theme — */
+        body.theme-monokai .hl-keyword   { color: #f92672; }
+        body.theme-monokai .hl-string    { color: #e6db74; }
+        body.theme-monokai .hl-comment   { color: #75715e; font-style: italic; }
+        body.theme-monokai .hl-number    { color: #ae81ff; }
+        body.theme-monokai .hl-function  { color: #a6e22e; }
+        body.theme-monokai .hl-operator  { color: #f8f8f2; }
+        body.theme-monokai .hl-punctuation { color: #f8f8f2; }
+        body.theme-monokai .hl-tag       { color: #f92672; }
+        body.theme-monokai .hl-attr      { color: #a6e22e; }
+        body.theme-monokai .hl-value     { color: #e6db74; }
+        body.theme-monokai .hl-builtin   { color: #66d9ef; }
+        body.theme-monokai .hl-type      { color: #66d9ef; }
+        body.theme-monokai .hl-regex     { color: #e6db74; }
+        body.theme-monokai .hl-plain     { color: #f8f8f2; }
+
+        /* — GitHub Light theme — */
+        body.theme-github #highlightOutput,
+        body.theme-github textarea#codeInput {
+            background: #f6f8fa;
+            color: #24292f;
+        }
+        body.theme-github .hl-keyword   { color: #cf222e; }
+        body.theme-github .hl-string    { color: #0a3069; }
+        body.theme-github .hl-comment   { color: #6e7781; font-style: italic; }
+        body.theme-github .hl-number    { color: #0550ae; }
+        body.theme-github .hl-function  { color: #8250df; }
+        body.theme-github .hl-operator  { color: #24292f; }
+        body.theme-github .hl-punctuation { color: #24292f; }
+        body.theme-github .hl-tag       { color: #116329; }
+        body.theme-github .hl-attr      { color: #0550ae; }
+        body.theme-github .hl-value     { color: #0a3069; }
+        body.theme-github .hl-builtin   { color: #953800; }
+        body.theme-github .hl-type      { color: #953800; }
+        body.theme-github .hl-regex     { color: #0550ae; }
+        body.theme-github .hl-plain     { color: #24292f; }
+        body.theme-github .editor-layout { background: #f6f8fa; }
+
+        /* — Solarized Dark theme — */
+        body.theme-solarized #highlightOutput,
+        body.theme-solarized textarea#codeInput {
+            background: #002b36;
+            color: #839496;
+        }
+        body.theme-solarized .hl-keyword   { color: #859900; }
+        body.theme-solarized .hl-string    { color: #2aa198; }
+        body.theme-solarized .hl-comment   { color: #586e75; font-style: italic; }
+        body.theme-solarized .hl-number    { color: #d33682; }
+        body.theme-solarized .hl-function  { color: #268bd2; }
+        body.theme-solarized .hl-operator  { color: #657b83; }
+        body.theme-solarized .hl-punctuation { color: #657b83; }
+        body.theme-solarized .hl-tag       { color: #268bd2; }
+        body.theme-solarized .hl-attr      { color: #b58900; }
+        body.theme-solarized .hl-value     { color: #2aa198; }
+        body.theme-solarized .hl-builtin   { color: #cb4b16; }
+        body.theme-solarized .hl-type      { color: #cb4b16; }
+        body.theme-solarized .hl-regex     { color: #2aa198; }
+        body.theme-solarized .hl-plain     { color: #839496; }
+        body.theme-solarized .editor-layout { background: #002b36; }
+
+        /* ── Banners ── */
+        .error-banner, .success-banner {
+            display: none;
+            padding: 0.6rem 1rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        .error-banner { background: rgba(239,68,68,.12); color: var(--red); border: 1px solid rgba(239,68,68,.3); }
+        .error-banner.visible { display: block; }
+        .success-banner { background: rgba(34,197,94,.10); color: var(--green); border: 1px solid rgba(34,197,94,.25); }
+        .success-banner.visible { display: block; }
+
+        /* ── Status bar ── */
+        .status-bar {
+            display: flex;
+            gap: 1.5rem;
+            padding: 0.45rem 0.25rem;
+            font-size: 0.78rem;
+            color: var(--muted);
+            flex-wrap: wrap;
+        }
+        .status-bar span strong { color: var(--text); font-weight: 600; }
+
+        /* ── Toast ── */
+        #toast {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            color: var(--text);
+            padding: 0.65rem 1.1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            opacity: 0;
+            transform: translateY(8px);
+            pointer-events: none;
+            transition: opacity 0.2s, transform 0.2s;
+            z-index: 1000;
+        }
+        #toast.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+        /* ── Mobile tabs ── */
+        .mobile-tabs {
+            display: none;
+            gap: 0.5rem;
+        }
+        .mob-tab {
+            flex: 1;
+            padding: 0.5rem;
+            border-radius: 6px;
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            color: var(--muted);
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+        .mob-tab.active {
+            background: var(--purple);
+            border-color: var(--purple);
+            color: #fff;
+        }
+        .mob-tab:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+        @media (max-width: 700px) {
+            .mobile-tabs { display: flex; }
+            .toolbar { gap: 0.4rem; }
+            .editor-layout {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 0 auto;
+                min-height: 300px;
+            }
+            .pane-divider { display: none; }
+            .pane { display: none; }
+            .pane.mob-visible { display: flex; }
+            .page-header { padding: 1rem 1rem 0.5rem; }
+            .main-wrap { padding: 0 0.75rem 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="breadcrumb">
+            <a href="../../">Ravionus</a>
+            <span class="sep">›</span>
+            <a href="../../tools/">Dev Tools</a>
+            <span class="sep">›</span>
+            <span class="current">Syntax Highlighter</span>
+        </div>
+        <div class="nav-links" role="navigation">
+            <a href="../../learn/">✨ Learn</a>
+            <a href="../../tools/">🛠️ Tools</a>
+            <a href="../../playground/">🧪 Playgrounds</a>
+        </div>
+    </nav>
+
+    <header class="page-header">
+        <h1>🌈 Syntax Highlighter</h1>
+        <p>Paste code and get instant syntax highlighting for 20+ languages. Choose a colour theme, then copy the colourised HTML or plain text. Everything runs in your browser — no data leaves your device.</p>
+    </header>
+
+    <div class="main-wrap">
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <button id="btnHighlight" class="tb-btn primary">⚡ Highlight</button>
+
+            <select id="langSelect" class="lang-select" aria-label="Programming language">
+                <option value="javascript">JavaScript</option>
+                <option value="typescript">TypeScript</option>
+                <option value="html">HTML</option>
+                <option value="css">CSS</option>
+                <option value="json">JSON</option>
+                <option value="python">Python</option>
+                <option value="java">Java</option>
+                <option value="csharp">C#</option>
+                <option value="cpp">C++</option>
+                <option value="c">C</option>
+                <option value="go">Go</option>
+                <option value="rust">Rust</option>
+                <option value="ruby">Ruby</option>
+                <option value="php">PHP</option>
+                <option value="swift">Swift</option>
+                <option value="kotlin">Kotlin</option>
+                <option value="bash">Bash / Shell</option>
+                <option value="sql">SQL</option>
+                <option value="yaml">YAML</option>
+                <option value="markdown">Markdown</option>
+                <option value="plain">Plain Text</option>
+            </select>
+
+            <select id="themeSelect" class="theme-select" aria-label="Colour theme">
+                <option value="">Dark (default)</option>
+                <option value="monokai">Monokai</option>
+                <option value="github">GitHub Light</option>
+                <option value="solarized">Solarized Dark</option>
+            </select>
+
+            <div class="tb-sep"></div>
+
+            <button id="btnCopyHtml" class="tb-btn">📋 Copy HTML</button>
+            <button id="btnCopyText" class="tb-btn">📄 Copy Text</button>
+            <button id="btnClear" class="tb-btn danger">🗑 Clear</button>
+        </div>
+
+        <!-- Mobile tabs -->
+        <div class="mobile-tabs">
+            <button class="mob-tab active" id="tabInput">📥 Input</button>
+            <button class="mob-tab" id="tabOutput">📤 Output</button>
+        </div>
+
+        <!-- Editor -->
+        <div class="editor-layout">
+            <div class="pane mob-visible" id="paneInput">
+                <div class="pane-header">
+                    <span>Source Code</span>
+                    <button class="ph-btn" id="btnPasteExample">Load example</button>
+                </div>
+                <textarea id="codeInput" aria-label="Source code to highlight" placeholder="Paste your code here…" spellcheck="false"></textarea>
+            </div>
+            <div class="pane-divider"></div>
+            <div class="pane" id="paneOutput">
+                <div class="pane-header">
+                    <span>Highlighted Output</span>
+                    <button class="ph-btn" id="btnLineNumbers">Line numbers</button>
+                </div>
+                <div id="highlightOutput" aria-label="Highlighted code output"></div>
+            </div>
+        </div>
+
+        <!-- Banners -->
+        <div class="error-banner" id="errorBanner" role="alert"></div>
+        <div class="success-banner" id="successBanner" aria-live="polite"></div>
+
+        <!-- Status bar -->
+        <div class="status-bar">
+            <span>Language: <strong id="statLang">—</strong></span>
+            <span>Lines: <strong id="statLines">0</strong></span>
+            <span>Chars: <strong id="statChars">0</strong></span>
+            <span>Theme: <strong id="statTheme">Dark</strong></span>
+        </div>
+    </div>
+
+    <div id="toast" aria-live="polite"></div>
+
+    <script>
+    'use strict';
+    // ── Constants ──────────────────────────────────────────────────────────────
+    const STORAGE_KEY = 'ravionus_tool_syntax';
+
+    // ── DOM refs ───────────────────────────────────────────────────────────────
+    const codeInput       = document.getElementById('codeInput');
+    const highlightOutput = document.getElementById('highlightOutput');
+    const langSelect      = document.getElementById('langSelect');
+    const themeSelect     = document.getElementById('themeSelect');
+    const btnHighlight    = document.getElementById('btnHighlight');
+    const btnCopyHtml     = document.getElementById('btnCopyHtml');
+    const btnCopyText     = document.getElementById('btnCopyText');
+    const btnClear        = document.getElementById('btnClear');
+    const btnPasteExample = document.getElementById('btnPasteExample');
+    const btnLineNumbers  = document.getElementById('btnLineNumbers');
+    const errorBanner     = document.getElementById('errorBanner');
+    const successBanner   = document.getElementById('successBanner');
+    const statLang        = document.getElementById('statLang');
+    const statLines       = document.getElementById('statLines');
+    const statChars       = document.getElementById('statChars');
+    const statTheme       = document.getElementById('statTheme');
+    const toast           = document.getElementById('toast');
+    const paneInput       = document.getElementById('paneInput');
+    const paneOutput      = document.getElementById('paneOutput');
+    const tabInput        = document.getElementById('tabInput');
+    const tabOutput       = document.getElementById('tabOutput');
+
+    // ── State ──────────────────────────────────────────────────────────────────
+    let lineNumbers = false;
+    let lastHighlightedHtml = '';
+
+    // ── Tokeniser ─────────────────────────────────────────────────────────────
+    // Each language tokeniser: returns array of {type, value} tokens.
+    // Types: keyword, string, comment, number, function, operator, punctuation,
+    //        tag, attr, value (attr value), builtin, type, regex, plain
+
+    function escHtml(s) {
+        return s
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    // Generic tokeniser engine using ordered regex rules
+    function tokenise(code, rules) {
+        const tokens = [];
+        let remaining = code;
+        outer: while (remaining.length > 0) {
+            for (const [type, rx] of rules) {
+                const m = rx.exec(remaining);
+                if (m && m.index === 0) {
+                    tokens.push({ type, value: m[0] });
+                    remaining = remaining.slice(m[0].length);
+                    continue outer;
+                }
+            }
+            // fall-through: consume one char as plain
+            tokens.push({ type: 'plain', value: remaining[0] });
+            remaining = remaining.slice(1);
+        }
+        return tokens;
+    }
+
+    // ── Language rule sets ─────────────────────────────────────────────────────
+
+    const KW_JS = /^(?:break|case|catch|class|const|continue|debugger|default|delete|do|else|export|extends|finally|for|from|function|if|import|in|instanceof|let|new|of|return|static|super|switch|this|throw|try|typeof|var|void|while|with|yield|async|await|null|true|false|undefined|NaN|Infinity)\b/;
+    const KW_TS_EXTRA = /^(?:interface|type|enum|implements|declare|namespace|module|abstract|readonly|private|public|protected|override|never|unknown|any|string|number|boolean|symbol|object|bigint|keyof|infer|as|is|satisfies)\b/;
+    const BUILTIN_JS = /^(?:console|Math|Object|Array|String|Number|Boolean|Date|RegExp|JSON|Promise|Map|Set|WeakMap|WeakSet|Symbol|Error|TypeError|RangeError|document|window|globalThis|process|require|module|exports|__dirname|__filename|fetch|setTimeout|clearTimeout|setInterval|clearInterval|parseInt|parseFloat|isNaN|isFinite|decodeURI|encodeURI|decodeURIComponent|encodeURIComponent)\b/;
+
+    function rulesJS(extra) {
+        return [
+            ['comment',     /^\/\/[^\n]*/],
+            ['comment',     /^\/\*[\s\S]*?\*\//],
+            ['string',      /^`(?:[^`\\]|\\.|\$\{[^}]*\})*`/],
+            ['string',      /^"(?:[^"\\]|\\.)*"/],
+            ['string',      /^'(?:[^'\\]|\\.)*'/],
+            ['regex',       /^\/(?![/*])(?:[^/\\\n]|\\.)+\/[gimsuy]*/],
+            ...(extra || []),
+            ['keyword',     KW_JS],
+            ['builtin',     BUILTIN_JS],
+            ['number',      /^0x[\da-fA-F]+|^0b[01]+|^0o[0-7]+|^\d+\.?\d*(?:[eE][+-]?\d+)?/],
+            ['function',    /^[a-zA-Z_$][\w$]*(?=\s*\()/],
+            ['operator',    /^(?:===|!==|==|!=|<=|>=|=>|<<|>>|>>>|\+\+|--|&&|\|\||[+\-*/%&|^~!<>=?])/],
+            ['punctuation', /^[{}[\]();,:./]/],
+            ['plain',       /^[a-zA-Z_$][\w$]*/],
+            ['plain',       /^\s+/],
+        ];
+    }
+
+    const RULES = {
+        javascript: rulesJS(),
+        typescript: rulesJS([
+            ['keyword', KW_TS_EXTRA],
+            ['type',    /^[A-Z][a-zA-Z0-9_]*\b/],
+        ]),
+        json: [
+            ['string',      /^"(?:[^"\\]|\\.)*"/],
+            ['number',      /^-?\d+\.?\d*(?:[eE][+-]?\d+)?/],
+            ['keyword',     /^(?:true|false|null)\b/],
+            ['punctuation', /^[{}[\]:,]/],
+            ['plain',       /^\s+/],
+        ],
+        python: [
+            ['comment',  /^#[^\n]*/],
+            ['string',   /^"""[\s\S]*?"""|^'''[\s\S]*?'''/],
+            ['string',   /^"(?:[^"\\]|\\.)*"|^'(?:[^'\\]|\\.)*'/],
+            ['keyword',  /^(?:and|as|assert|async|await|break|class|continue|def|del|elif|else|except|False|finally|for|from|global|if|import|in|is|lambda|None|nonlocal|not|or|pass|raise|return|True|try|while|with|yield)\b/],
+            ['builtin',  /^(?:abs|all|any|bin|bool|bytes|callable|chr|compile|complex|delattr|dict|dir|divmod|enumerate|eval|exec|filter|float|format|frozenset|getattr|globals|hasattr|hash|help|hex|id|input|int|isinstance|issubclass|iter|len|list|locals|map|max|memoryview|min|next|object|oct|open|ord|pow|print|property|range|repr|reversed|round|set|setattr|slice|sorted|staticmethod|str|sum|super|tuple|type|vars|zip|__import__)\b/],
+            ['number',   /^0x[\da-fA-F]+|^0b[01]+|^0o[0-7]+|^\d+\.?\d*(?:[eE][+-]?\d+)?j?/],
+            ['function', /^[a-zA-Z_][\w]*(?=\s*\()/],
+            ['decorator',/^@[a-zA-Z_][\w.]*/],
+            ['operator', /^(?:<<|>>|[+\-*/%&|^~<>=!]+)/],
+            ['punctuation', /^[{}[\]();:,]/],
+            ['plain',    /^[a-zA-Z_][\w]*|^\s+/],
+        ],
+        java: [
+            ['comment',  /^\/\/[^\n]*|^\/\*[\s\S]*?\*\//],
+            ['string',   /^"(?:[^"\\]|\\.)*"/],
+            ['string',   /^'(?:[^'\\]|\\.)*'/],
+            ['keyword',  /^(?:abstract|assert|boolean|break|byte|case|catch|char|class|const|continue|default|do|double|else|enum|extends|final|finally|float|for|goto|if|implements|import|instanceof|int|interface|long|native|new|package|private|protected|public|return|short|static|strictfp|super|switch|synchronized|this|throw|throws|transient|try|var|void|volatile|while|true|false|null|record|sealed|permits)\b/],
+            ['type',     /^[A-Z][a-zA-Z0-9_]*\b/],
+            ['number',   /^0x[\da-fA-F]+[Ll]?|^\d+\.?\d*(?:[eE][+-]?\d+)?[fFdDlL]?/],
+            ['function', /^[a-zA-Z_$][\w$]*(?=\s*\()/],
+            ['operator', /^(?:>>>|<<|>>|[+\-*/%&|^~!<>=?])/],
+            ['punctuation', /^[{}[\]();:,@]/],
+            ['plain',    /^[a-zA-Z_$][\w$]*|^\s+/],
+        ],
+        csharp: [
+            ['comment',  /^\/\/[^\n]*|^\/\*[\s\S]*?\*\//],
+            ['string',   /^@"(?:[^"]|"")*"|^"(?:[^"\\]|\\.)*"/],
+            ['string',   /^'(?:[^'\\]|\\.)*'/],
+            ['keyword',  /^(?:abstract|as|base|bool|break|byte|case|catch|char|checked|class|const|continue|decimal|default|delegate|do|double|else|enum|event|explicit|extern|false|finally|fixed|float|for|foreach|goto|if|implicit|in|int|interface|internal|is|lock|long|namespace|new|null|object|operator|out|override|params|private|protected|public|readonly|ref|return|sbyte|sealed|short|sizeof|stackalloc|static|string|struct|switch|this|throw|true|try|typeof|uint|ulong|unchecked|unsafe|ushort|using|virtual|void|volatile|while|async|await|var|record|init|with|global|nint|nuint|file|required|scoped)\b/],
+            ['type',     /^[A-Z][a-zA-Z0-9_]*\b/],
+            ['number',   /^0x[\da-fA-F]+[UuLl]*|^\d+\.?\d*(?:[eE][+-]?\d+)?[fFdDmMuUlL]*/],
+            ['function', /^[a-zA-Z_][\w]*(?=\s*[(<])/],
+            ['operator', /^(?:=>|\?\?=|\?\?|[+\-*/%&|^~!<>=?.,:])/],
+            ['punctuation', /^[{}[\]();:,@]/],
+            ['plain',    /^[a-zA-Z_][\w]*|^\s+/],
+        ],
+        cpp: [
+            ['comment',  /^\/\/[^\n]*|^\/\*[\s\S]*?\*\//],
+            ['string',   /^"(?:[^"\\]|\\.)*"|^'(?:[^'\\]|\\.)*'/],
+            ['keyword',  /^(?:alignas|alignof|and|and_eq|asm|auto|bitand|bitor|bool|break|case|catch|char|char8_t|char16_t|char32_t|class|compl|concept|const|consteval|constexpr|constinit|const_cast|continue|co_await|co_return|co_yield|decltype|default|delete|do|double|dynamic_cast|else|enum|explicit|export|extern|false|float|for|friend|goto|if|inline|int|long|mutable|namespace|new|noexcept|not|not_eq|nullptr|operator|or|or_eq|private|protected|public|register|reinterpret_cast|requires|return|short|signed|sizeof|static|static_assert|static_cast|struct|switch|template|this|thread_local|throw|true|try|typedef|typeid|typename|union|unsigned|using|virtual|void|volatile|wchar_t|while|xor|xor_eq|NULL|override|final)\b/],
+            ['type',     /^[A-Z][a-zA-Z0-9_]*\b/],
+            ['builtin',  /^#\s*(?:include|define|undef|if|ifdef|ifndef|else|elif|endif|pragma|error|warning|line)\b[^\n]*/],
+            ['number',   /^0x[\da-fA-F]+[UuLl]*|^\d+\.?\d*(?:[eE][+-]?\d+)?[fFlL]*/],
+            ['function', /^[a-zA-Z_][\w]*(?=\s*\()/],
+            ['operator', /^(?:->|\.\*|::|<<|>>|[+\-*/%&|^~!<>=?.:])/],
+            ['punctuation', /^[{}[\]();:,]/],
+            ['plain',    /^[a-zA-Z_][\w]*|^\s+/],
+        ],
+        c: [
+            ['comment',  /^\/\/[^\n]*|^\/\*[\s\S]*?\*\//],
+            ['string',   /^"(?:[^"\\]|\\.)*"|^'(?:[^'\\]|\\.)*'/],
+            ['keyword',  /^(?:auto|break|case|char|const|continue|default|do|double|else|enum|extern|float|for|goto|if|inline|int|long|register|restrict|return|short|signed|sizeof|static|struct|switch|typedef|union|unsigned|void|volatile|while|NULL|true|false|_Bool|_Complex|_Imaginary)\b/],
+            ['builtin',  /^#\s*(?:include|define|undef|if|ifdef|ifndef|else|elif|endif|pragma|error|warning|line)\b[^\n]*/],
+            ['type',     /^[A-Z][a-zA-Z0-9_]*\b/],
+            ['number',   /^0x[\da-fA-F]+[UuLl]*|^\d+\.?\d*(?:[eE][+-]?\d+)?[fFlL]*/],
+            ['function', /^[a-zA-Z_][\w]*(?=\s*\()/],
+            ['operator', /^(?:->|<<|>>|[+\-*/%&|^~!<>=?.,:])/],
+            ['punctuation', /^[{}[\]();]/],
+            ['plain',    /^[a-zA-Z_][\w]*|^\s+/],
+        ],
+        go: [
+            ['comment',  /^\/\/[^\n]*|^\/\*[\s\S]*?\*\//],
+            ['string',   /^`[^`]*`|^"(?:[^"\\]|\\.)*"/],
+            ['string',   /^'(?:[^'\\]|\\.)*'/],
+            ['keyword',  /^(?:break|case|chan|const|continue|default|defer|else|fallthrough|for|func|go|goto|if|import|interface|map|package|range|return|select|struct|switch|type|var|true|false|nil|iota)\b/],
+            ['builtin',  /^(?:append|cap|close|complex|copy|delete|imag|len|make|new|panic|print|println|real|recover)\b/],
+            ['type',     /^(?:bool|byte|complex64|complex128|error|float32|float64|int|int8|int16|int32|int64|rune|string|uint|uint8|uint16|uint32|uint64|uintptr)\b/],
+            ['number',   /^0x[\da-fA-F]+|^\d+\.?\d*(?:[eE][+-]?\d+)?/],
+            ['function', /^[a-zA-Z_][\w]*(?=\s*\()/],
+            ['operator', /^(?::=|<<|>>|[+\-*/%&|^~!<>=.,:])/],
+            ['punctuation', /^[{}[\]();]/],
+            ['plain',    /^[a-zA-Z_][\w]*|^\s+/],
+        ],
+        rust: [
+            ['comment',  /^\/\/[^\n]*|^\/\*[\s\S]*?\*\//],
+            ['string',   /^r#*"[\s\S]*?"#*|^"(?:[^"\\]|\\.)*"/],
+            ['string',   /^b?"(?:[^"\\]|\\.)*"|^'(?:[^'\\]|\\.)*'/],
+            ['keyword',  /^(?:as|async|await|break|const|continue|crate|dyn|else|enum|extern|false|fn|for|if|impl|in|let|loop|match|mod|move|mut|pub|ref|return|self|Self|static|struct|super|trait|true|type|union|unsafe|use|where|while|abstract|become|box|do|final|macro|override|priv|typeof|unsized|virtual|yield)\b/],
+            ['type',     /^(?:bool|char|f32|f64|i8|i16|i32|i64|i128|isize|str|u8|u16|u32|u64|u128|usize|String|Vec|Option|Result|Box|Rc|Arc|Cell|RefCell|HashMap|HashSet|BTreeMap|BTreeSet)\b/],
+            ['builtin',  /^(?:Some|None|Ok|Err|println!|print!|eprintln!|eprint!|format!|write!|writeln!|vec!|panic!|assert!|assert_eq!|assert_ne!|todo!|unimplemented!|unreachable!|dbg!)\b/],
+            ['number',   /^0x[\da-fA-F]+(?:_[\da-fA-F]+)*|^0b[01]+(?:_[01]+)*|^0o[0-7]+(?:_[0-7]+)*|^\d+(?:_\d+)*\.?\d*(?:[eE][+-]?\d+)?(?:_\d+)*(?:f32|f64|u8|u16|u32|u64|u128|usize|i8|i16|i32|i64|i128|isize)?/],
+            ['function', /^[a-zA-Z_][\w]*(?=\s*[!(])/],
+            ['operator', /^(?:=>|->|::|<=|>=|==|!=|<<|>>|&&|\|\||[+\-*/%&|^~!<>=?.,:])/],
+            ['punctuation', /^[{}[\]();]/],
+            ['plain',    /^[a-zA-Z_][\w]*|^\s+/],
+        ],
+        ruby: [
+            ['comment',  /^#[^\n]*/],
+            ['string',   /^%[qQwWiIrsx]?(?:\((?:[^)\\]|\\.)*\)|\[(?:[^]\\]|\\.)*\]|\{(?:[^}\\]|\\.)*\}|<(?:[^>\\]|\\.)*>|([^a-zA-Z0-9 \t\n])((?!\1)[\s\S])*?\1)/],
+            ['string',   /^"(?:[^"\\]|\\.)*"|^'(?:[^'\\]|\\.)*'/],
+            ['keyword',  /^(?:__ENCODING__|__LINE__|__FILE__|BEGIN|END|alias|and|begin|break|case|class|def|defined\?|do|else|elsif|end|ensure|for|if|in|module|next|nil|not|or|redo|rescue|retry|return|self|super|then|true|false|undef|unless|until|when|while|yield)\b/],
+            ['builtin',  /^(?:puts|print|p|pp|gets|require|require_relative|attr_accessor|attr_reader|attr_writer|include|extend|prepend|raise|fail|loop|lambda|proc|Kernel|Object|String|Array|Hash|Integer|Float|Symbol|Regexp|IO|File|Dir|ENV|ARGV|STDOUT|STDERR|STDIN)\b/],
+            ['number',   /^0x[\da-fA-F]+|^0b[01]+|^0o[0-7]+|^\d+\.?\d*(?:[eE][+-]?\d+)?/],
+            ['function', /^[a-zA-Z_][\w?!]*(?=\s*[({])/],
+            ['operator', /^(?:=>|::|<<|>>|[+\-*/%&|^~!<>=?.,:])/],
+            ['punctuation', /^[{}[\]();:@$]/],
+            ['plain',    /^[a-zA-Z_][\w?!]*|^\s+/],
+        ],
+        php: [
+            ['comment',  /^\/\/[^\n]*|^#[^\n]*|^\/\*[\s\S]*?\*\//],
+            ['string',   /^"(?:[^"\\]|\\.)*"|^'(?:[^'\\]|\\.)*'/],
+            ['keyword',  /^(?:abstract|and|array|as|break|callable|case|catch|class|clone|const|continue|declare|default|die|do|echo|else|elseif|empty|enddeclare|endfor|endforeach|endif|endswitch|endwhile|enum|eval|exit|extends|final|finally|fn|for|foreach|function|global|goto|if|implements|include|include_once|instanceof|insteadof|interface|isset|list|match|namespace|new|null|or|print|private|protected|public|readonly|require|require_once|return|static|switch|throw|trait|true|false|try|unset|use|var|while|xor|yield|__CLASS__|__DIR__|__FILE__|__FUNCTION__|__LINE__|__METHOD__|__NAMESPACE__|__TRAIT__)\b/i],
+            ['type',     /^\$[a-zA-Z_][\w]*/],
+            ['number',   /^0x[\da-fA-F]+|^\d+\.?\d*(?:[eE][+-]?\d+)?/],
+            ['function', /^[a-zA-Z_][\w]*(?=\s*\()/],
+            ['operator', /^(?:=>|->|::|<<|>>|[+\-*/%&|^~!<>=?,.])/],
+            ['punctuation', /^[{}[\]();:@]/],
+            ['plain',    /^[a-zA-Z_][\w]*|^\s+/],
+        ],
+        swift: [
+            ['comment',  /^\/\/[^\n]*|^\/\*[\s\S]*?\*\//],
+            ['string',   /^"(?:[^"\\]|\\.)*"/],
+            ['keyword',  /^(?:associatedtype|class|deinit|enum|extension|fileprivate|func|import|init|inout|internal|let|open|operator|precedencegroup|private|protocol|public|rethrows|static|struct|subscript|typealias|var|break|case|continue|default|defer|do|else|fallthrough|for|guard|if|in|repeat|return|switch|throw|throws|try|where|while|as|catch|false|is|nil|super|self|Self|throw|true|operator|some|any|async|await|actor|isolated|nonisolated|distributed|convenience|dynamic|final|lazy|mutating|nonmutating|optional|override|postfix|prefix|required|unowned|weak)\b/],
+            ['type',     /^(?:Int|Int8|Int16|Int32|Int64|UInt|UInt8|UInt16|UInt32|UInt64|Float|Float16|Double|Bool|String|Character|Array|Dictionary|Set|Optional|Result|AnyObject|Any|Void|Never|Error)\b/],
+            ['number',   /^0x[\da-fA-F]+(?:_[\da-fA-F]+)*|^0b[01]+|^0o[0-7]+|^\d+\.?\d*(?:[eE][+-]?\d+)?/],
+            ['function', /^[a-zA-Z_][\w]*(?=\s*\()/],
+            ['operator', /^(?:->|[+\-*/%&|^~!<>=?.,:])/],
+            ['punctuation', /^[{}[\]();]/],
+            ['plain',    /^[a-zA-Z_][\w]*|^\s+/],
+        ],
+        kotlin: [
+            ['comment',  /^\/\/[^\n]*|^\/\*[\s\S]*?\*\//],
+            ['string',   /^"""[\s\S]*?"""|^"(?:[^"\\]|\\.)*"/],
+            ['string',   /^'(?:[^'\\]|\\.)*'/],
+            ['keyword',  /^(?:abstract|actual|annotation|as|break|by|catch|class|companion|const|constructor|continue|crossinline|data|delegate|do|dynamic|else|enum|expect|external|false|field|file|final|finally|for|fun|get|if|in|infix|init|inline|inner|interface|internal|is|it|lateinit|noinline|null|object|open|operator|out|override|package|param|private|property|protected|public|receiveris|reified|return|sealed|set|setparam|super|suspend|tailrec|this|throw|true|try|typealias|typeof|val|value|var|vararg|when|where|while)\b/],
+            ['type',     /^(?:Int|Long|Short|Byte|Double|Float|Boolean|Char|String|Array|List|MutableList|Set|MutableSet|Map|MutableMap|Any|Unit|Nothing|Number|Comparable|Sequence)\b/],
+            ['number',   /^0x[\da-fA-F]+[Ll]?|^\d+\.?\d*(?:[eE][+-]?\d+)?[fFLl]*/],
+            ['function', /^[a-zA-Z_][\w]*(?=\s*\()/],
+            ['operator', /^(?:->|::|[+\-*/%&|^~!<>=?.,:])/],
+            ['punctuation', /^[{}[\]();@]/],
+            ['plain',    /^[a-zA-Z_][\w]*|^\s+/],
+        ],
+        bash: [
+            ['comment',  /^#[^\n]*/],
+            ['string',   /^"(?:[^"\\]|\\.)*"|^'[^']*'/],
+            ['keyword',  /^(?:if|then|else|elif|fi|for|while|do|done|case|esac|in|function|return|local|export|declare|typeset|readonly|unset|shift|source|trap|eval|exec|exit|break|continue|select|until|time|true|false|null|void)\b/],
+            ['builtin',  /^(?:echo|printf|read|test|cd|pwd|ls|mv|cp|rm|mkdir|rmdir|touch|cat|grep|sed|awk|cut|sort|uniq|wc|head|tail|find|xargs|tee|pipe|kill|ps|jobs|fg|bg|wait|let|expr|set|env|export|alias|type|which|whereis|hash)\b/],
+            ['number',   /^\d+/],
+            ['type',     /^\$(?:\{[^}]*\}|[a-zA-Z_][\w]*|\d|[?$!@*#])/],
+            ['operator', /^(?:&&|\|\||>>|<<|[|&;><])/],
+            ['punctuation', /^[{}[\]();,]/],
+            ['plain',    /^[a-zA-Z_][\w]*|^\s+/],
+        ],
+        sql: [
+            ['comment',  /^--[^\n]*|^\/\*[\s\S]*?\*\//],
+            ['string',   /^'(?:[^'\\]|''|\\.)*'/],
+            ['keyword',  /^(?:SELECT|INSERT|UPDATE|DELETE|CREATE|DROP|ALTER|TABLE|VIEW|INDEX|DATABASE|SCHEMA|FROM|WHERE|JOIN|INNER|LEFT|RIGHT|FULL|OUTER|ON|AS|GROUP|BY|ORDER|HAVING|LIMIT|OFFSET|UNION|ALL|DISTINCT|INTO|VALUES|SET|AND|OR|NOT|IN|IS|NULL|BETWEEN|LIKE|EXISTS|CASE|WHEN|THEN|ELSE|END|BEGIN|COMMIT|ROLLBACK|TRANSACTION|CONSTRAINT|PRIMARY|KEY|FOREIGN|REFERENCES|UNIQUE|DEFAULT|CHECK|CASCADE|GRANT|REVOKE|WITH|RECURSIVE|RETURNING|TRIGGER|FUNCTION|PROCEDURE|DECLARE|IF|CALL|TRUNCATE)\b/i],
+            ['builtin',  /^(?:COUNT|SUM|AVG|MIN|MAX|COALESCE|NULLIF|CAST|CONVERT|NOW|DATE|TIME|TRIM|UPPER|LOWER|LENGTH|SUBSTR|SUBSTRING|REPLACE|CONCAT|ROUND|FLOOR|CEIL|ABS|MOD|POWER|SQRT|RAND|ISNULL|IFNULL|NVL|DECODE|ROW_NUMBER|RANK|DENSE_RANK|NTILE|LAG|LEAD|FIRST_VALUE|LAST_VALUE)\b/i],
+            ['type',     /^(?:INT|INTEGER|BIGINT|SMALLINT|TINYINT|DECIMAL|NUMERIC|FLOAT|DOUBLE|REAL|CHAR|VARCHAR|TEXT|BLOB|CLOB|DATE|TIME|DATETIME|TIMESTAMP|BOOLEAN|BOOL|BINARY|VARBINARY|JSON|XML|UUID|SERIAL|AUTOINCREMENT)\b/i],
+            ['number',   /^-?\d+\.?\d*(?:[eE][+-]?\d+)?/],
+            ['operator', /^(?:[=<>!+\-*/]+)/],
+            ['punctuation', /^[(),;.]/],
+            ['plain',    /^[a-zA-Z_][\w]*|^\s+/],
+        ],
+        yaml: [
+            ['comment',  /^#[^\n]*/],
+            ['keyword',  /^(?:true|false|null|yes|no|on|off)\b/i],
+            ['string',   /^"(?:[^"\\]|\\.)*"|^'(?:[^'\\]|\\.)*'/],
+            ['type',     /^---\s*$|^\.\.\.\s*$/m],
+            ['attr',     /^[a-zA-Z_][\w\-. ]*(?=\s*:)/],
+            ['number',   /^-?\d+\.?\d*(?:[eE][+-]?\d+)?/],
+            ['operator', /^[:|>-]/],
+            ['punctuation', /^[{}\[\],]/],
+            ['plain',    /^[a-zA-Z_$][\w\-.:]*|^\s+/],
+        ],
+        html: htmlRules(),
+        css: cssRules(),
+        markdown: markdownRules(),
+        plain: [],
+    };
+
+    function htmlRules() {
+        return [
+            ['comment',     /^<!--[\s\S]*?-->/],
+            ['tag',         /^<\/[a-zA-Z][a-zA-Z0-9\-]*>/],              // closing tag
+            ['tag',         /^<[a-zA-Z][a-zA-Z0-9\-]*/],                 // opening tag name
+            ['attr',        /^[a-zA-Z:_][\w\-:.]*(?=\s*=)/],             // attr name with =
+            ['attr',        /^[a-zA-Z:_][\w\-:.]+/],                     // attr name no =
+            ['value',       /^"[^"]*"|^'[^']*'/],                        // attr value
+            ['operator',    /^=/],
+            ['punctuation', /^[<>/]/],
+            ['plain',       /^[^<>&"'\s]+|^\s+/],
+        ];
+    }
+
+    function cssRules() {
+        return [
+            ['comment',     /^\/\*[\s\S]*?\*\//],
+            ['string',      /^"[^"]*"|^'[^']*'/],
+            ['keyword',     /^(?:important|inherit|initial|unset|revert|auto|none|normal|bold|italic|underline|overline|line-through|dotted|dashed|solid|double|groove|ridge|inset|outset|hidden|visible|scroll|fixed|absolute|relative|sticky|flex|grid|block|inline|inline-block|table|flow-root|contents|list-item)\b/],
+            ['builtin',     /^(?:var|calc|rgb|rgba|hsl|hsla|hwb|oklch|oklab|lch|lab|linear-gradient|radial-gradient|conic-gradient|url|env|clamp|min|max|minmax|repeat|fit-content|content|attr|counter|counters|format|local|translate|rotate|scale|skew|matrix|perspective|blur|brightness|contrast|drop-shadow|grayscale|hue-rotate|invert|opacity|saturate|sepia|polygon|circle|ellipse|inset|path|cubic-bezier|steps|spring)\b/],
+            ['attr',        /^--[a-zA-Z][\w-]*/],                        // css variable name
+            ['type',        /^@[a-zA-Z-]+/],                             // at-rules
+            ['number',      /^-?\d*\.?\d+(?:px|em|rem|%|vh|vw|vmin|vmax|dvh|dvw|fr|pt|pc|cm|mm|ex|ch|deg|rad|grad|turn|s|ms)?/],
+            ['function',    /^[a-zA-Z-][\w-]*(?=\s*\()/],
+            ['tag',         /^[a-zA-Z][a-zA-Z0-9-]*(?=[^(])/],           // selector element names
+            ['operator',    /^[+>~|]/],
+            ['punctuation', /^[{}:;,.#*()\[\]]/],
+            ['plain',       /^[^\s{}:;,.#*()\[\]]+|^\s+/],
+        ];
+    }
+
+    function markdownRules() {
+        return [
+            ['comment',     /^<!--[\s\S]*?-->/],
+            ['type',        /^#{1,6}\s+[^\n]*/],                         // headings
+            ['string',      /^```[\s\S]*?```|^`[^`]+`/],                 // code (fenced + inline)
+            ['keyword',     /^\*\*(?:[^*]|\*(?!\*))+\*\*|^__(?:[^_]|_(?!_))+__/],  // bold
+            ['function',    /^\*(?:[^*])+\*|^_(?:[^_])+_/],              // italic
+            ['builtin',     /^!\[([^\]]*)\]\([^)]+\)/],                  // image
+            ['attr',        /^\[([^\]]+)\]\([^)]+\)/],                   // link
+            ['number',      /^\d+\.\s+/],                                // ordered list
+            ['operator',    /^[*\-+]\s+/],                               // unordered list marker
+            ['tag',         /^>\s*/],                                     // blockquote
+            ['value',       /^---+|^===+/],                              // hr / setext heading
+            ['plain',       /^[^\n`*_#>\[\]!]+|^\n/],
+        ];
+    }
+
+    // ── Highlight engine ───────────────────────────────────────────────────────
+    function highlight(code, lang) {
+        const rules = RULES[lang] || RULES.plain;
+        if (!rules.length) {
+            return escHtml(code);
+        }
+        const tokens = tokenise(code, rules);
+        let html = '';
+        for (const { type, value } of tokens) {
+            const cls = type === 'plain' ? 'hl-plain' : `hl-${type}`;
+            html += `<span class="${cls}">${escHtml(value)}</span>`;
+        }
+        return html;
+    }
+
+    function addLineNumbers(html) {
+        const lines = html.split('\n');
+        const pad = String(lines.length).length;
+        return lines.map((line, i) => {
+            const num = String(i + 1).padStart(pad, ' ');
+            return `<span class="hl-muted" style="color:var(--muted);user-select:none;margin-right:1.25em;">${num}</span>${line}`;
+        }).join('\n');
+    }
+
+    // ── Perform highlight ──────────────────────────────────────────────────────
+    function doHighlight() {
+        const code = codeInput.value;
+        hideError();
+        hideSuccess();
+
+        if (!code.trim()) {
+            showError('Paste some code first.');
+            return;
+        }
+
+        const lang = langSelect.value;
+        let html = highlight(code, lang);
+        if (lineNumbers) html = addLineNumbers(html);
+
+        lastHighlightedHtml = html;
+        highlightOutput.innerHTML = html;
+        updateStatus();
+
+        // Switch to output pane on mobile
+        if (window.innerWidth <= 700) {
+            setMobileTab('output');
+        }
+    }
+
+    // ── Status bar ─────────────────────────────────────────────────────────────
+    function updateStatus() {
+        const code = codeInput.value;
+        const lines = code ? code.split('\n').length : 0;
+        statLines.textContent = lines;
+        statChars.textContent = code.length;
+        statLang.textContent  = langSelect.options[langSelect.selectedIndex]?.text || '—';
+        const theme = themeSelect.value;
+        statTheme.textContent = theme
+            ? themeSelect.options[themeSelect.selectedIndex]?.text || theme
+            : 'Dark';
+    }
+
+    // ── Banners & toast ────────────────────────────────────────────────────────
+    function showError(msg)   { errorBanner.textContent = '❌ ' + msg; errorBanner.classList.add('visible'); }
+    function hideError()      { errorBanner.classList.remove('visible'); }
+    function showSuccess(msg) { successBanner.textContent = '✅ ' + msg; successBanner.classList.add('visible'); }
+    function hideSuccess()    { successBanner.classList.remove('visible'); }
+
+    let toastTimer;
+    function showToast(msg) {
+        toast.textContent = msg;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    // ── Theme ──────────────────────────────────────────────────────────────────
+    function applyTheme(theme) {
+        document.body.className = theme ? `theme-${theme}` : '';
+        updateStatus();
+    }
+
+    // ── Mobile tabs ────────────────────────────────────────────────────────────
+    function setMobileTab(which) {
+        if (which === 'input') {
+            paneInput.classList.add('mob-visible');
+            paneOutput.classList.remove('mob-visible');
+            tabInput.classList.add('active');
+            tabOutput.classList.remove('active');
+        } else {
+            paneOutput.classList.add('mob-visible');
+            paneInput.classList.remove('mob-visible');
+            tabOutput.classList.add('active');
+            tabInput.classList.remove('active');
+        }
+    }
+
+    // ── Example code snippets ─────────────────────────────────────────────────
+    const EXAMPLES = {
+        javascript: `// Fibonacci with memoisation
+function fibonacci(n, memo = {}) {
+    if (n in memo) return memo[n];
+    if (n <= 1) return n;
+    return memo[n] = fibonacci(n - 1, memo) + fibonacci(n - 2, memo);
+}
+
+const results = Array.from({ length: 10 }, (_, i) => fibonacci(i));
+console.log('Fibonacci:', results);`,
+
+        typescript: `interface User {
+    id: number;
+    name: string;
+    roles: string[];
+}
+
+async function fetchUser(id: number): Promise<User | null> {
+    try {
+        const res = await fetch(\`/api/users/\${id}\`);
+        if (!res.ok) return null;
+        return res.json() as Promise<User>;
+    } catch (err: unknown) {
+        console.error('fetchUser failed:', err);
+        return null;
+    }
+}`,
+
+        html: `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Example Page</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <h1>Hello, World!</h1>
+    <nav aria-label="Main navigation">
+      <a href="/">Home</a>
+      <a href="/about">About</a>
+    </nav>
+  </header>
+</body>
+</html>`,
+
+        css: `/* Modern card component */
+.card {
+  --card-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  border-radius: var(--card-radius);
+  background: hsl(220 20% 12%);
+  box-shadow: 0 4px 24px rgb(0 0 0 / 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgb(0 0 0 / 0.5);
+}`,
+
+        python: `from functools import lru_cache
+from typing import Iterator
+
+@lru_cache(maxsize=None)
+def fib(n: int) -> int:
+    """Return the nth Fibonacci number."""
+    if n < 2:
+        return n
+    return fib(n - 1) + fib(n - 2)
+
+def fibonacci_sequence(limit: int) -> Iterator[int]:
+    n = 0
+    while (value := fib(n)) <= limit:
+        yield value
+        n += 1
+
+print(list(fibonacci_sequence(1000)))`,
+
+        json: `{
+  "name": "ravionus-tools",
+  "version": "1.0.0",
+  "description": "Client-side developer utilities",
+  "keywords": ["tools", "developer", "browser"],
+  "homepage": "https://ravionus.com/tools/",
+  "license": "MIT",
+  "dependencies": {},
+  "engines": { "node": ">=20" }
+}`,
+
+        sql: `-- Get top 5 users by order total
+SELECT
+    u.id,
+    u.name,
+    COUNT(o.id)      AS order_count,
+    SUM(o.total)     AS lifetime_value
+FROM users u
+INNER JOIN orders o ON o.user_id = u.id
+WHERE o.status = 'completed'
+  AND o.created_at >= NOW() - INTERVAL '1 year'
+GROUP BY u.id, u.name
+HAVING SUM(o.total) > 0
+ORDER BY lifetime_value DESC
+LIMIT 5;`,
+
+        bash: `#!/usr/bin/env bash
+set -euo pipefail
+
+DEPLOY_DIR="/var/www/html"
+REPO="https://github.com/user/repo.git"
+
+if [[ ! -d "$DEPLOY_DIR" ]]; then
+    echo "Creating deploy directory…"
+    mkdir -p "$DEPLOY_DIR"
+fi
+
+git clone --depth 1 "$REPO" "$DEPLOY_DIR"
+echo "Deployed to $DEPLOY_DIR"`,
+    };
+
+    function loadExample() {
+        const lang = langSelect.value;
+        const ex = EXAMPLES[lang];
+        if (!ex) {
+            showToast(`No example for ${langSelect.options[langSelect.selectedIndex].text}`);
+            return;
+        }
+        codeInput.value = ex;
+        updateStatus();
+        save();
+    }
+
+    // ── Copy ───────────────────────────────────────────────────────────────────
+    async function copyToClipboard(text, label) {
+        try {
+            await navigator.clipboard.writeText(text);
+            showToast(`${label} copied to clipboard!`);
+        } catch {
+            showToast('Copy failed — please copy manually.');
+        }
+    }
+
+    // ── localStorage ──────────────────────────────────────────────────────────
+    function save() {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                input: codeInput.value,
+                lang:  langSelect.value,
+                theme: themeSelect.value,
+            }));
+        } catch { /* quota exceeded */ }
+    }
+
+    let saveTimer;
+    function debouncedSave() {
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(save, 800);
+    }
+
+    (function restore() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return;
+            const s = JSON.parse(raw);
+            if (s.input !== undefined) codeInput.value = s.input;
+            if (s.lang  !== undefined) langSelect.value  = s.lang;
+            if (s.theme !== undefined) { themeSelect.value = s.theme; applyTheme(s.theme); }
+        } catch { /* ignore */ }
+        updateStatus();
+    })();
+
+    // ── Event listeners ───────────────────────────────────────────────────────
+    btnHighlight.addEventListener('click', doHighlight);
+
+    codeInput.addEventListener('input', () => {
+        updateStatus();
+        debouncedSave();
+    });
+
+    langSelect.addEventListener('change', () => {
+        updateStatus();
+        debouncedSave();
+    });
+
+    themeSelect.addEventListener('change', () => {
+        applyTheme(themeSelect.value);
+        debouncedSave();
+    });
+
+    btnCopyHtml.addEventListener('click', () => {
+        if (!lastHighlightedHtml) { showToast('Nothing highlighted yet — click ⚡ Highlight first.'); return; }
+        copyToClipboard(`<pre><code>${lastHighlightedHtml}</code></pre>`, 'HTML');
+    });
+
+    btnCopyText.addEventListener('click', () => {
+        const txt = codeInput.value;
+        if (!txt.trim()) { showToast('Nothing to copy.'); return; }
+        copyToClipboard(txt, 'Text');
+    });
+
+    btnClear.addEventListener('click', () => {
+        codeInput.value = '';
+        highlightOutput.innerHTML = '';
+        lastHighlightedHtml = '';
+        hideError();
+        hideSuccess();
+        updateStatus();
+        save();
+    });
+
+    btnPasteExample.addEventListener('click', loadExample);
+
+    btnLineNumbers.addEventListener('click', () => {
+        lineNumbers = !lineNumbers;
+        btnLineNumbers.textContent = lineNumbers ? 'Hide line nos.' : 'Line numbers';
+        if (lastHighlightedHtml) doHighlight();
+    });
+
+    // Tab key inserts spaces in textarea
+    codeInput.addEventListener('keydown', e => {
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            const s = codeInput.selectionStart;
+            const spaces = '    ';
+            codeInput.value = codeInput.value.slice(0, s) + spaces + codeInput.value.slice(codeInput.selectionEnd);
+            codeInput.selectionStart = codeInput.selectionEnd = s + spaces.length;
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            e.preventDefault();
+            doHighlight();
+        }
+    });
+
+    tabInput.addEventListener('click',  () => setMobileTab('input'));
+    tabOutput.addEventListener('click', () => setMobileTab('output'));
+
+    updateStatus();
+    </script>
+</body>
+</html>

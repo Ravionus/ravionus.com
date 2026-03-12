@@ -66,6 +66,7 @@ jobs:
       color:     ${{ steps.filter.outputs.color }}
       minifier:  ${{ steps.filter.outputs.minifier }}
       qr:        ${{ steps.filter.outputs.qr }}
+      syntax:    ${{ steps.filter.outputs.syntax }}
     steps:
       - uses: actions/checkout@v4
 
@@ -128,6 +129,9 @@ jobs:
             qr:
               - 'tools/qr/**'
               - 'tests/qr.spec.js'
+            syntax:
+              - 'tools/syntax/**'
+              - 'tests/syntax.spec.js'
 
   # ── Job 1: Learn — catalog + topic tests ─────────────────────────────────
   # Runs when:  learn/** or its spec files change
@@ -831,13 +835,52 @@ jobs:
           path: tests/playwright-report/
           retention-days: 7
 
-  # ── Job 26: Deploy to GitHub Pages ────────────────────────────────────────
+  # ── Job 26: Syntax Highlighter ──────────────────────────────────────────────
+  # Runs when:  tools/syntax/** or tests/syntax.spec.js changes
+  #             OR every push to main (pre-deploy gate)
+  test_syntax:
+    name: "Test › Syntax Highlighter"
+    needs: changes
+    if: >-
+      needs.changes.outputs.syntax == 'true' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install test dependencies
+        run: npm install
+        working-directory: tests
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+        working-directory: tests
+
+      - name: Run Syntax Highlighter tests
+        run: npx playwright test syntax.spec.js
+        working-directory: tests
+
+      - name: Upload report on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: syntax-report
+          path: tests/playwright-report/
+          retention-days: 7
+
+  # ── Job 27: Deploy to GitHub Pages ────────────────────────────────────────
   # Only runs on pushes to main.
   # Requires ALL test jobs to have PASSED or been SKIPPED.
   # On main, no jobs are skipped (all run as pre-deploy gate), so all must pass.
   deploy:
     name: Deploy
-    needs: [test_learn, test_json, test_markdown, test_base64, test_url, test_csv, test_yaml, test_regex, test_formatter, test_hash, test_diff, test_uuid, test_password, test_lorem, test_case, test_color, test_minifier, test_qr]
+    needs: [test_learn, test_json, test_markdown, test_base64, test_url, test_csv, test_yaml, test_regex, test_formatter, test_hash, test_diff, test_uuid, test_password, test_lorem, test_case, test_color, test_minifier, test_qr, test_syntax]
     if: >-
       always() &&
       github.event_name == 'push' &&
@@ -859,7 +902,8 @@ jobs:
       (needs.test_case.result      == 'success' || needs.test_case.result      == 'skipped') &&
       (needs.test_color.result     == 'success' || needs.test_color.result     == 'skipped') &&
       (needs.test_minifier.result  == 'success' || needs.test_minifier.result  == 'skipped') &&
-      (needs.test_qr.result        == 'success' || needs.test_qr.result        == 'skipped')
+      (needs.test_qr.result        == 'success' || needs.test_qr.result        == 'skipped') &&
+      (needs.test_syntax.result    == 'success' || needs.test_syntax.result    == 'skipped')
     runs-on: ubuntu-latest
     environment:
       name: github-pages
