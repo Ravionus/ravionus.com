@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+    <title>JavaScript REPL — Ravionus Dev Tools</title>
+    <meta name="description" content="Run JavaScript in your browser instantly — interactive REPL with console output capture, examples, and auto-save. No server, no sign-up.">
+    <link rel="canonical" href="https://ravionus.com/playground/repl/">
+    <meta property="og:title" content="JavaScript REPL — Ravionus Dev Tools">
+    <meta property="og:description" content="Run JavaScript in your browser instantly — interactive REPL with console output capture, examples, and auto-save. No server, no sign-up.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ravionus.com/playground/repl/">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none';">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0a0f;
+            --surface: #12121a;
+            --surface2: #0e0e16;
+            --border: #1e1e2e;
+            --border2: #2a2a3e;
+            --text: #e2e2f0;
+            --muted: #7878a0;
+            --purple: #a855f7;
+            --cyan: #22d3ee;
+            --green: #22c55e;
+            --red: #ef4444;
+            --yellow: #facc15;
+            --accent-g: linear-gradient(135deg, #a855f7, #22d3ee);
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Nav ── */
+        nav {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 52px;
+            flex-shrink: 0;
+        }
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+        .breadcrumb a { color: var(--cyan); text-decoration: none; }
+        .breadcrumb a:hover { text-decoration: underline; }
+        .breadcrumb .sep { color: var(--border2); }
+        .breadcrumb .current { color: var(--text); font-weight: 600; }
+        .nav-links {
+            display: flex;
+            gap: 1.25rem;
+        }
+        .nav-links a {
+            font-size: 0.85rem;
+            color: var(--muted);
+            text-decoration: none;
+            white-space: nowrap;
+        }
+        .nav-links a:hover { color: var(--text); }
+
+        /* ── Page header ── */
+        .page-header {
+            padding: 2rem 1.5rem 1rem;
+            max-width: 900px;
+            width: 100%;
+            margin: 0 auto;
+        }
+        .page-header h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            background: var(--accent-g);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+        .page-header p {
+            font-size: 0.95rem;
+            color: var(--muted);
+            max-width: 620px;
+            line-height: 1.6;
+        }
+
+        /* ── Main layout ── */
+        .main-wrap {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 0 1.5rem 2rem;
+            gap: 0.75rem;
+        }
+
+        /* ── Toolbar ── */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .tb-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.45rem 1rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--border2);
+            background: var(--surface);
+            color: var(--text);
+            transition: background 0.15s, border-color 0.15s, color 0.15s;
+            white-space: nowrap;
+        }
+        .tb-btn:hover { background: var(--border); }
+        .tb-btn.primary {
+            background: var(--purple);
+            border-color: var(--purple);
+            color: #fff;
+        }
+        .tb-btn.primary:hover { background: #9333ea; border-color: #9333ea; }
+        .tb-btn.danger { color: var(--red); border-color: var(--red); }
+        .tb-btn.danger:hover { background: rgba(239,68,68,.12); }
+        .tb-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .tb-btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+        .tb-sep { flex: 1; }
+
+        /* ── Example select ── */
+        .example-select {
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            color: var(--text);
+            font-size: 0.875rem;
+            padding: 0.45rem 0.75rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+        }
+        .example-select:focus { outline: 2px solid var(--cyan); outline-offset: 2px; }
+        .example-select option { background: var(--surface); }
+
+        /* ── Editor layout ── */
+        .editor-layout {
+            display: grid;
+            grid-template-columns: 1fr 4px 1fr;
+            min-height: 460px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--surface2);
+        }
+        .pane {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-width: 0;
+        }
+        .pane-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 0.75rem;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            flex-shrink: 0;
+            gap: 0.5rem;
+        }
+        .pane-header .ph-btn {
+            background: none;
+            border: 1px solid var(--border2);
+            color: var(--muted);
+            padding: 0.2rem 0.55rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            font-family: inherit;
+            transition: color 0.15s, border-color 0.15s;
+            white-space: nowrap;
+        }
+        .pane-header .ph-btn:hover { color: var(--text); border-color: var(--cyan); }
+        .pane-header .ph-btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+        .pane-header .ph-right { display: flex; gap: 0.4rem; align-items: center; }
+
+        .pane-divider {
+            background: var(--border);
+            cursor: col-resize;
+            flex-shrink: 0;
+        }
+
+        /* ── Code editor ── */
+        textarea#codeInput {
+            flex: 1;
+            background: var(--surface2);
+            color: var(--text);
+            border: none;
+            padding: 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            line-height: 1.6;
+            resize: none;
+            outline: none;
+            tab-size: 4;
+            white-space: pre;
+            overflow-wrap: normal;
+            overflow-x: auto;
+        }
+
+        /* ── Console output ── */
+        #consoleOutput {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.5rem 0;
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            line-height: 1.6;
+            background: var(--surface2);
+        }
+
+        .console-line {
+            display: flex;
+            gap: 0.5rem;
+            padding: 0.15rem 1rem;
+            border-bottom: 1px solid transparent;
+            cursor: default;
+        }
+        .console-line:hover { background: rgba(255,255,255,0.03); }
+        .console-line .prefix {
+            flex-shrink: 0;
+            font-size: 0.75rem;
+            margin-top: 0.15rem;
+            user-select: none;
+        }
+        .console-line .value {
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            flex: 1;
+            color: var(--text);
+        }
+
+        /* line type colours */
+        .console-line.log    .value  { color: var(--text); }
+        .console-line.info   .value  { color: var(--cyan); }
+        .console-line.warn   .value  { color: var(--yellow); }
+        .console-line.warn   { background: rgba(250,204,21,.05); }
+        .console-line.error  .value  { color: var(--red); }
+        .console-line.error  { background: rgba(239,68,68,.06); }
+        .console-line.return .value  { color: #c792ea; }
+        .console-line.return .prefix { color: #c792ea; }
+        .console-line.system .value  { color: var(--muted); font-style: italic; }
+        .console-line.log    .prefix { color: var(--muted); }
+        .console-line.info   .prefix { color: var(--cyan); }
+        .console-line.warn   .prefix { color: var(--yellow); }
+        .console-line.error  .prefix { color: var(--red); }
+
+        /* prefix icons */
+        .console-line.log    .prefix::before { content: '›'; }
+        .console-line.info   .prefix::before { content: 'ℹ'; }
+        .console-line.warn   .prefix::before { content: '⚠'; }
+        .console-line.error  .prefix::before { content: '✖'; }
+        .console-line.return .prefix::before { content: '←'; }
+        .console-line.system .prefix::before { content: '»'; }
+
+        .console-empty {
+            padding: 2rem 1rem;
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.85rem;
+            font-style: italic;
+        }
+
+        /* ── Running indicator ── */
+        .running-pill {
+            display: none;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.75rem;
+            color: var(--cyan);
+            padding: 0.15rem 0.5rem;
+            border-radius: 10px;
+            border: 1px solid rgba(34,211,238,.3);
+            background: rgba(34,211,238,.08);
+        }
+        .running-pill.show { display: inline-flex; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spin-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            border: 2px solid rgba(34,211,238,.3);
+            border-top-color: var(--cyan);
+            animation: spin 0.8s linear infinite;
+        }
+
+        /* ── Banners ── */
+        .error-banner, .success-banner {
+            display: none;
+            padding: 0.6rem 1rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        .error-banner { background: rgba(239,68,68,.12); color: var(--red); border: 1px solid rgba(239,68,68,.3); }
+        .error-banner.visible { display: block; }
+        .success-banner { background: rgba(34,197,94,.10); color: var(--green); border: 1px solid rgba(34,197,94,.25); }
+        .success-banner.visible { display: block; }
+
+        /* ── Status bar ── */
+        .status-bar {
+            display: flex;
+            gap: 1.5rem;
+            padding: 0.45rem 0.25rem;
+            font-size: 0.78rem;
+            color: var(--muted);
+            flex-wrap: wrap;
+        }
+        .status-bar span strong { color: var(--text); font-weight: 600; }
+
+        /* ── Toast ── */
+        #toast {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            color: var(--text);
+            padding: 0.65rem 1.1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            opacity: 0;
+            transform: translateY(8px);
+            pointer-events: none;
+            transition: opacity 0.2s, transform 0.2s;
+            z-index: 1000;
+        }
+        #toast.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+        /* ── Mobile tabs ── */
+        .mobile-tabs { display: none; gap: 0.5rem; }
+        .mob-tab {
+            flex: 1;
+            padding: 0.5rem;
+            border-radius: 6px;
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            color: var(--muted);
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+        .mob-tab.active { background: var(--purple); border-color: var(--purple); color: #fff; }
+        .mob-tab:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+        @media (max-width: 700px) {
+            .mobile-tabs { display: flex; }
+            .toolbar { gap: 0.4rem; }
+            .editor-layout {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 0 auto;
+                min-height: 300px;
+            }
+            .pane-divider { display: none; }
+            .pane { display: none; }
+            .pane.mob-visible { display: flex; }
+            .page-header { padding: 1rem 1rem 0.5rem; }
+            .main-wrap { padding: 0 0.75rem 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="breadcrumb">
+            <a href="../../">Ravionus</a>
+            <span class="sep">›</span>
+            <a href="../../playground/">Playgrounds</a>
+            <span class="sep">›</span>
+            <span class="current">JavaScript REPL</span>
+        </div>
+        <div class="nav-links" role="navigation">
+            <a href="../../learn/">✨ Learn</a>
+            <a href="../../tools/">🛠️ Tools</a>
+            <a href="../../playground/">🧪 Playgrounds</a>
+        </div>
+    </nav>
+
+    <header class="page-header">
+        <h1>🧪 JavaScript REPL</h1>
+        <p>Write JavaScript and run it instantly in a sandboxed environment. Console output — <code>log</code>, <code>warn</code>, <code>error</code>, <code>info</code> — is captured and displayed in the output pane. Everything runs in your browser.</p>
+    </header>
+
+    <div class="main-wrap">
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <button id="btnRun" class="tb-btn primary">▶ Run</button>
+
+            <select id="exampleSelect" class="example-select" aria-label="Load example snippet">
+                <option value="">📂 Load example…</option>
+                <option value="fibonacci">Fibonacci (recursion)</option>
+                <option value="promises">Async / Promises</option>
+                <option value="array">Array methods</option>
+                <option value="classes">ES6 Classes</option>
+                <option value="closures">Closures &amp; scope</option>
+                <option value="regex">Regex matching</option>
+                <option value="json">JSON manipulation</option>
+                <option value="generator">Generators</option>
+                <option value="destructuring">Destructuring</option>
+                <option value="errors">Error handling</option>
+            </select>
+
+            <div class="tb-sep"></div>
+
+            <div class="running-pill" id="runningPill">
+                <div class="spin-dot"></div>
+                Running…
+            </div>
+
+            <button id="btnCopyCode" class="tb-btn">📋 Copy Code</button>
+            <button id="btnClearOutput" class="tb-btn">🗑 Clear Output</button>
+            <button id="btnClearAll" class="tb-btn danger">✕ Clear All</button>
+        </div>
+
+        <!-- Mobile tabs -->
+        <div class="mobile-tabs">
+            <button class="mob-tab active" id="tabInput">📥 Editor</button>
+            <button class="mob-tab" id="tabOutput">📤 Output</button>
+        </div>
+
+        <!-- Editor -->
+        <div class="editor-layout">
+            <div class="pane mob-visible" id="paneInput">
+                <div class="pane-header">
+                    <span>Editor</span>
+                    <div class="ph-right">
+                        <span id="cursorPos" style="font-size:0.72rem;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;">Ln 1, Col 1</span>
+                        <button class="ph-btn" id="btnWordWrap">Wrap</button>
+                    </div>
+                </div>
+                <textarea id="codeInput"
+                    aria-label="JavaScript code editor"
+                    placeholder="// Write JavaScript here and press ▶ Run (or Shift+Enter)&#10;&#10;console.log('Hello, World!');"
+                    spellcheck="false"
+                    autocomplete="off"
+                    autocorrect="off"
+                    autocapitalize="off"></textarea>
+            </div>
+            <div class="pane-divider"></div>
+            <div class="pane" id="paneOutput">
+                <div class="pane-header">
+                    <span>Console Output</span>
+                    <div class="ph-right">
+                        <span id="lineCount" style="font-size:0.72rem;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;">0 lines</span>
+                        <button class="ph-btn" id="btnCopyOutput">Copy</button>
+                    </div>
+                </div>
+                <div id="consoleOutput" aria-label="Console output" aria-live="polite">
+                    <div class="console-empty" id="emptyState">Press ▶ Run to execute your code</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Banners -->
+        <div class="error-banner" id="errorBanner" role="alert"></div>
+        <div class="success-banner" id="successBanner" aria-live="polite"></div>
+
+        <!-- Status bar -->
+        <div class="status-bar">
+            <span>Lines: <strong id="statLines">0</strong></span>
+            <span>Chars: <strong id="statChars">0</strong></span>
+            <span>Last run: <strong id="statLastRun">—</strong></span>
+            <span>Output lines: <strong id="statOutputLines">0</strong></span>
+        </div>
+    </div>
+
+    <div id="toast" aria-live="polite"></div>
+
+    <script>
+    'use strict';
+    // ── Constants ──────────────────────────────────────────────────────────────
+    const STORAGE_KEY = 'ravionus_tool_repl';
+
+    // ── DOM refs ───────────────────────────────────────────────────────────────
+    const codeInput      = document.getElementById('codeInput');
+    const consoleOutput  = document.getElementById('consoleOutput');
+    const emptyState     = document.getElementById('emptyState');
+    const btnRun         = document.getElementById('btnRun');
+    const btnCopyCode    = document.getElementById('btnCopyCode');
+    const btnCopyOutput  = document.getElementById('btnCopyOutput');
+    const btnClearOutput = document.getElementById('btnClearOutput');
+    const btnClearAll    = document.getElementById('btnClearAll');
+    const btnWordWrap    = document.getElementById('btnWordWrap');
+    const exampleSelect  = document.getElementById('exampleSelect');
+    const runningPill    = document.getElementById('runningPill');
+    const cursorPos      = document.getElementById('cursorPos');
+    const lineCount      = document.getElementById('lineCount');
+    const errorBanner    = document.getElementById('errorBanner');
+    const successBanner  = document.getElementById('successBanner');
+    const statLines      = document.getElementById('statLines');
+    const statChars      = document.getElementById('statChars');
+    const statLastRun    = document.getElementById('statLastRun');
+    const statOutputLines = document.getElementById('statOutputLines');
+    const toast          = document.getElementById('toast');
+    const paneInput      = document.getElementById('paneInput');
+    const paneOutput     = document.getElementById('paneOutput');
+    const tabInput       = document.getElementById('tabInput');
+    const tabOutput      = document.getElementById('tabOutput');
+
+    // ── State ──────────────────────────────────────────────────────────────────
+    let wordWrap = false;
+    let outputLineCount = 0;
+
+    // ── Example snippets ───────────────────────────────────────────────────────
+    const EXAMPLES = {
+        fibonacci: `// Fibonacci with memoisation
+function fib(n, memo = new Map()) {
+    if (n <= 1) return n;
+    if (memo.has(n)) return memo.get(n);
+    const result = fib(n - 1, memo) + fib(n - 2, memo);
+    memo.set(n, result);
+    return result;
+}
+
+for (let i = 0; i <= 10; i++) {
+    console.log(\`fib(\${i}) = \${fib(i)}\`);
+}`,
+
+        promises: `// Async / Promises
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function main() {
+    console.log('Start');
+    await delay(0);
+    console.log('After async pause');
+
+    const results = await Promise.all([
+        Promise.resolve(1),
+        Promise.resolve(2),
+        Promise.resolve(3),
+    ]);
+    console.log('Promise.all:', results);
+    return 'done';
+}
+
+main().then(v => console.log('Resolved:', v));`,
+
+        array: `// Array methods
+const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+const evens    = numbers.filter(n => n % 2 === 0);
+const doubled  = evens.map(n => n * 2);
+const sum      = doubled.reduce((acc, n) => acc + n, 0);
+
+console.log('Evens:', evens);
+console.log('Doubled:', doubled);
+console.log('Sum:', sum);
+
+const words = ['banana', 'apple', 'cherry', 'date'];
+console.log('Sorted:', [...words].sort());
+console.log('Flat:', [[1, 2], [3, 4], [5]].flat());`,
+
+        classes: `// ES6 Classes
+class Animal {
+    #name;
+    constructor(name, sound) {
+        this.#name = name;
+        this.sound = sound;
+    }
+    speak() {
+        return \`\${this.#name} says "\${this.sound}"\`;
+    }
+    get name() { return this.#name; }
+}
+
+class Dog extends Animal {
+    constructor(name) { super(name, 'Woof'); }
+    fetch(item) { return \`\${this.name} fetches the \${item}!\`; }
+}
+
+const d = new Dog('Rex');
+console.log(d.speak());
+console.log(d.fetch('ball'));
+console.log(d instanceof Animal);`,
+
+        closures: `// Closures & scope
+function makeCounter(start = 0, step = 1) {
+    let count = start;
+    return {
+        increment: () => (count += step),
+        decrement: () => (count -= step),
+        reset:     () => (count = start),
+        value:     () => count,
+    };
+}
+
+const counter = makeCounter(10, 5);
+console.log(counter.value());       // 10
+counter.increment();
+counter.increment();
+console.log(counter.value());       // 20
+counter.decrement();
+console.log(counter.value());       // 15
+counter.reset();
+console.log(counter.value());       // 10`,
+
+        regex: `// Regex matching
+const text = "Contact: alice@example.com or bob.smith@test.org";
+
+const emailRx = /[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}/g;
+const emails  = text.match(emailRx);
+console.log('Emails found:', emails);
+
+const dateStr = "2024-03-15";
+const dateRx  = /^(\\d{4})-(\\d{2})-(\\d{2})$/;
+const [, year, month, day] = dateStr.match(dateRx);
+console.log(\`Year: \${year}, Month: \${month}, Day: \${day}\`);
+
+const masked = text.replace(emailRx, m => m.replace(/(?<=.).(?=[^@]*@)/g, '*'));
+console.log('Masked:', masked);`,
+
+        json: `// JSON manipulation
+const data = {
+    users: [
+        { id: 1, name: 'Alice', roles: ['admin', 'user'] },
+        { id: 2, name: 'Bob',   roles: ['user'] },
+        { id: 3, name: 'Carol', roles: ['user', 'moderator'] },
+    ],
+};
+
+// Serialise & parse
+const json   = JSON.stringify(data, null, 2);
+const parsed = JSON.parse(json);
+
+// Query
+const admins = parsed.users.filter(u => u.roles.includes('admin'));
+console.log('Admins:', admins.map(u => u.name));
+
+// Transform
+const lookup = Object.fromEntries(parsed.users.map(u => [u.id, u.name]));
+console.log('Lookup:', JSON.stringify(lookup));`,
+
+        generator: `// Generators
+function* range(start, end, step = 1) {
+    for (let i = start; i < end; i += step) yield i;
+}
+
+function* take(n, iter) {
+    let i = 0;
+    for (const v of iter) {
+        if (i++ >= n) return;
+        yield v;
+    }
+}
+
+function* naturals(n = 1) {
+    while (true) yield n++;
+}
+
+console.log([...range(0, 10, 2)]);       // [0, 2, 4, 6, 8]
+console.log([...take(5, naturals(100))]);  // [100..104]
+
+function* fibonacci() {
+    let [a, b] = [0, 1];
+    while (true) { yield a; [a, b] = [b, a + b]; }
+}
+console.log([...take(8, fibonacci())]);`,
+
+        destructuring: `// Destructuring & spread
+const point = { x: 10, y: 20, z: 30 };
+const { x, z, y: height } = point;
+console.log(x, height, z);
+
+const matrix = [[1, 2, 3], [4, 5, 6], [7, 8, 9]];
+const [[a, b], [, e]] = matrix;
+console.log(a, b, e);
+
+const [first, second, ...rest] = [10, 20, 30, 40, 50];
+console.log(first, second, rest);
+
+function greet({ name = 'World', greeting = 'Hello' } = {}) {
+    return \`\${greeting}, \${name}!\`;
+}
+console.log(greet({ name: 'Alice' }));
+console.log(greet());`,
+
+        errors: `// Error handling
+class ValidationError extends Error {
+    constructor(field, message) {
+        super(\`[\${field}] \${message}\`);
+        this.name = 'ValidationError';
+        this.field = field;
+    }
+}
+
+function validate(user) {
+    if (!user.name?.trim())   throw new ValidationError('name',  'Required');
+    if (!/.+@.+\\..+/.test(user.email)) throw new ValidationError('email', 'Invalid format');
+    return true;
+}
+
+const testCases = [
+    { name: 'Alice', email: 'alice@example.com' },
+    { name: '',      email: 'oops' },
+    { name: 'Bob',   email: 'not-an-email' },
+];
+
+for (const tc of testCases) {
+    try {
+        validate(tc);
+        console.log('Valid:', tc.name || '(empty)');
+    } catch (e) {
+        if (e instanceof ValidationError) {
+            console.error(\`\${e.name}: \${e.message}\`);
+        } else throw e;
+    }
+}`,
+    };
+
+    // ── Execution engine ───────────────────────────────────────────────────────
+    // Runs user code via indirect eval in the page context.
+    // Console methods are temporarily overridden to capture output.
+    // The page's CSP includes 'unsafe-eval' which allows this approach.
+
+    function serializeArg(a) {
+        if (a === null)      return 'null';
+        if (a === undefined) return 'undefined';
+        if (typeof a === 'string')  return a;
+        if (typeof a === 'number' || typeof a === 'boolean') return String(a);
+        if (typeof a === 'bigint')  return a.toString() + 'n';
+        if (typeof a === 'symbol')  return a.toString();
+        if (typeof a === 'function') return '[Function: ' + (a.name || 'anonymous') + ']';
+        try {
+            return JSON.stringify(a, (k, v) => {
+                if (typeof v === 'function') return '[Function: ' + (v.name || 'anonymous') + ']';
+                if (typeof v === 'symbol')   return v.toString();
+                if (typeof v === 'bigint')   return v.toString() + 'n';
+                return v;
+            }, 2);
+        } catch { return '[Unserializable]'; }
+    }
+
+    let _savedConsole = {};
+
+    function captureConsole() {
+        const methods = ['log', 'error', 'warn', 'info', 'dir', 'table'];
+        methods.forEach(m => {
+            _savedConsole[m] = console[m];
+            console[m] = (...args) => appendLine(m === 'dir' || m === 'table' ? 'log' : m, args.map(serializeArg).join(' '));
+        });
+        _savedConsole.clear = console.clear;
+        console.clear = () => clearOutput();
+    }
+
+    function restoreConsole() {
+        Object.keys(_savedConsole).forEach(m => { console[m] = _savedConsole[m]; });
+        _savedConsole = {};
+    }
+
+    // Indirect eval — runs in global scope, not in this function's strict scope.
+    const _globalEval = (0, eval);
+
+    function runCode(code) {
+        captureConsole();
+        let result;
+        try {
+            result = _globalEval(code);
+        } catch (e) {
+            appendLine('error', e instanceof Error ? (e.message || String(e)) : String(e));
+        } finally {
+            restoreConsole();
+        }
+        // Capture non-undefined synchronous return values
+        if (result !== undefined && !(result instanceof Promise)) {
+            appendLine('return', serializeArg(result));
+        }
+        // Async — show result/error when the promise settles
+        if (result instanceof Promise) {
+            result.then(v => {
+                if (v !== undefined) appendLine('return', serializeArg(v));
+            }).catch(e => {
+                appendLine('error', 'Promise rejected: ' + (e instanceof Error ? e.message : String(e)));
+            });
+        }
+        return Promise.resolve('done');
+    }
+
+    // ── Output rendering ───────────────────────────────────────────────────────
+    function clearOutput() {
+        consoleOutput.innerHTML = '';
+        consoleOutput.appendChild(emptyState);
+        emptyState.style.display = '';
+        outputLineCount = 0;
+        updateOutputStat();
+    }
+
+    function appendLine(type, text) {
+        emptyState.style.display = 'none';
+        const line = document.createElement('div');
+        line.className = `console-line ${type}`;
+
+        const prefix = document.createElement('span');
+        prefix.className = 'prefix';
+
+        const value = document.createElement('span');
+        value.className = 'value';
+        value.textContent = text;
+
+        line.appendChild(prefix);
+        line.appendChild(value);
+        consoleOutput.appendChild(line);
+
+        // Auto-scroll to bottom
+        consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        outputLineCount++;
+        updateOutputStat();
+    }
+
+    function appendSystem(text) {
+        appendLine('system', text);
+    }
+
+    function updateOutputStat() {
+        const n = outputLineCount;
+        lineCount.textContent = `${n} line${n !== 1 ? 's' : ''}`;
+        statOutputLines.textContent = n;
+    }
+
+    // ── Run ────────────────────────────────────────────────────────────────────
+    async function doRun() {
+        const code = codeInput.value;
+        hideError();
+        hideSuccess();
+
+        if (!code.trim()) {
+            showError('Write some JavaScript first.');
+            return;
+        }
+
+        btnRun.disabled = true;
+        runningPill.classList.add('show');
+
+        const started = Date.now();
+
+        // Add separator if there's already output
+        if (outputLineCount > 0) {
+            const div = document.createElement('div');
+            div.style.cssText = 'height:1px;background:var(--border);margin:6px 0;';
+            consoleOutput.appendChild(div);
+        }
+
+        const outcome = await runCode(code);
+
+        btnRun.disabled = false;
+        runningPill.classList.remove('show');
+
+        statLastRun.textContent = new Date().toLocaleTimeString();
+
+        if (window.innerWidth <= 700) {
+            setMobileTab('output');
+        }
+    }
+
+    // ── Status bar ─────────────────────────────────────────────────────────────
+    function updateEditorStat() {
+        const code = codeInput.value;
+        statLines.textContent = code ? code.split('\n').length : 0;
+        statChars.textContent = code.length;
+    }
+
+    function updateCursorPos() {
+        const pos = codeInput.selectionStart;
+        const text = codeInput.value.slice(0, pos);
+        const lines = text.split('\n');
+        const ln = lines.length;
+        const col = lines[lines.length - 1].length + 1;
+        cursorPos.textContent = `Ln ${ln}, Col ${col}`;
+    }
+
+    // ── Banners & toast ────────────────────────────────────────────────────────
+    function showError(msg)   { errorBanner.textContent = '❌ ' + msg; errorBanner.classList.add('visible'); }
+    function hideError()      { errorBanner.classList.remove('visible'); }
+    function showSuccess(msg) { successBanner.textContent = '✅ ' + msg; successBanner.classList.add('visible'); }
+    function hideSuccess()    { successBanner.classList.remove('visible'); }
+
+    let toastTimer;
+    function showToast(msg) {
+        toast.textContent = msg;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    // ── Mobile tabs ────────────────────────────────────────────────────────────
+    function setMobileTab(which) {
+        if (which === 'input') {
+            paneInput.classList.add('mob-visible');
+            paneOutput.classList.remove('mob-visible');
+            tabInput.classList.add('active');
+            tabOutput.classList.remove('active');
+        } else {
+            paneOutput.classList.add('mob-visible');
+            paneInput.classList.remove('mob-visible');
+            tabOutput.classList.add('active');
+            tabInput.classList.remove('active');
+        }
+    }
+
+    // ── localStorage ──────────────────────────────────────────────────────────
+    function save() {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                input: codeInput.value,
+                wrap:  wordWrap,
+            }));
+        } catch { /* quota */ }
+    }
+
+    let saveTimer;
+    function debouncedSave() {
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(save, 800);
+    }
+
+    (function restore() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return;
+            const s = JSON.parse(raw);
+            if (s.input !== undefined) codeInput.value = s.input;
+            if (s.wrap) {
+                wordWrap = true;
+                applyWordWrap();
+            }
+        } catch { /* ignore */ }
+        updateEditorStat();
+    })();
+
+    // ── Word wrap toggle ───────────────────────────────────────────────────────
+    function applyWordWrap() {
+        if (wordWrap) {
+            codeInput.style.whiteSpace = 'pre-wrap';
+            codeInput.style.overflowWrap = 'break-word';
+            btnWordWrap.textContent = 'No wrap';
+        } else {
+            codeInput.style.whiteSpace = 'pre';
+            codeInput.style.overflowWrap = 'normal';
+            btnWordWrap.textContent = 'Wrap';
+        }
+    }
+
+    // ── Copy output as text ────────────────────────────────────────────────────
+    function getOutputText() {
+        const lines = consoleOutput.querySelectorAll('.console-line .value');
+        return Array.from(lines).map(el => el.textContent).join('\n');
+    }
+
+    async function copyToClipboard(text, label) {
+        try {
+            await navigator.clipboard.writeText(text);
+            showToast(`${label} copied!`);
+        } catch {
+            showToast('Copy failed — please copy manually.');
+        }
+    }
+
+    // ── Event listeners ───────────────────────────────────────────────────────
+    btnRun.addEventListener('click', doRun);
+
+    codeInput.addEventListener('input', () => {
+        updateEditorStat();
+        debouncedSave();
+        hideError();
+    });
+
+    codeInput.addEventListener('click', updateCursorPos);
+    codeInput.addEventListener('keyup', updateCursorPos);
+
+    codeInput.addEventListener('keydown', e => {
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            const s = codeInput.selectionStart;
+            const end = codeInput.selectionEnd;
+            const val = codeInput.value;
+            const spaces = '    ';
+            codeInput.value = val.slice(0, s) + spaces + val.slice(end);
+            codeInput.selectionStart = codeInput.selectionEnd = s + spaces.length;
+            updateEditorStat();
+        }
+        if ((e.shiftKey) && e.key === 'Enter' && !e.ctrlKey && !e.metaKey) {
+            e.preventDefault();
+            doRun();
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            e.preventDefault();
+            doRun();
+        }
+    });
+
+    exampleSelect.addEventListener('change', () => {
+        const key = exampleSelect.value;
+        if (!key) return;
+        const ex = EXAMPLES[key];
+        if (ex) {
+            codeInput.value = ex;
+            updateEditorStat();
+            debouncedSave();
+            hideError();
+        }
+        exampleSelect.value = '';
+    });
+
+    btnWordWrap.addEventListener('click', () => {
+        wordWrap = !wordWrap;
+        applyWordWrap();
+        debouncedSave();
+    });
+
+    btnCopyCode.addEventListener('click', () => {
+        const code = codeInput.value;
+        if (!code.trim()) { showToast('Nothing to copy.'); return; }
+        copyToClipboard(code, 'Code');
+    });
+
+    btnCopyOutput.addEventListener('click', () => {
+        const txt = getOutputText();
+        if (!txt) { showToast('No output to copy.'); return; }
+        copyToClipboard(txt, 'Output');
+    });
+
+    btnClearOutput.addEventListener('click', () => {
+        clearOutput();
+    });
+
+    btnClearAll.addEventListener('click', () => {
+        codeInput.value = '';
+        clearOutput();
+        hideError();
+        hideSuccess();
+        updateEditorStat();
+        save();
+    });
+
+    tabInput.addEventListener('click',  () => setMobileTab('input'));
+    tabOutput.addEventListener('click', () => setMobileTab('output'));
+
+    updateEditorStat();
+    updateCursorPos();
+    </script>
+</body>
+</html>
