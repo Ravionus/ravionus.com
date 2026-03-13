@@ -1,0 +1,1481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+    <title>CSS Layout Playground — Ravionus Dev Tools</title>
+    <meta name="description" content="Experiment with CSS Grid and Flexbox layouts visually — edit HTML and CSS side-by-side and see the result instantly. No server, no sign-up.">
+    <link rel="canonical" href="https://ravionus.com/playground/css-layout/">
+    <meta property="og:title" content="CSS Layout Playground — Ravionus Dev Tools">
+    <meta property="og:description" content="Experiment with CSS Grid and Flexbox layouts visually — edit HTML and CSS side-by-side and see the result instantly. No server, no sign-up.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ravionus.com/playground/css-layout/">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none';">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0a0f;
+            --surface: #12121a;
+            --surface2: #0e0e16;
+            --border: #1e1e2e;
+            --border2: #2a2a3e;
+            --text: #e2e2f0;
+            --muted: #7878a0;
+            --purple: #a855f7;
+            --cyan: #22d3ee;
+            --green: #22c55e;
+            --red: #ef4444;
+            --accent-g: linear-gradient(135deg, #a855f7, #22d3ee);
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Nav ── */
+        nav {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 52px;
+            flex-shrink: 0;
+        }
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+        .breadcrumb a { color: var(--cyan); text-decoration: none; }
+        .breadcrumb a:hover { text-decoration: underline; }
+        .breadcrumb .sep { color: var(--border2); }
+        .breadcrumb .current { color: var(--text); font-weight: 600; }
+        .nav-links { display: flex; gap: 1.25rem; }
+        .nav-links a {
+            font-size: 0.85rem;
+            color: var(--muted);
+            text-decoration: none;
+            white-space: nowrap;
+        }
+        .nav-links a:hover { color: var(--text); }
+
+        /* ── Page header ── */
+        .page-header {
+            padding: 2rem 1.5rem 1rem;
+            max-width: 900px;
+            width: 100%;
+            margin: 0 auto;
+        }
+        .page-header h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            background: var(--accent-g);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+        .page-header p {
+            font-size: 0.95rem;
+            color: var(--muted);
+            max-width: 620px;
+            line-height: 1.6;
+        }
+
+        /* ── Main wrap ── */
+        .main-wrap {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 1600px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 0 1.5rem 2rem;
+            gap: 0.75rem;
+        }
+
+        /* ── Toolbar ── */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .tb-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.45rem 1rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--border2);
+            background: var(--surface);
+            color: var(--text);
+            font-family: inherit;
+            transition: background 0.15s, border-color 0.15s;
+            white-space: nowrap;
+        }
+        .tb-btn:hover { background: var(--border); }
+        .tb-btn.primary { background: var(--purple); border-color: var(--purple); color: #fff; }
+        .tb-btn.primary:hover { background: #9333ea; border-color: #9333ea; }
+        .tb-btn.danger { color: var(--red); border-color: var(--red); }
+        .tb-btn.danger:hover { background: rgba(239,68,68,.12); }
+        .tb-btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+        /* ── Example select ── */
+        .example-select {
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            color: var(--text);
+            font-size: 0.875rem;
+            padding: 0.45rem 0.75rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+        }
+        .example-select:focus { outline: 2px solid var(--cyan); outline-offset: 2px; }
+        .example-select option { background: var(--surface); }
+
+        .tb-sep { flex: 1; }
+
+        /* ── Editor tabs ── */
+        .editor-tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .ed-tab {
+            padding: 0.45rem 1.1rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--muted);
+            cursor: pointer;
+            border: none;
+            background: none;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+            font-family: inherit;
+            transition: color 0.15s;
+            white-space: nowrap;
+        }
+        .ed-tab:hover { color: var(--text); }
+        .ed-tab.active { color: var(--cyan); border-bottom-color: var(--cyan); }
+        .ed-tab:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+        /* ── Main layout ── */
+        .editor-layout {
+            display: grid;
+            grid-template-columns: 1fr 4px 1fr;
+            min-height: 500px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--surface2);
+        }
+        .pane {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-width: 0;
+        }
+        .pane-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 0.75rem;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            flex-shrink: 0;
+            gap: 0.5rem;
+        }
+        .pane-header .ph-right { display: flex; gap: 0.4rem; align-items: center; }
+        .ph-btn {
+            background: none;
+            border: 1px solid var(--border2);
+            color: var(--muted);
+            padding: 0.2rem 0.55rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            font-family: inherit;
+            transition: color 0.15s, border-color 0.15s;
+            white-space: nowrap;
+        }
+        .ph-btn:hover { color: var(--text); border-color: var(--cyan); }
+        .ph-btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+        .pane-divider { background: var(--border); flex-shrink: 0; cursor: col-resize; }
+
+        /* ── Code editors ── */
+        .editor-pane {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .code-tab-content {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+        textarea.code-editor {
+            position: absolute;
+            inset: 0;
+            background: var(--surface2);
+            color: var(--text);
+            border: none;
+            padding: 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            line-height: 1.6;
+            resize: none;
+            outline: none;
+            tab-size: 2;
+            white-space: pre;
+            overflow-wrap: normal;
+            overflow-x: auto;
+            display: none;
+        }
+        textarea.code-editor.active { display: block; }
+
+        /* ── Preview pane ── */
+        .preview-pane {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        #previewFrame {
+            flex: 1;
+            border: none;
+            background: #fff;
+            width: 100%;
+        }
+
+        /* ── Banners ── */
+        .error-banner, .success-banner {
+            display: none;
+            padding: 0.6rem 1rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        .error-banner { background: rgba(239,68,68,.12); color: var(--red); border: 1px solid rgba(239,68,68,.3); }
+        .error-banner.visible { display: block; }
+        .success-banner { background: rgba(34,197,94,.10); color: var(--green); border: 1px solid rgba(34,197,94,.25); }
+        .success-banner.visible { display: block; }
+
+        /* ── Status bar ── */
+        .status-bar {
+            display: flex;
+            gap: 1.5rem;
+            padding: 0.45rem 0.25rem;
+            font-size: 0.78rem;
+            color: var(--muted);
+            flex-wrap: wrap;
+        }
+        .status-bar span strong { color: var(--text); font-weight: 600; }
+
+        /* ── Toast ── */
+        #toast {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            color: var(--text);
+            padding: 0.65rem 1.1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            opacity: 0;
+            transform: translateY(8px);
+            pointer-events: none;
+            transition: opacity 0.2s, transform 0.2s;
+            z-index: 1000;
+        }
+        #toast.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+        /* ── Mobile tabs ── */
+        .mobile-tabs { display: none; gap: 0.5rem; }
+        .mob-tab {
+            flex: 1;
+            padding: 0.5rem;
+            border-radius: 6px;
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            color: var(--muted);
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+        }
+        .mob-tab.active { background: var(--purple); border-color: var(--purple); color: #fff; }
+        .mob-tab:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+        @media (max-width: 700px) {
+            .mobile-tabs { display: flex; }
+            .toolbar { gap: 0.4rem; }
+            .editor-layout {
+                grid-template-columns: 1fr;
+                min-height: 320px;
+            }
+            .pane-divider { display: none; }
+            .pane { display: none; }
+            .pane.mob-visible { display: flex; }
+            .page-header { padding: 1rem 1rem 0.5rem; }
+            .main-wrap { padding: 0 0.75rem 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="breadcrumb">
+            <a href="../../">Ravionus</a>
+            <span class="sep">›</span>
+            <a href="../../playground/">Playgrounds</a>
+            <span class="sep">›</span>
+            <span class="current">CSS Layout Playground</span>
+        </div>
+        <div class="nav-links" role="navigation">
+            <a href="../../learn/">✨ Learn</a>
+            <a href="../../tools/">🛠️ Tools</a>
+            <a href="../../playground/">🧪 Playgrounds</a>
+        </div>
+    </nav>
+
+    <header class="page-header">
+        <h1>🎨 CSS Layout Playground</h1>
+        <p>Write HTML and CSS side-by-side and see your layout come to life instantly. Experiment with Flexbox, Grid, and more — no setup needed, everything runs in your browser.</p>
+    </header>
+
+    <div class="main-wrap">
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <button id="btnRun" class="tb-btn primary">▶ Run</button>
+
+            <select id="exampleSelect" class="example-select" aria-label="Load layout example">
+                <option value="">📂 Load example…</option>
+                <option value="flexbox-row">Flexbox — Row</option>
+                <option value="flexbox-wrap">Flexbox — Wrap</option>
+                <option value="flexbox-center">Flexbox — Center</option>
+                <option value="grid-basic">Grid — Basic</option>
+                <option value="grid-areas">Grid — Template Areas</option>
+                <option value="grid-responsive">Grid — Responsive</option>
+                <option value="holy-grail">Holy Grail Layout</option>
+                <option value="card-grid">Card Grid</option>
+                <option value="sidebar">Sidebar Layout</option>
+                <option value="sticky-header">Sticky Header</option>
+            </select>
+
+            <div class="tb-sep"></div>
+
+            <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.85rem;color:var(--muted);cursor:pointer;">
+                <input type="checkbox" id="autoRun" checked style="accent-color:var(--purple);width:15px;height:15px;">
+                Auto-run
+            </label>
+
+            <button id="btnCopyHtml" class="tb-btn">📋 Copy HTML</button>
+            <button id="btnCopyCss" class="tb-btn">📋 Copy CSS</button>
+            <button id="btnClearAll" class="tb-btn danger">✕ Clear All</button>
+        </div>
+
+        <!-- Mobile tabs -->
+        <div class="mobile-tabs">
+            <button class="mob-tab active" id="tabInput">📥 Editor</button>
+            <button class="mob-tab" id="tabPreview">📤 Preview</button>
+        </div>
+
+        <!-- Editor layout -->
+        <div class="editor-layout">
+            <!-- Left: code editors with HTML/CSS tabs -->
+            <div class="pane editor-pane mob-visible" id="paneEditor">
+                <div class="pane-header">
+                    <div class="editor-tabs">
+                        <button class="ed-tab active" id="tabHtml" aria-label="Switch to HTML editor">HTML</button>
+                        <button class="ed-tab" id="tabCss" aria-label="Switch to CSS editor">CSS</button>
+                    </div>
+                    <div class="ph-right">
+                        <span id="cursorPos" style="font-size:0.72rem;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;">Ln 1, Col 1</span>
+                        <button class="ph-btn" id="btnWordWrap">Wrap</button>
+                    </div>
+                </div>
+                <div class="code-tab-content">
+                    <textarea id="htmlInput"
+                        class="code-editor active"
+                        aria-label="HTML editor"
+                        spellcheck="false"
+                        autocomplete="off"
+                        autocorrect="off"
+                        autocapitalize="off"
+                        placeholder="<!-- Write your HTML here -->"></textarea>
+                    <textarea id="cssInput"
+                        class="code-editor"
+                        aria-label="CSS editor"
+                        spellcheck="false"
+                        autocomplete="off"
+                        autocorrect="off"
+                        autocapitalize="off"
+                        placeholder="/* Write your CSS here */"></textarea>
+                </div>
+            </div>
+
+            <div class="pane-divider"></div>
+
+            <!-- Right: live preview -->
+            <div class="pane preview-pane" id="panePreview">
+                <div class="pane-header">
+                    <span>Preview</span>
+                    <div class="ph-right">
+                        <button class="ph-btn" id="btnRefresh">↻ Refresh</button>
+                        <button class="ph-btn" id="btnFullscreen">⛶ Full</button>
+                    </div>
+                </div>
+                <iframe id="previewFrame"
+                    title="Layout preview"
+                    sandbox="allow-scripts"
+                    aria-label="Live preview of your layout"></iframe>
+            </div>
+        </div>
+
+        <!-- Banners -->
+        <div class="error-banner" id="errorBanner" role="alert"></div>
+        <div class="success-banner" id="successBanner" aria-live="polite"></div>
+
+        <!-- Status bar -->
+        <div class="status-bar">
+            <span>HTML: <strong id="statHtmlLines">0</strong> lines</span>
+            <span>CSS: <strong id="statCssLines">0</strong> lines</span>
+            <span>Last run: <strong id="statLastRun">—</strong></span>
+            <span>Active: <strong id="statActive">HTML</strong></span>
+        </div>
+    </div>
+
+    <div id="toast" aria-live="polite"></div>
+
+    <script>
+    'use strict';
+
+    // ── Constants ──────────────────────────────────────────────────────────────
+    const STORAGE_KEY = 'ravionus_tool_css_layout';
+
+    // ── DOM refs ───────────────────────────────────────────────────────────────
+    const htmlInput     = document.getElementById('htmlInput');
+    const cssInput      = document.getElementById('cssInput');
+    const previewFrame  = document.getElementById('previewFrame');
+    const btnRun        = document.getElementById('btnRun');
+    const btnRefresh    = document.getElementById('btnRefresh');
+    const btnFullscreen = document.getElementById('btnFullscreen');
+    const btnCopyHtml   = document.getElementById('btnCopyHtml');
+    const btnCopyCss    = document.getElementById('btnCopyCss');
+    const btnClearAll   = document.getElementById('btnClearAll');
+    const btnWordWrap   = document.getElementById('btnWordWrap');
+    const exampleSelect = document.getElementById('exampleSelect');
+    const autoRunCheck  = document.getElementById('autoRun');
+    const tabHtml       = document.getElementById('tabHtml');
+    const tabCss        = document.getElementById('tabCss');
+    const cursorPos     = document.getElementById('cursorPos');
+    const errorBanner   = document.getElementById('errorBanner');
+    const successBanner = document.getElementById('successBanner');
+    const statHtmlLines = document.getElementById('statHtmlLines');
+    const statCssLines  = document.getElementById('statCssLines');
+    const statLastRun   = document.getElementById('statLastRun');
+    const statActive    = document.getElementById('statActive');
+    const toast         = document.getElementById('toast');
+    const paneEditor    = document.getElementById('paneEditor');
+    const panePreview   = document.getElementById('panePreview');
+    const tabInput      = document.getElementById('tabInput');
+    const tabPreview    = document.getElementById('tabPreview');
+
+    // ── State ──────────────────────────────────────────────────────────────────
+    let wordWrap = false;
+    let activeEditor = 'html'; // 'html' | 'css'
+
+    // ── Examples ───────────────────────────────────────────────────────────────
+    const EXAMPLES = {
+        'flexbox-row': {
+            html: `<div class="container">
+  <div class="box">1</div>
+  <div class="box">2</div>
+  <div class="box">3</div>
+  <div class="box">4</div>
+  <div class="box">5</div>
+</div>`,
+            css: `* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #f0f2f5;
+  padding: 2rem;
+  font-family: sans-serif;
+}
+
+.container {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.1);
+}
+
+.box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  background: #6366f1;
+  color: #fff;
+  font-size: 1.25rem;
+  font-weight: 700;
+  border-radius: 6px;
+}`
+        },
+
+        'flexbox-wrap': {
+            html: `<div class="container">
+  <div class="box">Alpha</div>
+  <div class="box">Beta</div>
+  <div class="box">Gamma</div>
+  <div class="box">Delta</div>
+  <div class="box">Epsilon</div>
+  <div class="box">Zeta</div>
+  <div class="box">Eta</div>
+  <div class="box">Theta</div>
+</div>`,
+            css: `* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #f0f2f5;
+  padding: 2rem;
+  font-family: sans-serif;
+}
+
+.container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.1);
+}
+
+.box {
+  flex: 1 1 120px;
+  padding: 1rem;
+  background: #22c55e;
+  color: #fff;
+  font-weight: 600;
+  border-radius: 6px;
+  text-align: center;
+}`
+        },
+
+        'flexbox-center': {
+            html: `<div class="container">
+  <div class="card">
+    <h2>Centered Card</h2>
+    <p>This card is perfectly centered using Flexbox.</p>
+    <button class="btn">Click me</button>
+  </div>
+</div>`,
+            css: `* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #0f172a;
+  font-family: sans-serif;
+}
+
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+.card {
+  background: #1e293b;
+  color: #f1f5f9;
+  padding: 2.5rem;
+  border-radius: 12px;
+  max-width: 360px;
+  width: 100%;
+  box-shadow: 0 20px 40px rgba(0,0,0,.4);
+}
+
+.card h2 { font-size: 1.5rem; margin-bottom: 0.75rem; color: #a78bfa; }
+.card p  { color: #94a3b8; line-height: 1.6; margin-bottom: 1.5rem; }
+
+.btn {
+  background: #7c3aed;
+  color: #fff;
+  border: none;
+  padding: 0.6rem 1.4rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn:hover { background: #6d28d9; }`
+        },
+
+        'grid-basic': {
+            html: `<div class="grid">
+  <div class="cell">1</div>
+  <div class="cell">2</div>
+  <div class="cell">3</div>
+  <div class="cell">4</div>
+  <div class="cell">5</div>
+  <div class="cell">6</div>
+  <div class="cell">7</div>
+  <div class="cell">8</div>
+  <div class="cell">9</div>
+</div>`,
+            css: `* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #f8fafc;
+  padding: 2rem;
+  font-family: sans-serif;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100px;
+  background: #3b82f6;
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 700;
+  border-radius: 8px;
+  transition: transform 0.2s;
+}
+.cell:hover { transform: scale(1.05); }`
+        },
+
+        'grid-areas': {
+            html: `<div class="layout">
+  <header class="header">Header</header>
+  <nav class="sidebar">Sidebar</nav>
+  <main class="main">Main Content</main>
+  <aside class="aside">Aside</aside>
+  <footer class="footer">Footer</footer>
+</div>`,
+            css: `* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #f1f5f9;
+  padding: 1.5rem;
+  font-family: sans-serif;
+  min-height: 100vh;
+}
+
+.layout {
+  display: grid;
+  grid-template-areas:
+    "header  header  header"
+    "sidebar main    aside"
+    "footer  footer  footer";
+  grid-template-columns: 180px 1fr 160px;
+  grid-template-rows: 56px 1fr 48px;
+  gap: 0.75rem;
+  min-height: calc(100vh - 3rem);
+}
+
+.header  { grid-area: header;  background: #6366f1; }
+.sidebar { grid-area: sidebar; background: #8b5cf6; }
+.main    { grid-area: main;    background: #22d3ee; }
+.aside   { grid-area: aside;   background: #a78bfa; }
+.footer  { grid-area: footer;  background: #64748b; }
+
+.layout > * {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}`
+        },
+
+        'grid-responsive': {
+            html: `<div class="grid">
+  <article class="card">
+    <div class="card-img"></div>
+    <div class="card-body">
+      <h3>Card One</h3>
+      <p>Responsive grid that adapts to screen width automatically.</p>
+    </div>
+  </article>
+  <article class="card">
+    <div class="card-img" style="background:#22c55e"></div>
+    <div class="card-body">
+      <h3>Card Two</h3>
+      <p>Using auto-fill and minmax for fluid columns.</p>
+    </div>
+  </article>
+  <article class="card">
+    <div class="card-img" style="background:#f59e0b"></div>
+    <div class="card-body">
+      <h3>Card Three</h3>
+      <p>No media queries needed for this layout.</p>
+    </div>
+  </article>
+  <article class="card">
+    <div class="card-img" style="background:#ef4444"></div>
+    <div class="card-body">
+      <h3>Card Four</h3>
+      <p>Grid items wrap naturally as available space shrinks.</p>
+    </div>
+  </article>
+</div>`,
+            css: `* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #f1f5f9;
+  padding: 2rem;
+  font-family: sans-serif;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.25rem;
+}
+
+.card {
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0,0,0,.1);
+}
+
+.card-img {
+  height: 120px;
+  background: #6366f1;
+}
+
+.card-body {
+  padding: 1rem;
+}
+
+.card-body h3 {
+  font-size: 1rem;
+  margin-bottom: 0.4rem;
+  color: #1e293b;
+}
+
+.card-body p {
+  font-size: 0.85rem;
+  color: #64748b;
+  line-height: 1.5;
+}`
+        },
+
+        'holy-grail': {
+            html: `<div class="page">
+  <header>
+    <span>🏛️ Holy Grail Layout</span>
+    <nav>Home · About · Contact</nav>
+  </header>
+  <div class="body">
+    <aside class="left-sidebar">
+      <h4>Left</h4>
+      <ul>
+        <li>Link 1</li>
+        <li>Link 2</li>
+        <li>Link 3</li>
+      </ul>
+    </aside>
+    <main>
+      <h2>Main Content</h2>
+      <p>The classic "Holy Grail" layout: fixed-width sidebars with a fluid center column, built with Flexbox.</p>
+    </main>
+    <aside class="right-sidebar">
+      <h4>Right</h4>
+      <p>Widget area</p>
+    </aside>
+  </div>
+  <footer>© 2024 My Site</footer>
+</div>`,
+            css: `* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #f8fafc;
+  font-family: sans-serif;
+  color: #334155;
+  min-height: 100vh;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+header {
+  background: #1e40af;
+  color: #fff;
+  padding: 0 1.5rem;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 700;
+}
+
+header nav { font-size: 0.875rem; opacity: 0.85; }
+
+.body {
+  display: flex;
+  flex: 1;
+}
+
+.left-sidebar, .right-sidebar {
+  width: 180px;
+  flex-shrink: 0;
+  padding: 1.5rem 1rem;
+  background: #f1f5f9;
+  border-right: 1px solid #e2e8f0;
+}
+
+.right-sidebar { border-right: none; border-left: 1px solid #e2e8f0; }
+
+main {
+  flex: 1;
+  padding: 1.5rem 2rem;
+  background: #fff;
+}
+
+main h2 { margin-bottom: 0.75rem; color: #1e293b; }
+main p  { line-height: 1.7; color: #475569; }
+
+.left-sidebar h4, .right-sidebar h4 { margin-bottom: 0.75rem; color: #64748b; font-size: 0.8rem; text-transform: uppercase; letter-spacing: .05em; }
+.left-sidebar ul { padding-left: 1rem; }
+.left-sidebar li { margin-bottom: 0.4rem; font-size: 0.875rem; color: #475569; }
+
+footer {
+  background: #1e293b;
+  color: #94a3b8;
+  text-align: center;
+  padding: 0.75rem;
+  font-size: 0.85rem;
+}`
+        },
+
+        'card-grid': {
+            html: `<div class="page">
+  <h1>Our Team</h1>
+  <div class="grid">
+    <div class="card">
+      <div class="avatar" style="background:#6366f1">AJ</div>
+      <h3>Alice Johnson</h3>
+      <span class="role">Frontend Engineer</span>
+      <p>Loves CSS, hates IE6.</p>
+    </div>
+    <div class="card">
+      <div class="avatar" style="background:#22c55e">BS</div>
+      <h3>Bob Smith</h3>
+      <span class="role">Backend Dev</span>
+      <p>Talks to databases all day.</p>
+    </div>
+    <div class="card">
+      <div class="avatar" style="background:#f59e0b">CL</div>
+      <h3>Carol Lee</h3>
+      <span class="role">Designer</span>
+      <p>Pixel-perfect or riot.</p>
+    </div>
+    <div class="card">
+      <div class="avatar" style="background:#ef4444">DW</div>
+      <h3>Dan Wu</h3>
+      <span class="role">DevOps</span>
+      <p>Keeps the lights on.</p>
+    </div>
+    <div class="card">
+      <div class="avatar" style="background:#8b5cf6">EK</div>
+      <h3>Eva Kim</h3>
+      <span class="role">QA Engineer</span>
+      <p>Breaks things professionally.</p>
+    </div>
+    <div class="card">
+      <div class="avatar" style="background:#06b6d4">FP</div>
+      <h3>Frank Park</h3>
+      <span class="role">Product Manager</span>
+      <p>Writes stories, ships features.</p>
+    </div>
+  </div>
+</div>`,
+            css: `* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #f8fafc;
+  font-family: sans-serif;
+  padding: 2rem;
+}
+
+.page h1 {
+  text-align: center;
+  font-size: 2rem;
+  color: #0f172a;
+  margin-bottom: 2rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1.25rem;
+}
+
+.card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.5rem 1rem;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+  transition: transform .2s, box-shadow .2s;
+}
+.card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,.12); }
+
+.avatar {
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.card h3 { font-size: 1rem; color: #1e293b; margin-bottom: 0.25rem; }
+.role { font-size: 0.75rem; color: #7c3aed; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; display: block; margin-bottom: 0.5rem; }
+.card p { font-size: 0.82rem; color: #64748b; line-height: 1.5; }`
+        },
+
+        'sidebar': {
+            html: `<div class="layout">
+  <aside class="sidebar">
+    <div class="logo">⚡ MyApp</div>
+    <nav>
+      <a href="#" class="nav-item active">🏠 Dashboard</a>
+      <a href="#" class="nav-item">📊 Analytics</a>
+      <a href="#" class="nav-item">👥 Users</a>
+      <a href="#" class="nav-item">⚙️ Settings</a>
+    </nav>
+    <div class="sidebar-footer">v1.0.0</div>
+  </aside>
+  <div class="content">
+    <header class="topbar">
+      <h1>Dashboard</h1>
+      <button class="btn">+ New</button>
+    </header>
+    <div class="cards">
+      <div class="stat-card">
+        <span class="label">Users</span>
+        <span class="value">4,821</span>
+      </div>
+      <div class="stat-card">
+        <span class="label">Revenue</span>
+        <span class="value">$12,340</span>
+      </div>
+      <div class="stat-card">
+        <span class="label">Orders</span>
+        <span class="value">892</span>
+      </div>
+    </div>
+  </div>
+</div>`,
+            css: `* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: sans-serif;
+  background: #0f172a;
+  color: #f1f5f9;
+  min-height: 100vh;
+}
+
+.layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: #1e293b;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 0;
+  border-right: 1px solid #334155;
+}
+
+.logo {
+  font-size: 1.1rem;
+  font-weight: 800;
+  padding: 0 1.25rem 1.5rem;
+  color: #a78bfa;
+}
+
+nav { flex: 1; }
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.25rem;
+  color: #94a3b8;
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-left: 3px solid transparent;
+  transition: background .15s, color .15s;
+}
+.nav-item:hover { background: rgba(255,255,255,.05); color: #f1f5f9; }
+.nav-item.active { color: #a78bfa; border-left-color: #a78bfa; background: rgba(167,139,250,.08); }
+
+.sidebar-footer {
+  padding: 1rem 1.25rem 0;
+  font-size: 0.75rem;
+  color: #475569;
+}
+
+.content { flex: 1; display: flex; flex-direction: column; }
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #1e293b;
+}
+
+.topbar h1 { font-size: 1.25rem; font-weight: 700; }
+
+.btn {
+  background: #7c3aed;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cards {
+  display: flex;
+  gap: 1rem;
+  padding: 1.5rem;
+}
+
+.stat-card {
+  flex: 1;
+  background: #1e293b;
+  border-radius: 10px;
+  padding: 1.25rem;
+  border: 1px solid #334155;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.label { font-size: 0.8rem; color: #64748b; text-transform: uppercase; letter-spacing: .05em; }
+.value { font-size: 1.75rem; font-weight: 800; color: #f1f5f9; }`
+        },
+
+        'sticky-header': {
+            html: `<div class="page">
+  <header class="sticky-header">
+    <div class="header-inner">
+      <span class="brand">🚀 Brand</span>
+      <nav>
+        <a href="#">Home</a>
+        <a href="#">About</a>
+        <a href="#">Blog</a>
+        <a href="#">Contact</a>
+      </nav>
+      <button class="cta">Get Started</button>
+    </div>
+  </header>
+
+  <section class="hero">
+    <h1>Scroll down to see<br>the sticky header</h1>
+    <p>The header stays fixed at the top while content scrolls beneath it.</p>
+  </section>
+
+  <section class="content">
+    <div class="block">Section 1</div>
+    <div class="block" style="background:#22c55e20">Section 2</div>
+    <div class="block" style="background:#f59e0b20">Section 3</div>
+    <div class="block" style="background:#ef444420">Section 4</div>
+  </section>
+</div>`,
+            css: `* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: sans-serif;
+  background: #f8fafc;
+  color: #1e293b;
+}
+
+.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(255,255,255,.95);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+}
+
+.header-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.brand {
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: #7c3aed;
+  margin-right: auto;
+}
+
+nav { display: flex; gap: 1.5rem; }
+nav a {
+  color: #475569;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+nav a:hover { color: #7c3aed; }
+
+.cta {
+  background: #7c3aed;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1.1rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.hero {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 5rem 1.5rem;
+  text-align: center;
+}
+.hero h1 { font-size: 2.5rem; font-weight: 800; margin-bottom: 1rem; }
+.hero p  { font-size: 1.1rem; color: #64748b; }
+
+.content {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 1.5rem 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.block {
+  padding: 3rem 2rem;
+  background: #6366f120;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #334155;
+  text-align: center;
+}`
+        },
+    };
+
+    // ── Preview rendering ──────────────────────────────────────────────────────
+    function buildPreviewDoc(html, css) {
+        return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>${css}</style>
+</head>
+<body>${html}</body>
+</html>`;
+    }
+
+    function renderPreview() {
+        const html = htmlInput.value;
+        const css  = cssInput.value;
+        try {
+            previewFrame.srcdoc = buildPreviewDoc(html, css);
+            statLastRun.textContent = new Date().toLocaleTimeString();
+            hideError();
+        } catch (e) {
+            showError('Preview error: ' + e.message);
+        }
+    }
+
+    // ── Status bar ─────────────────────────────────────────────────────────────
+    function updateStats() {
+        const htmlLines = htmlInput.value ? htmlInput.value.split('\n').length : 0;
+        const cssLines  = cssInput.value  ? cssInput.value.split('\n').length  : 0;
+        statHtmlLines.textContent = htmlLines;
+        statCssLines.textContent  = cssLines;
+    }
+
+    function updateCursor(textarea) {
+        const pos   = textarea.selectionStart;
+        const text  = textarea.value.slice(0, pos);
+        const lines = text.split('\n');
+        const ln    = lines.length;
+        const col   = (lines[lines.length - 1] || '').length + 1;
+        cursorPos.textContent = `Ln ${ln}, Col ${col}`;
+    }
+
+    // ── Editor tab switching ───────────────────────────────────────────────────
+    function switchEditor(which) {
+        activeEditor = which;
+        if (which === 'html') {
+            tabHtml.classList.add('active');
+            tabCss.classList.remove('active');
+            htmlInput.classList.add('active');
+            cssInput.classList.remove('active');
+            statActive.textContent = 'HTML';
+            updateCursor(htmlInput);
+        } else {
+            tabCss.classList.add('active');
+            tabHtml.classList.remove('active');
+            cssInput.classList.add('active');
+            htmlInput.classList.remove('active');
+            statActive.textContent = 'CSS';
+            updateCursor(cssInput);
+        }
+    }
+
+    // ── Word wrap ──────────────────────────────────────────────────────────────
+    function applyWordWrap() {
+        const style = wordWrap
+            ? { whiteSpace: 'pre-wrap', overflowWrap: 'break-word', overflowX: 'hidden' }
+            : { whiteSpace: 'pre', overflowWrap: 'normal', overflowX: 'auto' };
+        Object.assign(htmlInput.style, style);
+        Object.assign(cssInput.style, style);
+        btnWordWrap.textContent = wordWrap ? 'No wrap' : 'Wrap';
+    }
+
+    // ── Banners & toast ────────────────────────────────────────────────────────
+    function showError(msg)   { errorBanner.textContent = '❌ ' + msg; errorBanner.classList.add('visible'); }
+    function hideError()      { errorBanner.classList.remove('visible'); }
+    function showSuccess(msg) { successBanner.textContent = '✅ ' + msg; successBanner.classList.add('visible'); }
+    function hideSuccess()    { successBanner.classList.remove('visible'); }
+
+    let toastTimer;
+    function showToast(msg) {
+        toast.textContent = msg;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    // ── Mobile tabs ────────────────────────────────────────────────────────────
+    function setMobileTab(which) {
+        if (which === 'editor') {
+            paneEditor.classList.add('mob-visible');
+            panePreview.classList.remove('mob-visible');
+            tabInput.classList.add('active');
+            tabPreview.classList.remove('active');
+        } else {
+            panePreview.classList.add('mob-visible');
+            paneEditor.classList.remove('mob-visible');
+            tabPreview.classList.add('active');
+            tabInput.classList.remove('active');
+        }
+    }
+
+    // ── localStorage ──────────────────────────────────────────────────────────
+    function save() {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                html:     htmlInput.value,
+                css:      cssInput.value,
+                wrap:     wordWrap,
+                autoRun:  autoRunCheck.checked,
+            }));
+        } catch { /* quota */ }
+    }
+
+    let saveTimer;
+    function debouncedSave() {
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(save, 800);
+    }
+
+    (function restore() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return;
+            const s = JSON.parse(raw);
+            if (s.html !== undefined) htmlInput.value = s.html;
+            if (s.css  !== undefined) cssInput.value  = s.css;
+            if (s.wrap) { wordWrap = true; applyWordWrap(); }
+            if (typeof s.autoRun === 'boolean') autoRunCheck.checked = s.autoRun;
+        } catch { /* ignore */ }
+        updateStats();
+    })();
+
+    // ── Auto-run debounce ──────────────────────────────────────────────────────
+    let runTimer;
+    function scheduleRun() {
+        if (!autoRunCheck.checked) return;
+        clearTimeout(runTimer);
+        runTimer = setTimeout(renderPreview, 600);
+    }
+
+    // ── Copy ───────────────────────────────────────────────────────────────────
+    async function copyToClipboard(text, label) {
+        try {
+            await navigator.clipboard.writeText(text);
+            showToast(`${label} copied!`);
+        } catch {
+            showToast('Copy failed — please copy manually.');
+        }
+    }
+
+    // ── Event listeners ───────────────────────────────────────────────────────
+
+    btnRun.addEventListener('click', () => { hideError(); hideSuccess(); renderPreview(); });
+
+    btnRefresh.addEventListener('click', renderPreview);
+
+    btnFullscreen.addEventListener('click', () => {
+        if (previewFrame.requestFullscreen) {
+            previewFrame.requestFullscreen().catch(() => showToast('Fullscreen not available.'));
+        } else {
+            showToast('Fullscreen not supported in this browser.');
+        }
+    });
+
+    btnCopyHtml.addEventListener('click', () => {
+        const v = htmlInput.value;
+        if (!v.trim()) { showToast('HTML editor is empty.'); return; }
+        copyToClipboard(v, 'HTML');
+    });
+
+    btnCopyCss.addEventListener('click', () => {
+        const v = cssInput.value;
+        if (!v.trim()) { showToast('CSS editor is empty.'); return; }
+        copyToClipboard(v, 'CSS');
+    });
+
+    btnClearAll.addEventListener('click', () => {
+        htmlInput.value = '';
+        cssInput.value  = '';
+        previewFrame.srcdoc = '';
+        hideError();
+        hideSuccess();
+        updateStats();
+        save();
+    });
+
+    btnWordWrap.addEventListener('click', () => {
+        wordWrap = !wordWrap;
+        applyWordWrap();
+        debouncedSave();
+    });
+
+    tabHtml.addEventListener('click', () => switchEditor('html'));
+    tabCss.addEventListener('click',  () => switchEditor('css'));
+
+    tabInput.addEventListener('click',   () => setMobileTab('editor'));
+    tabPreview.addEventListener('click', () => setMobileTab('preview'));
+
+    exampleSelect.addEventListener('change', () => {
+        const key = exampleSelect.value;
+        if (!key) return;
+        const ex = EXAMPLES[key];
+        if (ex) {
+            htmlInput.value = ex.html;
+            cssInput.value  = ex.css;
+            updateStats();
+            debouncedSave();
+            renderPreview();
+        }
+        exampleSelect.value = '';
+    });
+
+    autoRunCheck.addEventListener('change', debouncedSave);
+
+    // Input handling for both editors
+    [htmlInput, cssInput].forEach(ta => {
+        ta.addEventListener('input', () => {
+            updateStats();
+            debouncedSave();
+            scheduleRun();
+        });
+
+        ta.addEventListener('click', () => updateCursor(ta));
+        ta.addEventListener('keyup', () => updateCursor(ta));
+
+        ta.addEventListener('keydown', e => {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                const s   = ta.selectionStart;
+                const end = ta.selectionEnd;
+                const sp  = '  '; // 2 spaces for HTML/CSS
+                ta.value  = ta.value.slice(0, s) + sp + ta.value.slice(end);
+                ta.selectionStart = ta.selectionEnd = s + sp.length;
+                updateStats();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                renderPreview();
+            }
+        });
+    });
+
+    // Run on initial load if there's saved content
+    if (htmlInput.value || cssInput.value) {
+        renderPreview();
+    }
+
+    updateStats();
+    </script>
+</body>
+</html>
