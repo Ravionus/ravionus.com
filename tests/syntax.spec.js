@@ -180,7 +180,7 @@ test.describe('Syntax Highlighter — features', () => {
     // ── Empty input ───────────────────────────────────────────────────────────
 
     test('empty input shows error banner — no dialog', async ({ page }) => {
-        const dialogs = [];
+        const dialogs = /** @type {string[]} */ ([]);
         page.on('dialog', d => { dialogs.push(d.type()); d.dismiss(); });
         await page.click('#btnHighlight');
         expect(dialogs).toHaveLength(0);
@@ -240,7 +240,7 @@ test.describe('Syntax Highlighter — features', () => {
     // ── Copy HTML button (no dialog) ──────────────────────────────────────────
 
     test('Copy HTML with no highlighted output shows toast — no dialog', async ({ page }) => {
-        const dialogs = [];
+        const dialogs = /** @type {string[]} */ ([]);
         page.on('dialog', d => { dialogs.push(d.type()); d.dismiss(); });
         await page.click('#btnCopyHtml');
         expect(dialogs).toHaveLength(0);
@@ -248,7 +248,7 @@ test.describe('Syntax Highlighter — features', () => {
     });
 
     test('Copy Text with no input shows toast — no dialog', async ({ page }) => {
-        const dialogs = [];
+        const dialogs = /** @type {string[]} */ ([]);
         page.on('dialog', d => { dialogs.push(d.type()); d.dismiss(); });
         await page.click('#btnCopyText');
         expect(dialogs).toHaveLength(0);

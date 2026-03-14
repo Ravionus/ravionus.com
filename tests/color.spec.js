@@ -137,7 +137,7 @@ test.describe('Color Converter — features', () => {
     // ── Invalid input ──────────────────────────────────────────────────────
 
     test('invalid HEX shows error banner — no dialog', async ({ page }) => {
-        const dialogs = [];
+        const dialogs = /** @type {string[]} */ ([]);
         page.on('dialog', d => { dialogs.push(d.type()); d.dismiss(); });
         await page.fill('#inputHex', 'notacolor');
         await page.locator('#inputHex').dispatchEvent('input');
@@ -187,7 +187,7 @@ test.describe('Color Converter — features', () => {
     // ── Copy All ───────────────────────────────────────────────────────────
 
     test('Copy All shows toast — no dialog', async ({ page }) => {
-        const dialogs = [];
+        const dialogs = /** @type {string[]} */ ([]);
         page.on('dialog', d => { dialogs.push(d.type()); d.dismiss(); });
         await page.click('#btnCopyAll');
         expect(dialogs).toHaveLength(0);

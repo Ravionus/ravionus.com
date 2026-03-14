@@ -581,7 +581,7 @@ test.describe('Git Simulator — graph rendering', () => {
     });
 
     test('canvas dimensions expand after commits', async ({ page }) => {
-        const w = await page.evaluate(() => document.getElementById('graphCanvas').width);
+        const w = await page.evaluate(() => /** @type {HTMLCanvasElement} */ (document.getElementById('graphCanvas')).width);
         expect(w).toBeGreaterThan(0);
     });
 

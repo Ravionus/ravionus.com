@@ -138,7 +138,7 @@ test.describe('Password Generator — features', () => {
     });
 
     test('copy all without passwords shows toast — no dialog', async ({ page }) => {
-        const dialogs = [];
+        const dialogs = /** @type {string[]} */ ([]);
         page.on('dialog', d => { dialogs.push(d.type()); d.dismiss(); });
         await page.click('#btnCopyAll');
         expect(dialogs).toHaveLength(0);
@@ -146,7 +146,7 @@ test.describe('Password Generator — features', () => {
     });
 
     test('download without passwords shows toast — no dialog', async ({ page }) => {
-        const dialogs = [];
+        const dialogs = /** @type {string[]} */ ([]);
         page.on('dialog', d => { dialogs.push(d.type()); d.dismiss(); });
         await page.click('#btnDownload');
         expect(dialogs).toHaveLength(0);
@@ -163,7 +163,7 @@ test.describe('Password Generator — features', () => {
     });
 
     test('no charset selected shows error banner — no dialog or alert', async ({ page }) => {
-        const dialogs = [];
+        const dialogs = /** @type {string[]} */ ([]);
         page.on('dialog', d => { dialogs.push(d.type()); d.dismiss(); });
         await page.uncheck('#chkUpper');
         await page.uncheck('#chkLower');
@@ -196,7 +196,7 @@ test.describe('Password Generator — features', () => {
     test('copy individual password row shows toast — no dialog', async ({ page, context }) => {
         await context.grantPermissions(['clipboard-read', 'clipboard-write']);
         await page.click('#btnGenerate');
-        const dialogs = [];
+        const dialogs = /** @type {string[]} */ ([]);
         page.on('dialog', d => { dialogs.push(d.type()); d.dismiss(); });
         await page.locator('.pw-row').first().locator('.ph-btn').click();
         expect(dialogs).toHaveLength(0);

@@ -160,7 +160,7 @@ test.describe('CSS Layout Playground — preview iframe', () => {
         await page.goto(PAGE);
         // Disable auto-run first
         await page.evaluate(() => {
-            document.getElementById('autoRun').checked = false;
+            /** @type {HTMLInputElement} */ (document.getElementById('autoRun')).checked = false;
         });
         const ta = page.locator('#htmlInput');
         await ta.click();

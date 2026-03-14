@@ -159,7 +159,7 @@ test.describe('Case Converter — features', () => {
     // ── Toolbar ───────────────────────────────────────────────────────────────
 
     test('Copy All without input shows warning toast — no dialog', async ({ page }) => {
-        const dialogs = [];
+        const dialogs = /** @type {string[]} */ ([]);
         page.on('dialog', d => { dialogs.push(d.type()); d.dismiss(); });
         await page.click('#btnCopyAll');
         expect(dialogs).toHaveLength(0);
@@ -167,7 +167,7 @@ test.describe('Case Converter — features', () => {
     });
 
     test('Download without input shows warning toast — no dialog', async ({ page }) => {
-        const dialogs = [];
+        const dialogs = /** @type {string[]} */ ([]);
         page.on('dialog', d => { dialogs.push(d.type()); d.dismiss(); });
         await page.click('#btnDownload');
         expect(dialogs).toHaveLength(0);
@@ -194,7 +194,7 @@ test.describe('Case Converter — features', () => {
     test('copy individual card shows toast — no dialog', async ({ page, context }) => {
         await context.grantPermissions(['clipboard-read', 'clipboard-write']);
         await page.fill('#inputArea', 'hello world');
-        const dialogs = [];
+        const dialogs = /** @type {string[]} */ ([]);
         page.on('dialog', d => { dialogs.push(d.type()); d.dismiss(); });
         await page.locator('[data-case-id="upper"] .copy-btn').click();
         expect(dialogs).toHaveLength(0);

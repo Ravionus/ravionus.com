@@ -94,8 +94,8 @@ test.describe('Password Generator (Playground) — classic', () => {
 
     test('count=3 generates 3 .pw-items', async ({ page }) => {
         await page.evaluate(() => {
-            const s = document.getElementById('countSlider');
-            const n = document.getElementById('countDisplay');
+            const s = /** @type {HTMLInputElement} */ (document.getElementById('countSlider'));
+            const n = /** @type {HTMLInputElement} */ (document.getElementById('countDisplay'));
             s.value = '3'; n.value = '3';
             s.dispatchEvent(new Event('input', { bubbles: true }));
         });
@@ -179,8 +179,8 @@ test.describe('Password Generator (Playground) — classic', () => {
         await page.fill('#lengthDisplay', '50');
         await page.dispatchEvent('#lengthDisplay', 'input');
         await page.evaluate(() => {
-            const s = document.getElementById('countSlider');
-            const n = document.getElementById('countDisplay');
+            const s = /** @type {HTMLInputElement} */ (document.getElementById('countSlider'));
+            const n = /** @type {HTMLInputElement} */ (document.getElementById('countDisplay'));
             s.value = '10'; n.value = '10';
             s.dispatchEvent(new Event('input', { bubbles: true }));
         });
@@ -239,8 +239,8 @@ test.describe('Password Generator (Playground) — classic', () => {
 
     test('statCount updates after generate', async ({ page }) => {
         await page.evaluate(() => {
-            const s = document.getElementById('countSlider');
-            const n = document.getElementById('countDisplay');
+            const s = /** @type {HTMLInputElement} */ (document.getElementById('countSlider'));
+            const n = /** @type {HTMLInputElement} */ (document.getElementById('countDisplay'));
             s.value = '5'; n.value = '5';
             s.dispatchEvent(new Event('input', { bubbles: true }));
         });
@@ -299,8 +299,8 @@ test.describe('Password Generator (Playground) — passphrase', () => {
     test('changing word count to 6 → passphrase has 6 parts', async ({ page }) => {
         await page.selectOption('#separatorSelect', '-');
         await page.evaluate(() => {
-            const s = document.getElementById('wordCountSlider');
-            const n = document.getElementById('wordCountDisplay');
+            const s = /** @type {HTMLInputElement} */ (document.getElementById('wordCountSlider'));
+            const n = /** @type {HTMLInputElement} */ (document.getElementById('wordCountDisplay'));
             s.value = '6'; n.value = '6';
             s.dispatchEvent(new Event('input', { bubbles: true }));
         });
@@ -342,8 +342,8 @@ test.describe('Password Generator (Playground) — passphrase', () => {
 
     test('count=3 generates 3 phrase items', async ({ page }) => {
         await page.evaluate(() => {
-            const s = document.getElementById('phraseCountSlider');
-            const n = document.getElementById('phraseCountDisplay');
+            const s = /** @type {HTMLInputElement} */ (document.getElementById('phraseCountSlider'));
+            const n = /** @type {HTMLInputElement} */ (document.getElementById('phraseCountDisplay'));
             s.value = '3'; n.value = '3';
             s.dispatchEvent(new Event('input', { bubbles: true }));
         });
@@ -519,8 +519,8 @@ test.describe('Password Generator (Playground) — toolbar', () => {
 
     test('each pw-item has a copy button', async ({ page }) => {
         await page.evaluate(() => {
-            const s = document.getElementById('countSlider');
-            const n = document.getElementById('countDisplay');
+            const s = /** @type {HTMLInputElement} */ (document.getElementById('countSlider'));
+            const n = /** @type {HTMLInputElement} */ (document.getElementById('countDisplay'));
             s.value = '3'; n.value = '3';
             s.dispatchEvent(new Event('input', { bubbles: true }));
         });
@@ -562,15 +562,15 @@ test.describe('Password Generator (Playground) — strength', () => {
     test('phrase 8 words has higher entropy than 2 words', async ({ page }) => {
         await page.click('#tabPassphrase');
         await page.evaluate(() => {
-            const s = document.getElementById('wordCountSlider');
-            const n = document.getElementById('wordCountDisplay');
+            const s = /** @type {HTMLInputElement} */ (document.getElementById('wordCountSlider'));
+            const n = /** @type {HTMLInputElement} */ (document.getElementById('wordCountDisplay'));
             s.value = '8'; n.value = '8';
             s.dispatchEvent(new Event('input', { bubbles: true }));
         });
         const ent8 = parseInt(await page.locator('#phraseEntropyDisplay').textContent() || '0');
         await page.evaluate(() => {
-            const s = document.getElementById('wordCountSlider');
-            const n = document.getElementById('wordCountDisplay');
+            const s = /** @type {HTMLInputElement} */ (document.getElementById('wordCountSlider'));
+            const n = /** @type {HTMLInputElement} */ (document.getElementById('wordCountDisplay'));
             s.value = '2'; n.value = '2';
             s.dispatchEvent(new Event('input', { bubbles: true }));
         });

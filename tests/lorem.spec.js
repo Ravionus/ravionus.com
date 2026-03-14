@@ -176,7 +176,7 @@ test.describe('Lorem Ipsum Generator — features', () => {
     });
 
     test('copy without output shows toast — no dialog', async ({ page }) => {
-        const dialogs = [];
+        const dialogs = /** @type {string[]} */ ([]);
         page.on('dialog', d => { dialogs.push(d.type()); d.dismiss(); });
         await page.click('#btnCopy');
         expect(dialogs).toHaveLength(0);
@@ -184,7 +184,7 @@ test.describe('Lorem Ipsum Generator — features', () => {
     });
 
     test('download without output shows toast — no dialog', async ({ page }) => {
-        const dialogs = [];
+        const dialogs = /** @type {string[]} */ ([]);
         page.on('dialog', d => { dialogs.push(d.type()); d.dismiss(); });
         await page.click('#btnDownload');
         expect(dialogs).toHaveLength(0);

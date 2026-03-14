@@ -120,7 +120,7 @@ test.describe('QR Code Generator — features', () => {
     // ── Empty input ───────────────────────────────────────────────────────────
 
     test('empty input shows error banner — no dialog', async ({ page }) => {
-        const dialogs = [];
+        const dialogs = /** @type {string[]} */ ([]);
         page.on('dialog', d => { dialogs.push(d.type()); d.dismiss(); });
         await page.click('#btnGenerate');
         expect(dialogs).toHaveLength(0);
@@ -205,7 +205,7 @@ test.describe('QR Code Generator — features', () => {
     // ── Download buttons (no dialog) ──────────────────────────────────────────
 
     test('Download PNG with no QR shows toast — no dialog', async ({ page }) => {
-        const dialogs = [];
+        const dialogs = /** @type {string[]} */ ([]);
         page.on('dialog', d => { dialogs.push(d.type()); d.dismiss(); });
         await page.click('#btnDownloadPng');
         expect(dialogs).toHaveLength(0);
@@ -213,7 +213,7 @@ test.describe('QR Code Generator — features', () => {
     });
 
     test('Download SVG with no QR shows toast — no dialog', async ({ page }) => {
-        const dialogs = [];
+        const dialogs = /** @type {string[]} */ ([]);
         page.on('dialog', d => { dialogs.push(d.type()); d.dismiss(); });
         await page.click('#btnDownloadSvg');
         expect(dialogs).toHaveLength(0);

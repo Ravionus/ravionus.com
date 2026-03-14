@@ -4,14 +4,17 @@ const { test, expect } = require('@playwright/test');
 const URL = 'http://localhost:3000/playground/color-palette/';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+/** @param {any} page */
 async function swatches(page) {
     return page.$$('.swatch');
 }
 
+/** @param {any} page */
 async function swatchCount(page) {
     return (await swatches(page)).length;
 }
 
+/** @param {any} page */
 async function resetTool(page) {
     await page.click('#btnReset');
     await page.waitForTimeout(100);
@@ -33,7 +36,7 @@ test.describe('Color Palette Generator — smoke', () => {
     });
 
     test('no JS errors on load', async ({ page }) => {
-        const errors = [];
+        const errors = /** @type {string[]} */ ([]);
         page.on('pageerror', e => errors.push(e.message));
         await page.reload();
         await page.waitForLoadState('load');
@@ -42,7 +45,7 @@ test.describe('Color Palette Generator — smoke', () => {
     });
 
     test('no CSP violations on load', async ({ page }) => {
-        const violations = [];
+        const violations = /** @type {string[]} */ ([]);
         page.on('console', msg => {
             if (msg.type() === 'error' && msg.text().includes('Content Security Policy')) {
                 violations.push(msg.text());
@@ -400,7 +403,7 @@ test.describe('Color Palette Generator — lock', () => {
     });
 
     test('locked swatch hex preserved after regenerate', async ({ page }) => {
-        const firstHex = await page.locator('.swatch-hex').first().textContent();
+        const firstHex = await page.locator('.swatch-hex').first().textContent() ?? '';
         await page.locator('.swatch-lock').first().click();
         await page.waitForTimeout(50);
         await page.click('#btnGenerate');

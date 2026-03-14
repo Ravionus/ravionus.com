@@ -94,7 +94,7 @@ test.describe('Minifier — features', () => {
     });
 
     test('invalid JSON shows error banner — no dialog', async ({ page }) => {
-        const dialogs = [];
+        const dialogs = /** @type {string[]} */ ([]);
         page.on('dialog', d => { dialogs.push(d.type()); d.dismiss(); });
         await page.click('#tabJson');
         await page.fill('#inputArea', '{not valid json}');
@@ -226,7 +226,7 @@ test.describe('Minifier — features', () => {
     // ── Empty input ───────────────────────────────────────────────────────────
 
     test('minifying empty input shows error — no dialog', async ({ page }) => {
-        const dialogs = [];
+        const dialogs = /** @type {string[]} */ ([]);
         page.on('dialog', d => { dialogs.push(d.type()); d.dismiss(); });
         await page.click('#btnMinify');
         expect(dialogs).toHaveLength(0);
@@ -256,7 +256,7 @@ test.describe('Minifier — features', () => {
     // ── Copy button ───────────────────────────────────────────────────────────
 
     test('Copy with no output shows toast — no dialog', async ({ page }) => {
-        const dialogs = [];
+        const dialogs = /** @type {string[]} */ ([]);
         page.on('dialog', d => { dialogs.push(d.type()); d.dismiss(); });
         await page.click('#btnCopy');
         expect(dialogs).toHaveLength(0);
@@ -264,7 +264,7 @@ test.describe('Minifier — features', () => {
     });
 
     test('Copy after minifying shows success toast — no dialog', async ({ page }) => {
-        const dialogs = [];
+        const dialogs = /** @type {string[]} */ ([]);
         page.on('dialog', d => { dialogs.push(d.type()); d.dismiss(); });
         await page.fill('#inputArea', '{"x":1}');
         await page.click('#btnMinify');
@@ -276,7 +276,7 @@ test.describe('Minifier — features', () => {
     // ── Download button ───────────────────────────────────────────────────────
 
     test('Download with no output shows toast — no dialog', async ({ page }) => {
-        const dialogs = [];
+        const dialogs = /** @type {string[]} */ ([]);
         page.on('dialog', d => { dialogs.push(d.type()); d.dismiss(); });
         await page.click('#btnDownload');
         expect(dialogs).toHaveLength(0);

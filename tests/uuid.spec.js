@@ -128,7 +128,7 @@ test.describe('UUID Generator — features', () => {
     });
 
     test('copy all without UUIDs shows toast — no dialog', async ({ page }) => {
-        const dialogs = [];
+        const dialogs = /** @type {string[]} */ ([]);
         page.on('dialog', d => { dialogs.push(d.type()); d.dismiss(); });
         // No generate → list is empty
         await page.click('#btnCopyAll');
@@ -137,7 +137,7 @@ test.describe('UUID Generator — features', () => {
     });
 
     test('download without UUIDs shows toast — no dialog', async ({ page }) => {
-        const dialogs = [];
+        const dialogs = /** @type {string[]} */ ([]);
         page.on('dialog', d => { dialogs.push(d.type()); d.dismiss(); });
         await page.click('#btnDownload');
         expect(dialogs).toHaveLength(0);
@@ -156,7 +156,7 @@ test.describe('UUID Generator — features', () => {
     test('copy individual UUID row shows toast — no dialog', async ({ page, context }) => {
         await context.grantPermissions(['clipboard-read', 'clipboard-write']);
         await page.click('#btnGenerate');
-        const dialogs = [];
+        const dialogs = /** @type {string[]} */ ([]);
         page.on('dialog', d => { dialogs.push(d.type()); d.dismiss(); });
         await page.locator('.uuid-row').first().locator('.ph-btn').click();
         expect(dialogs).toHaveLength(0);
@@ -181,9 +181,9 @@ test.describe('UUID Generator — features', () => {
         await page.click('#btnGenerate');
         await page.reload();
         // Check settings were restored
-        const caseVal    = await page.$eval('input[name="uuidCase"]:checked',    el => el.value);
-        const wrapperVal = await page.$eval('input[name="uuidWrapper"]:checked', el => el.value);
-        const hyphens    = await page.$eval('#hyphensCheck', el => el.checked);
+        const caseVal    = await page.$eval('input[name="uuidCase"]:checked',    el => /** @type {HTMLInputElement} */ (el).value);
+        const wrapperVal = await page.$eval('input[name="uuidWrapper"]:checked', el => /** @type {HTMLInputElement} */ (el).value);
+        const hyphens    = await page.$eval('#hyphensCheck', el => /** @type {HTMLInputElement} */ (el).checked);
         expect(caseVal).toBe('upper');
         expect(wrapperVal).toBe('braces');
         expect(hyphens).toBe(false);
