@@ -22,17 +22,15 @@
   <!-- Navigation -->
   <nav class="nav">
     <div class="nav-inner">
-      <a href="/" class="nav-logo">
-        Ravionus
-        <span class="logo-badge">Learn</span>
-      </a>
-      <div class="nav-links">
-        <a href="../learn/" class="nav-link primary">✨ Learn</a>
-        <a href="../tools/" class="nav-link">🛠️ Dev Tools</a>
-        <a href="../playground/" class="nav-link">🧪 Playgrounds</a>
-      </div>
-      <!-- Auth UI (populated by firebase.js) -->
-      <div class="nav-auth" id="navAuth">
+      <a href="/" class="nav-logo">Ravionus</a>
+      <div class="nav-right">
+        <div class="nav-links">
+          <a href="../learn/" class="nav-link primary">✨ Learn</a>
+          <a href="../tools/" class="nav-link">🛠️ Dev Tools</a>
+          <a href="../playground/" class="nav-link">🧪 Playgrounds</a>
+        </div>
+        <!-- Auth UI (populated by firebase.js) -->
+        <div class="nav-auth" id="navAuth">
         <button class="btn-signin" id="signInBtn">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path
@@ -54,6 +52,7 @@
           <img class="user-avatar" id="userAvatar" src="" alt="avatar">
           <span class="user-name" id="userName"></span>
           <button class="btn-signout" id="signOutBtn">Sign out</button>
+        </div>
         </div>
       </div>
     </div>

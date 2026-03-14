@@ -145,6 +145,11 @@ strong { color: var(--text-primary); font-weight: 600; }
 }
 .nav-back:hover { color: var(--text-primary); background: var(--bg-glass-hover); }
 
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 .nav-links {
   display: flex;
   gap: 8px;
