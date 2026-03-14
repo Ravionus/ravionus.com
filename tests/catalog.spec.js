@@ -107,6 +107,28 @@ test.describe('Catalog page — unauthenticated', () => {
     await expect(page.locator('.empty-state')).toBeVisible();
   });
 
+  // ── Navigation ───────────────────────────────────────────
+
+  test('nav shows Learn, Dev Tools and Playgrounds links', async ({ page }) => {
+    await page.goto('/learn/');
+    await expect(page.locator('.nav-links')).toContainText('Learn');
+    await expect(page.locator('.nav-links')).toContainText('Tools');
+    await expect(page.locator('.nav-links')).toContainText('Playgrounds');
+  });
+
+  test('nav Learn link is highlighted as active section', async ({ page }) => {
+    await page.goto('/learn/');
+    const learnLink = page.locator('.nav-links a.primary');
+    await expect(learnLink).toContainText('Learn');
+  });
+
+  test('nav Tools and Playgrounds links are not highlighted on learn page', async ({ page }) => {
+    await page.goto('/learn/');
+    const toolsLink = page.locator('.nav-links a[href*="/tools/"]');
+    const hasPrimary = await toolsLink.evaluate(el => el.classList.contains('primary'));
+    expect(hasPrimary).toBe(false);
+  });
+
   // ── Auth UI ──────────────────────────────────────────────
 
   test('sign-in button visible when not logged in', async ({ page }) => {

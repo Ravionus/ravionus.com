@@ -145,6 +145,31 @@ strong { color: var(--text-primary); font-weight: 600; }
 }
 .nav-back:hover { color: var(--text-primary); background: var(--bg-glass-hover); }
 
+.nav-links {
+  display: flex;
+  gap: 8px;
+}
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+  color: var(--text-secondary);
+  transition: color var(--transition), background var(--transition);
+}
+.nav-link:hover {
+  color: var(--text-primary);
+  background: var(--bg-glass-hover);
+}
+.nav-link.primary {
+  background: linear-gradient(135deg, var(--accent), #0e7490);
+  color: #fff;
+}
+
 /* ── Hero Section ── */
 .hero {
   padding: 80px 24px 60px;
