@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+    <title>Password Generator — Ravionus Dev Tools</title>
+    <meta name="description" content="Generate secure passwords, memorable passphrases, and PINs with real-time entropy analysis. No server, no sign-up.">
+    <link rel="canonical" href="https://ravionus.com/playground/password-gen/">
+    <meta property="og:title" content="Password Generator — Ravionus Dev Tools">
+    <meta property="og:description" content="Generate secure passwords, memorable passphrases, and PINs with real-time entropy analysis. No server, no sign-up.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ravionus.com/playground/password-gen/">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none';">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0a0f;
+            --surface: #12121a;
+            --surface2: #0e0e16;
+            --border: #1e1e2e;
+            --border2: #2a2a3e;
+            --text: #e2e2f0;
+            --muted: #7878a0;
+            --purple: #a855f7;
+            --cyan: #22d3ee;
+            --green: #22c55e;
+            --red: #ef4444;
+            --orange: #f97316;
+            --yellow: #eab308;
+            --accent-g: linear-gradient(135deg, #a855f7, #22d3ee);
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+        }
+
+        html, body {
+            height: 100%;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', system-ui, sans-serif;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        /* ── Nav ── */
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--border);
+            background: rgba(10,10,15,.92);
+            backdrop-filter: blur(12px);
+        }
+        .nav-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px;
+            height: 54px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: .85rem;
+            color: var(--muted);
+            flex-shrink: 0;
+        }
+        .breadcrumb a { color: var(--muted); text-decoration: none; }
+        .breadcrumb a:hover { color: var(--text); }
+        .breadcrumb .sep { opacity: .5; }
+        .breadcrumb .current { color: var(--text); font-weight: 600; }
+        .nav-links { display: flex; gap: 4px; }
+        .nav-links a {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: .83rem;
+            font-weight: 500;
+            text-decoration: none;
+            color: var(--muted);
+            transition: color .15s, background .15s;
+        }
+        .nav-links a:hover { color: var(--text); background: var(--surface); }
+
+        /* ── Header ── */
+        .page-header {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 1.5rem 20px .75rem;
+        }
+        .page-header h1 {
+            font-size: clamp(1.4rem, 3vw, 1.9rem);
+            font-weight: 800;
+            letter-spacing: -.03em;
+            background: var(--accent-g);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: .3rem;
+        }
+        .page-header p { color: var(--muted); font-size: .9rem; max-width: 620px; }
+
+        /* ── Toolbar ── */
+        .toolbar {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: .5rem 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .tb-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border2);
+            background: var(--surface);
+            color: var(--text);
+            font-family: inherit;
+            font-size: .83rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background .15s, border-color .15s;
+        }
+        .tb-btn:hover { background: var(--border); }
+        .tb-btn.primary { background: var(--purple); border-color: var(--purple); color: #fff; }
+        .tb-btn.primary:hover { opacity: .88; }
+        .tb-btn.danger { color: var(--red); border-color: #ef44441a; }
+        .tb-btn.danger:hover { background: #ef44440d; }
+        .tb-btn:focus-visible, button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+        .tb-sep { width: 1px; height: 22px; background: var(--border); margin: 0 4px; }
+
+        /* ── Mode tabs ── */
+        .util-tabs {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            gap: 4px;
+            border-bottom: 1px solid var(--border);
+        }
+        .util-tab {
+            padding: 8px 16px;
+            border: none;
+            border-bottom: 2px solid transparent;
+            background: none;
+            color: var(--muted);
+            font-family: inherit;
+            font-size: .85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: color .15s, border-color .15s;
+            margin-bottom: -1px;
+        }
+        .util-tab:hover { color: var(--text); }
+        .util-tab.active { color: var(--purple); border-bottom-color: var(--purple); }
+        .util-tab:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+        /* ── Banners ── */
+        .banners { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+        #errorBanner, #successBanner {
+            display: none;
+            padding: 9px 14px;
+            border-radius: 8px;
+            font-size: .83rem;
+            margin-top: 10px;
+        }
+        #errorBanner.visible {
+            display: block;
+            background: rgba(239,68,68,.1);
+            border: 1px solid rgba(239,68,68,.3);
+            color: var(--red);
+        }
+        #successBanner.visible {
+            display: block;
+            background: rgba(34,197,94,.1);
+            border: 1px solid rgba(34,197,94,.3);
+            color: var(--green);
+        }
+
+        /* ── Main layout ── */
+        .main-wrap {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 1.25rem 20px 2rem;
+        }
+        .util-panel { display: none; }
+        .util-panel.active { display: block; }
+
+        .panel-grid {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        /* ── Cards ── */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem;
+        }
+        .card-title {
+            font-size: .78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: var(--muted);
+            margin-bottom: .9rem;
+        }
+
+        /* ── Settings controls ── */
+        .setting-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: .75rem;
+        }
+        .setting-row label {
+            font-size: .83rem;
+            color: var(--muted);
+            min-width: 90px;
+            flex-shrink: 0;
+        }
+        .setting-row label.full { min-width: unset; flex: 1; cursor: pointer; }
+        .range-wrap {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        input[type="range"] {
+            flex: 1;
+            accent-color: var(--purple);
+            cursor: pointer;
+            height: 4px;
+        }
+        .num-badge {
+            font-family: var(--font-mono);
+            font-size: .83rem;
+            color: var(--cyan);
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            border-radius: 6px;
+            padding: 2px 8px;
+            min-width: 46px;
+            text-align: center;
+        }
+        input[type="number"].num-input {
+            font-family: var(--font-mono);
+            font-size: .83rem;
+            width: 64px;
+            padding: 4px 8px;
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            border-radius: 6px;
+            color: var(--cyan);
+            text-align: center;
+            outline: none;
+        }
+        input[type="number"].num-input:focus { border-color: var(--purple); }
+
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: .55rem;
+        }
+        .checkbox-row input[type="checkbox"] {
+            accent-color: var(--purple);
+            width: 15px;
+            height: 15px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .checkbox-row label {
+            font-size: .83rem;
+            color: var(--text);
+            cursor: pointer;
+        }
+        .checkbox-row label span { color: var(--muted); margin-left: 4px; font-size: .78rem; }
+
+        .setting-divider {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: .75rem 0;
+        }
+
+        .setting-group-title {
+            font-size: .75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .07em;
+            color: var(--muted);
+            margin-bottom: .6rem;
+        }
+
+        input[type="text"].text-input {
+            width: 100%;
+            font-family: var(--font-mono);
+            font-size: .83rem;
+            padding: 6px 10px;
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            border-radius: 8px;
+            color: var(--text);
+            outline: none;
+        }
+        input[type="text"].text-input:focus { border-color: var(--purple); }
+
+        select.std-select {
+            font-family: inherit;
+            font-size: .83rem;
+            padding: 5px 10px;
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            border-radius: 8px;
+            color: var(--text);
+            outline: none;
+            cursor: pointer;
+        }
+        select.std-select:focus { border-color: var(--purple); }
+
+        /* ── PIN length buttons ── */
+        .pin-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+        .pin-btn {
+            font-family: var(--font-mono);
+            font-size: .83rem;
+            font-weight: 600;
+            padding: 5px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border2);
+            background: var(--surface2);
+            color: var(--muted);
+            cursor: pointer;
+            transition: all .15s;
+        }
+        .pin-btn:hover { color: var(--text); border-color: var(--border2); background: var(--border); }
+        .pin-btn.active { background: var(--purple); border-color: var(--purple); color: #fff; }
+
+        /* ── Output ── */
+        .output-card { min-height: 320px; }
+
+        /* Strength meter */
+        .strength-section { margin-bottom: 1rem; }
+        .strength-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+        .strength-track {
+            height: 6px;
+            background: var(--surface2);
+            border-radius: 99px;
+            overflow: hidden;
+            margin-bottom: 6px;
+            border: 1px solid var(--border);
+        }
+        #strengthBar {
+            height: 100%;
+            border-radius: 99px;
+            width: 0;
+            transition: width .35s ease, background .35s ease;
+        }
+        .strength-meta {
+            display: flex;
+            gap: 16px;
+            font-size: .78rem;
+            color: var(--muted);
+        }
+        .strength-meta strong { color: var(--text); }
+        #strengthLabel { font-size: .83rem; font-weight: 600; }
+
+        /* Password list */
+        #pwPlaceholder {
+            padding: 3rem 0;
+            text-align: center;
+            color: var(--muted);
+            font-size: .88rem;
+        }
+        #pwList { display: flex; flex-direction: column; gap: 6px; }
+        .pw-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 10px 8px 12px;
+            transition: border-color .15s;
+        }
+        .pw-item:hover { border-color: var(--border2); }
+        .pw-idx {
+            font-size: .72rem;
+            color: var(--muted);
+            min-width: 18px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .pw-text {
+            font-family: var(--font-mono);
+            font-size: .88rem;
+            color: var(--cyan);
+            flex: 1;
+            word-break: break-all;
+            cursor: pointer;
+            user-select: all;
+        }
+        .pw-text:hover { color: var(--text); }
+        .pw-copy {
+            font-size: .75rem;
+            color: var(--muted);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: color .15s, background .15s;
+            flex-shrink: 0;
+        }
+        .pw-copy:hover { color: var(--cyan); background: rgba(34,211,238,.08); }
+
+        /* Charset pill */
+        #charsetPill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 10px;
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            border-radius: 99px;
+            font-size: .75rem;
+            color: var(--muted);
+            margin-top: .5rem;
+            flex-wrap: wrap;
+        }
+        .cs-badge {
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-family: var(--font-mono);
+            font-size: .72rem;
+            background: var(--border);
+            color: var(--text);
+        }
+
+        /* ── Status bar ── */
+        .status-bar {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 8px 20px;
+            display: flex;
+            gap: 18px;
+            font-size: .75rem;
+            color: var(--muted);
+            border-top: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+        .status-bar strong { color: var(--text); }
+
+        /* ── Toast ── */
+        #toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            color: var(--text);
+            padding: 9px 18px;
+            border-radius: 10px;
+            font-size: .83rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,.5);
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity .2s, transform .2s;
+            pointer-events: none;
+            z-index: 999;
+        }
+        #toast.show { opacity: 1; transform: translateY(0); }
+
+        /* ── Footer ── */
+        footer {
+            text-align: center;
+            padding: 20px;
+            font-size: .75rem;
+            color: var(--muted);
+            border-top: 1px solid var(--border);
+        }
+        footer a { color: var(--muted); text-decoration: none; }
+        footer a:hover { color: var(--cyan); }
+
+        /* ── Mobile ── */
+        @media (max-width: 720px) {
+            .panel-grid { grid-template-columns: 1fr; }
+            .util-tabs { overflow-x: auto; }
+            .page-header { padding: 1rem 16px .5rem; }
+            .toolbar { padding: .5rem 16px; }
+            .main-wrap { padding: 1rem 16px 2rem; }
+            .banners { padding: 0 16px; }
+            .status-bar { padding: 8px 16px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ── Nav ── -->
+<nav>
+    <div class="nav-inner">
+        <div class="breadcrumb">
+            <a href="/">Ravionus</a>
+            <span class="sep">›</span>
+            <a href="../../playground/">Playgrounds</a>
+            <span class="sep">›</span>
+            <span class="current">Password Generator</span>
+        </div>
+        <div class="nav-links">
+            <a href="../../learn/">✨ Learn</a>
+            <a href="../../tools/">🛠️ Tools</a>
+            <a href="../../playground/">🧪 Playgrounds</a>
+        </div>
+    </div>
+</nav>
+
+<!-- ── Header ── -->
+<header class="page-header">
+    <h1>🔐 Password Generator</h1>
+    <p>Generate secure passwords, memorable passphrases, or numeric PINs. Uses <code style="font-family:var(--font-mono);font-size:.85em;color:var(--cyan)">crypto.getRandomValues()</code> for cryptographic randomness.</p>
+</header>
+
+<!-- ── Toolbar ── -->
+<div class="toolbar">
+    <button class="tb-btn primary" id="btnGenerate">⚡ Generate</button>
+    <button class="tb-btn" id="btnCopy">📋 Copy All</button>
+    <span class="tb-sep"></span>
+    <button class="tb-btn danger" id="btnClear">✕ Clear</button>
+</div>
+
+<!-- ── Mode tabs ── -->
+<div class="util-tabs" role="tablist" aria-label="Password mode">
+    <button class="util-tab active" id="tabClassic"    role="tab" aria-selected="true"  aria-controls="panelClassic">🔑 Classic</button>
+    <button class="util-tab"        id="tabPassphrase" role="tab" aria-selected="false" aria-controls="panelPassphrase">📝 Passphrase</button>
+    <button class="util-tab"        id="tabPin"        role="tab" aria-selected="false" aria-controls="panelPin">🔢 PIN</button>
+</div>
+
+<!-- ── Banners ── -->
+<div class="banners">
+    <div id="errorBanner"   role="alert"      aria-live="assertive"></div>
+    <div id="successBanner" aria-live="polite"></div>
+</div>
+
+<!-- ── Main ── -->
+<div class="main-wrap">
+
+    <!-- ====== Classic panel ====== -->
+    <div class="util-panel active" id="panelClassic" role="tabpanel" aria-labelledby="tabClassic">
+        <div class="panel-grid">
+            <!-- Settings -->
+            <div class="card">
+                <div class="card-title">Settings</div>
+
+                <!-- Length -->
+                <div class="setting-row">
+                    <label for="lengthSlider">Length</label>
+                    <div class="range-wrap">
+                        <input type="range" id="lengthSlider" min="4" max="128" value="20" aria-label="Password length">
+                        <input type="number" class="num-input" id="lengthDisplay" min="4" max="128" value="20" aria-label="Password length value">
+                    </div>
+                </div>
+
+                <!-- Count -->
+                <div class="setting-row">
+                    <label for="countSlider">Count</label>
+                    <div class="range-wrap">
+                        <input type="range" id="countSlider" min="1" max="20" value="1" aria-label="Number of passwords">
+                        <input type="number" class="num-input" id="countDisplay" min="1" max="20" value="1" aria-label="Number of passwords value">
+                    </div>
+                </div>
+
+                <hr class="setting-divider">
+                <div class="setting-group-title">Character sets</div>
+
+                <div class="checkbox-row">
+                    <input type="checkbox" id="chkUpper" checked>
+                    <label for="chkUpper">Uppercase <span>A–Z</span></label>
+                </div>
+                <div class="checkbox-row">
+                    <input type="checkbox" id="chkLower" checked>
+                    <label for="chkLower">Lowercase <span>a–z</span></label>
+                </div>
+                <div class="checkbox-row">
+                    <input type="checkbox" id="chkNumbers" checked>
+                    <label for="chkNumbers">Numbers <span>0–9</span></label>
+                </div>
+                <div class="checkbox-row">
+                    <input type="checkbox" id="chkSymbols" checked>
+                    <label for="chkSymbols">Symbols <span>!@#$%…</span></label>
+                </div>
+
+                <hr class="setting-divider">
+                <div class="setting-group-title">Options</div>
+
+                <div class="checkbox-row">
+                    <input type="checkbox" id="chkAmbiguous">
+                    <label for="chkAmbiguous">Exclude ambiguous <span>0 O l I 1</span></label>
+                </div>
+
+                <div style="margin-top:.65rem">
+                    <div class="setting-group-title" style="margin-bottom:.4rem">Exclude characters</div>
+                    <input type="text" class="text-input" id="excludeInput" placeholder="e.g. { } [ ] ( )" aria-label="Characters to exclude" autocomplete="off" spellcheck="false">
+                </div>
+            </div>
+
+            <!-- Output -->
+            <div class="card output-card">
+                <div class="card-title">Output</div>
+
+                <!-- Strength -->
+                <div class="strength-section">
+                    <div class="strength-header">
+                        <span id="strengthLabel" style="color:var(--muted)">—</span>
+                        <span id="entropyDisplay" style="font-size:.78rem;color:var(--muted)">0 bits</span>
+                    </div>
+                    <div class="strength-track">
+                        <div id="strengthBar"></div>
+                    </div>
+                    <div class="strength-meta">
+                        Pool size: <strong id="statCharset">—</strong>
+                        &ensp;·&ensp;
+                        Entropy: <strong id="statEntropy">—</strong>
+                    </div>
+                    <div id="charsetPill" style="margin-top:.5rem;display:none"></div>
+                </div>
+
+                <!-- List -->
+                <div id="pwPlaceholder">Press <strong>Generate</strong> or hit <kbd style="font-family:var(--font-mono);font-size:.75em;padding:1px 5px;background:var(--surface2);border:1px solid var(--border2);border-radius:4px">Enter</kbd></div>
+                <div id="pwList" aria-live="polite"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== Passphrase panel ====== -->
+    <div class="util-panel" id="panelPassphrase" role="tabpanel" aria-labelledby="tabPassphrase">
+        <div class="panel-grid">
+            <!-- Settings -->
+            <div class="card">
+                <div class="card-title">Settings</div>
+
+                <!-- Word count -->
+                <div class="setting-row">
+                    <label for="wordCountSlider">Words</label>
+                    <div class="range-wrap">
+                        <input type="range" id="wordCountSlider" min="2" max="12" value="4" aria-label="Word count">
+                        <input type="number" class="num-input" id="wordCountDisplay" min="2" max="12" value="4" aria-label="Word count value">
+                    </div>
+                </div>
+
+                <!-- Count -->
+                <div class="setting-row">
+                    <label for="phraseCountSlider">Count</label>
+                    <div class="range-wrap">
+                        <input type="range" id="phraseCountSlider" min="1" max="10" value="1" aria-label="Number of passphrases">
+                        <input type="number" class="num-input" id="phraseCountDisplay" min="1" max="10" value="1" aria-label="Number of passphrases value">
+                    </div>
+                </div>
+
+                <hr class="setting-divider">
+                <div class="setting-group-title">Separator</div>
+                <div class="setting-row" style="margin-bottom:.2rem">
+                    <label for="separatorSelect" style="min-width:unset;margin-right:4px">Style</label>
+                    <select class="std-select" id="separatorSelect" aria-label="Word separator">
+                        <option value="-">Hyphen  ( - )</option>
+                        <option value=" ">Space   ( · )</option>
+                        <option value="_">Underscore ( _ )</option>
+                        <option value=".">Dot     ( . )</option>
+                        <option value="">None</option>
+                    </select>
+                </div>
+
+                <hr class="setting-divider">
+                <div class="setting-group-title">Extras</div>
+
+                <div class="checkbox-row">
+                    <input type="checkbox" id="chkCapitalize" checked>
+                    <label for="chkCapitalize">Capitalize each word</label>
+                </div>
+                <div class="checkbox-row">
+                    <input type="checkbox" id="chkAddNumber">
+                    <label for="chkAddNumber">Append random number <span>(0–99)</span></label>
+                </div>
+                <div class="checkbox-row">
+                    <input type="checkbox" id="chkAddSymbol">
+                    <label for="chkAddSymbol">Append random symbol <span>(!@#$?&*)</span></label>
+                </div>
+            </div>
+
+            <!-- Output -->
+            <div class="card output-card">
+                <div class="card-title">Output</div>
+                <div class="strength-section">
+                    <div class="strength-header">
+                        <span id="phraseStrengthLabel" style="color:var(--muted)">—</span>
+                        <span id="phraseEntropyDisplay" style="font-size:.78rem;color:var(--muted)">0 bits</span>
+                    </div>
+                    <div class="strength-track">
+                        <div id="phraseStrengthBar" style="height:100%;border-radius:99px;width:0;transition:width .35s ease,background .35s ease"></div>
+                    </div>
+                    <div class="strength-meta">
+                        Words in list: <strong id="phraseWordlistSize">—</strong>
+                        &ensp;·&ensp;
+                        Entropy: <strong id="phraseStatEntropy">—</strong>
+                    </div>
+                </div>
+                <div id="phrasePlaceholder" style="padding:3rem 0;text-align:center;color:var(--muted);font-size:.88rem">Press <strong>Generate</strong> or hit <kbd style="font-family:var(--font-mono);font-size:.75em;padding:1px 5px;background:var(--surface2);border:1px solid var(--border2);border-radius:4px">Enter</kbd></div>
+                <div id="phraseList" aria-live="polite"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== PIN panel ====== -->
+    <div class="util-panel" id="panelPin" role="tabpanel" aria-labelledby="tabPin">
+        <div class="panel-grid">
+            <!-- Settings -->
+            <div class="card">
+                <div class="card-title">Settings</div>
+
+                <div class="setting-group-title">PIN length</div>
+                <div class="pin-btns" id="pinLenBtns" style="margin-bottom:1rem">
+                    <button class="pin-btn" id="pinLen4"  data-len="4">4</button>
+                    <button class="pin-btn active" id="pinLen6" data-len="6">6</button>
+                    <button class="pin-btn" id="pinLen8"  data-len="8">8</button>
+                    <button class="pin-btn" id="pinLen10" data-len="10">10</button>
+                    <button class="pin-btn" id="pinLen12" data-len="12">12</button>
+                </div>
+
+                <!-- Count -->
+                <div class="setting-row">
+                    <label for="pinCountInput">Count</label>
+                    <input type="number" class="num-input" id="pinCountInput" min="1" max="20" value="1" aria-label="Number of PINs">
+                </div>
+
+                <hr class="setting-divider">
+                <div class="setting-group-title">Options</div>
+
+                <div class="checkbox-row">
+                    <input type="checkbox" id="chkPinGroups">
+                    <label for="chkPinGroups">Group digits <span>(every 4, e.g. 1234-5678)</span></label>
+                </div>
+                <div class="checkbox-row">
+                    <input type="checkbox" id="chkPinNoAmbiguous">
+                    <label for="chkPinNoAmbiguous">Exclude ambiguous <span>(0, 1)</span></label>
+                </div>
+            </div>
+
+            <!-- Output -->
+            <div class="card output-card">
+                <div class="card-title">Output</div>
+                <div class="strength-section">
+                    <div class="strength-header">
+                        <span id="pinStrengthLabel" style="color:var(--muted)">—</span>
+                        <span id="pinEntropyDisplay" style="font-size:.78rem;color:var(--muted)">0 bits</span>
+                    </div>
+                    <div class="strength-track">
+                        <div id="pinStrengthBar" style="height:100%;border-radius:99px;width:0;transition:width .35s ease,background .35s ease"></div>
+                    </div>
+                    <div class="strength-meta">
+                        Digit pool: <strong id="pinPoolSize">10</strong>
+                        &ensp;·&ensp;
+                        Entropy: <strong id="pinStatEntropy">—</strong>
+                    </div>
+                </div>
+                <div id="pinPlaceholder" style="padding:3rem 0;text-align:center;color:var(--muted);font-size:.88rem">Press <strong>Generate</strong> or hit <kbd style="font-family:var(--font-mono);font-size:.75em;padding:1px 5px;background:var(--surface2);border:1px solid var(--border2);border-radius:4px">Enter</kbd></div>
+                <div id="pinList" aria-live="polite"></div>
+            </div>
+        </div>
+    </div>
+
+</div><!-- /main-wrap -->
+
+<!-- ── Status bar ── -->
+<div class="status-bar">
+    <span>Mode: <strong id="statMode">Classic</strong></span>
+    <span>Generated: <strong id="statCount">0</strong></span>
+    <span>Length: <strong id="statLen">—</strong></span>
+</div>
+
+<!-- ── Toast ── -->
+<div id="toast" aria-live="assertive" aria-atomic="true"></div>
+
+<!-- ── Footer ── -->
+<footer>
+    <a href="../../">ravionus.com</a> · Password Generator Playground
+</footer>
+
+<script>
+'use strict';
+
+/* ── Constants ── */
+const STORAGE_KEY = 'ravionus_tool_pg-password-gen';
+
+/* ── Mutable globals (declared early to avoid TDZ) ── */
+let saveTimer;
+let toastTimer;
+
+const UPPER   = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const LOWER   = 'abcdefghijklmnopqrstuvwxyz';
+const DIGITS  = '0123456789';
+const SYMBOLS = '!@#$%^&*()-_=+[]{}|;:,.<>?';
+const AMBIGUOUS = 'Il1O0';
+
+/* Built-in word list: 400 common, memorable words */
+const WORDS = ('able acid aged also area army away back ball band bank base bath bear beat bell best bill blow blue boat bold bone book born bowl busy call calm card care case cash cave city clay clip coal coat code cold cook cool copy cord cost crew crop dark data date dawn dead deal dear deep deny desk dial diet disk dock done door draw drop drum dusk easy edge emit even exam face fact fail fair fake fall fame farm fast fate feel file fill find fire firm fish flag flat flow foam fold folk fond food fool form free fuel full game give glad glow gold good grab gray grey grid grip grew grow gulf gust half hall hand hang hard harm have head heal heap heat held help hero hide high hill hint hold hole home hope horn host hour huge hunt hurt idea inch into iron item jack join jump just keen keep kind king kiss land lane last late lead lean leaf left lend lens less life lift like lime line link list live load lock long look loop lord lose loud love luck made make mark mask mass mast math maze meal mean meet melt mild mile milk mill mind miss mode moon more moss most move much nail name near need next nice nine node noon norm note noun open over pale park pass peak pine plan play plot pole pond port prey push rack rail rain rank real reef rice rich ride ring rise road rock role roll roof root rope rose rush safe sail sand save seal seed seek send ship show silk sing site skip slow snow soft soil song sort spin star stem step stop suit swim tank tape task team thin tide tile time tint tone tool tree trim true tube tune twin type unit vale vast vine void walk wall warm wave weak weld well wind wine wing wish wood word work worn wrap year zero zone').split(' ');
+
+/* ── Crypto random helpers ── */
+function randInt(n) {
+    /* Returns a cryptographically random integer in [0, n) using rejection sampling */
+    const limit = 0x100000000 - (0x100000000 % n);
+    const buf = new Uint32Array(1);
+    do { crypto.getRandomValues(buf); } while (buf[0] >= limit);
+    return buf[0] % n;
+}
+function pickChar(pool) { return pool[randInt(pool.length)]; }
+function pickWord()     { return WORDS[randInt(WORDS.length)]; }
+
+/* ── Entropy & strength ── */
+function calcEntropy(poolSize, length) {
+    if (poolSize <= 1 || length <= 0) return 0;
+    return Math.round(Math.log2(poolSize) * length);
+}
+function strengthInfo(bits) {
+    if (bits < 28)  return { label: 'Very Weak',  color: '#ef4444', pct: 8  };
+    if (bits < 50)  return { label: 'Weak',        color: '#f97316', pct: 28 };
+    if (bits < 80)  return { label: 'Fair',         color: '#eab308', pct: 55 };
+    if (bits < 128) return { label: 'Strong',       color: '#22d3ee', pct: 80 };
+    return               { label: 'Very Strong',  color: '#22c55e', pct: 100 };
+}
+function renderStrengthBar(barEl, labelEl, entropyEl, statEl, bits) {
+    const s = strengthInfo(bits);
+    barEl.style.width = s.pct + '%';
+    barEl.style.background = s.color;
+    labelEl.style.color = s.color;
+    labelEl.textContent = s.label;
+    const bitsStr = bits + ' bits';
+    if (entropyEl) entropyEl.textContent = bitsStr;
+    if (statEl)    statEl.textContent    = bitsStr;
+}
+
+/* ── Build password item DOM ── */
+function buildPwItem(text, idx) {
+    const wrap  = document.createElement('div');
+    wrap.className = 'pw-item';
+    const idxEl = document.createElement('span');
+    idxEl.className = 'pw-idx';
+    idxEl.textContent = idx + '.';
+    const txt   = document.createElement('span');
+    txt.className = 'pw-text';
+    txt.textContent = text;
+    txt.title = 'Click to copy';
+    const btn   = document.createElement('button');
+    btn.className = 'pw-copy';
+    btn.textContent = '📋';
+    btn.title = 'Copy';
+    btn.addEventListener('click', e => { e.stopPropagation(); copyText(text); });
+    txt.addEventListener('click', () => copyText(text));
+    wrap.append(idxEl, txt, btn);
+    return wrap;
+}
+
+/* ── Toast ── */
+const toastEl = document.getElementById('toast');
+function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2000);
+}
+async function copyText(text) {
+    try {
+        await navigator.clipboard.writeText(text);
+        toast('Copied!');
+    } catch {
+        toast('Copy failed — please copy manually.');
+    }
+}
+
+/* ── Error / success banners ── */
+const errBanner = document.getElementById('errorBanner');
+const okBanner  = document.getElementById('successBanner');
+function showError(msg)   { errBanner.textContent = msg; errBanner.classList.add('visible');    okBanner.classList.remove('visible'); }
+function showSuccess(msg) { okBanner.textContent  = msg; okBanner.classList.add('visible');     errBanner.classList.remove('visible'); }
+function clearBanners()   { errBanner.classList.remove('visible'); okBanner.classList.remove('visible'); }
+
+/* ── Tab switching ── */
+let currentTab = 'classic';
+const TABS = ['Classic','Passphrase','Pin'];
+TABS.forEach(t => {
+    const id = 'tab' + t;
+    const panelId = 'panel' + t;
+    document.getElementById(id).addEventListener('click', () => switchTab(t.toLowerCase()));
+});
+function switchTab(name) {
+    currentTab = name;
+    TABS.forEach(t => {
+        const active = t.toLowerCase() === name;
+        document.getElementById('tab'   + t).classList.toggle('active', active);
+        document.getElementById('tab'   + t).setAttribute('aria-selected', active);
+        document.getElementById('panel' + t).classList.toggle('active', active);
+    });
+    document.getElementById('statMode').textContent =
+        name === 'classic' ? 'Classic' : name === 'passphrase' ? 'Passphrase' : 'PIN';
+    clearBanners();
+    saveState();
+}
+
+/* ───────────────────────────────────────────
+   CLASSIC
+──────────────────────────────────────────── */
+const lengthSlider  = document.getElementById('lengthSlider');
+const lengthDisplay = document.getElementById('lengthDisplay');
+const countSlider   = document.getElementById('countSlider');
+const countDisplay  = document.getElementById('countDisplay');
+
+function syncSliderNum(slider, num) {
+    slider.addEventListener('input', () => { num.value = slider.value; updateClassicEntropy(); });
+    num.addEventListener('input', () => {
+        let v = Math.min(Math.max(parseInt(num.value)||slider.min, parseInt(slider.min)), parseInt(slider.max));
+        slider.value = v; num.value = v; updateClassicEntropy();
+    });
+}
+syncSliderNum(lengthSlider, lengthDisplay);
+syncSliderNum(countSlider,  countDisplay);
+
+['chkUpper','chkLower','chkNumbers','chkSymbols','chkAmbiguous'].forEach(id => {
+    document.getElementById(id).addEventListener('change', updateClassicEntropy);
+});
+document.getElementById('excludeInput').addEventListener('input', updateClassicEntropy);
+
+function getClassicPool() {
+    const excl = document.getElementById('excludeInput').value;
+    const noAmb = document.getElementById('chkAmbiguous').checked;
+    let pool = '';
+    if (document.getElementById('chkUpper').checked)   pool += UPPER;
+    if (document.getElementById('chkLower').checked)   pool += LOWER;
+    if (document.getElementById('chkNumbers').checked) pool += DIGITS;
+    if (document.getElementById('chkSymbols').checked) pool += SYMBOLS;
+    if (noAmb)  pool = [...pool].filter(c => !AMBIGUOUS.includes(c)).join('');
+    if (excl)   pool = [...pool].filter(c => !excl.includes(c)).join('');
+    // Deduplicate
+    pool = [...new Set(pool)].join('');
+    return pool;
+}
+function updateClassicEntropy() {
+    const pool = getClassicPool();
+    const len  = parseInt(lengthSlider.value);
+    const bits = calcEntropy(pool.length, len);
+    renderStrengthBar(
+        document.getElementById('strengthBar'),
+        document.getElementById('strengthLabel'),
+        document.getElementById('entropyDisplay'),
+        document.getElementById('statEntropy'),
+        bits
+    );
+    document.getElementById('statCharset').textContent = pool.length + ' chars';
+    // Charset pill
+    const pill = document.getElementById('charsetPill');
+    pill.style.display = pool.length ? 'inline-flex' : 'none';
+    pill.innerHTML = '';
+    const sets = [];
+    if (document.getElementById('chkUpper').checked)   sets.push({ label: 'A–Z', n: UPPER.length });
+    if (document.getElementById('chkLower').checked)   sets.push({ label: 'a–z', n: LOWER.length });
+    if (document.getElementById('chkNumbers').checked) sets.push({ label: '0–9', n: DIGITS.length });
+    if (document.getElementById('chkSymbols').checked) sets.push({ label: '!@#', n: SYMBOLS.length });
+    sets.forEach(s => {
+        const b = document.createElement('span');
+        b.className = 'cs-badge';
+        b.textContent = s.label;
+        pill.appendChild(b);
+    });
+    const info = document.createElement('span');
+    info.style.color = 'var(--muted)';
+    info.textContent = '→ ' + pool.length + ' chars';
+    pill.appendChild(info);
+    saveState();
+}
+updateClassicEntropy();
+
+function generateClassic() {
+    clearBanners();
+    const pool  = getClassicPool();
+    const len   = parseInt(lengthSlider.value);
+    const count = parseInt(countSlider.value);
+    if (!pool) { showError('Select at least one character set.'); return; }
+
+    const passwords = [];
+    for (let i = 0; i < count; i++) {
+        // Guarantee at least one char from each active set
+        const required = [];
+        if (document.getElementById('chkUpper').checked)   required.push(UPPER.split('').filter(c => pool.includes(c)));
+        if (document.getElementById('chkLower').checked)   required.push(LOWER.split('').filter(c => pool.includes(c)));
+        if (document.getElementById('chkNumbers').checked) required.push(DIGITS.split('').filter(c => pool.includes(c)));
+        if (document.getElementById('chkSymbols').checked) required.push(SYMBOLS.split('').filter(c => pool.includes(c)));
+
+        const chars = required.flatMap(set => set.length ? [pickChar(set.join(''))] : []);
+        while (chars.length < len) chars.push(pickChar(pool));
+        // Fisher-Yates shuffle
+        for (let j = chars.length - 1; j > 0; j--) {
+            const k = randInt(j + 1);
+            [chars[j], chars[k]] = [chars[k], chars[j]];
+        }
+        passwords.push(chars.join(''));
+    }
+
+    renderPwList('pwList', 'pwPlaceholder', passwords);
+    document.getElementById('statCount').textContent = count;
+    document.getElementById('statLen').textContent    = len;
+    saveState();
+}
+
+/* ───────────────────────────────────────────
+   PASSPHRASE
+──────────────────────────────────────────── */
+const wcSlider  = document.getElementById('wordCountSlider');
+const wcDisplay = document.getElementById('wordCountDisplay');
+const pcSlider  = document.getElementById('phraseCountSlider');
+const pcDisplay = document.getElementById('phraseCountDisplay');
+
+function syncSliderNumPhrase(slider, num) {
+    slider.addEventListener('input', () => { num.value = slider.value; updatePhraseEntropy(); });
+    num.addEventListener('input', () => {
+        let v = Math.min(Math.max(parseInt(num.value)||slider.min, parseInt(slider.min)), parseInt(slider.max));
+        slider.value = v; num.value = v; updatePhraseEntropy();
+    });
+}
+syncSliderNumPhrase(wcSlider, wcDisplay);
+syncSliderNumPhrase(pcSlider, pcDisplay);
+['separatorSelect','chkCapitalize','chkAddNumber','chkAddSymbol'].forEach(id => {
+    document.getElementById(id).addEventListener('change', updatePhraseEntropy);
+});
+
+function updatePhraseEntropy() {
+    const wc   = parseInt(wcSlider.value);
+    const wl   = WORDS.length;
+    let entropy = Math.round(Math.log2(wl) * wc);
+    if (document.getElementById('chkAddNumber').checked) entropy += Math.round(Math.log2(100));
+    if (document.getElementById('chkAddSymbol').checked) entropy += Math.round(Math.log2(8));
+    renderStrengthBar(
+        document.getElementById('phraseStrengthBar'),
+        document.getElementById('phraseStrengthLabel'),
+        document.getElementById('phraseEntropyDisplay'),
+        document.getElementById('phraseStatEntropy'),
+        entropy
+    );
+    document.getElementById('phraseWordlistSize').textContent = wl.toLocaleString();
+    saveState();
+}
+updatePhraseEntropy();
+
+function generatePassphrase() {
+    clearBanners();
+    const wc  = parseInt(wcSlider.value);
+    const cnt = parseInt(pcSlider.value);
+    const sep = document.getElementById('separatorSelect').value;
+    const cap = document.getElementById('chkCapitalize').checked;
+    const num = document.getElementById('chkAddNumber').checked;
+    const sym = document.getElementById('chkAddSymbol').checked;
+    const EXTRA_SYMS = '!@#$?&*';
+
+    const phrases = [];
+    for (let i = 0; i < cnt; i++) {
+        let words = [];
+        for (let j = 0; j < wc; j++) {
+            let w = pickWord();
+            if (cap) w = w[0].toUpperCase() + w.slice(1);
+            words.push(w);
+        }
+        let phrase = words.join(sep);
+        if (num) phrase += randInt(100);
+        if (sym) phrase += EXTRA_SYMS[randInt(EXTRA_SYMS.length)];
+        phrases.push(phrase);
+    }
+
+    renderPwList('phraseList', 'phrasePlaceholder', phrases);
+    document.getElementById('statCount').textContent = cnt;
+    document.getElementById('statLen').textContent = phrases[0] ? phrases[0].replace(/-/g,'').length : '—';
+    saveState();
+}
+
+/* ───────────────────────────────────────────
+   PIN
+──────────────────────────────────────────── */
+let pinLength = 6;
+
+document.querySelectorAll('.pin-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.pin-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        pinLength = parseInt(btn.dataset.len);
+        updatePinEntropy();
+        saveState();
+    });
+});
+document.getElementById('pinCountInput').addEventListener('input', saveState);
+['chkPinGroups','chkPinNoAmbiguous'].forEach(id => {
+    document.getElementById(id).addEventListener('change', () => { updatePinEntropy(); saveState(); });
+});
+
+function updatePinEntropy() {
+    const pool = document.getElementById('chkPinNoAmbiguous').checked ? 8 : 10;
+    const bits = Math.round(Math.log2(pool) * pinLength);
+    renderStrengthBar(
+        document.getElementById('pinStrengthBar'),
+        document.getElementById('pinStrengthLabel'),
+        document.getElementById('pinEntropyDisplay'),
+        document.getElementById('pinStatEntropy'),
+        bits
+    );
+    document.getElementById('pinPoolSize').textContent = pool;
+}
+updatePinEntropy();
+
+function generatePin() {
+    clearBanners();
+    const count  = Math.min(Math.max(parseInt(document.getElementById('pinCountInput').value)||1, 1), 20);
+    const groups = document.getElementById('chkPinGroups').checked;
+    const noAmb  = document.getElementById('chkPinNoAmbiguous').checked;
+    const pool   = noAmb ? '23456789' : '0123456789';
+
+    const pins = [];
+    for (let i = 0; i < count; i++) {
+        let pin = '';
+        for (let j = 0; j < pinLength; j++) pin += pickChar(pool);
+        if (groups && pinLength > 4) pin = pin.match(/.{1,4}/g).join('-');
+        pins.push(pin);
+    }
+
+    renderPwList('pinList', 'pinPlaceholder', pins);
+    document.getElementById('statCount').textContent = count;
+    document.getElementById('statLen').textContent = pinLength;
+    saveState();
+}
+
+/* ───────────────────────────────────────────
+   Shared render
+──────────────────────────────────────────── */
+function renderPwList(listId, placeholderId, items) {
+    const list = document.getElementById(listId);
+    const ph   = document.getElementById(placeholderId);
+    list.innerHTML = '';
+    if (!items.length) { ph.style.display = ''; return; }
+    ph.style.display = 'none';
+    items.forEach((pw, i) => list.appendChild(buildPwItem(pw, i + 1)));
+}
+
+/* ───────────────────────────────────────────
+   Toolbar
+──────────────────────────────────────────── */
+document.getElementById('btnGenerate').addEventListener('click', generate);
+document.getElementById('btnCopy').addEventListener('click', copyAll);
+document.getElementById('btnClear').addEventListener('click', clearAll);
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) generate();
+});
+
+function generate() {
+    if      (currentTab === 'classic')    generateClassic();
+    else if (currentTab === 'passphrase') generatePassphrase();
+    else                                  generatePin();
+}
+
+async function copyAll() {
+    const listId = currentTab === 'classic' ? 'pwList' : currentTab === 'passphrase' ? 'phraseList' : 'pinList';
+    const items  = [...document.getElementById(listId).querySelectorAll('.pw-text')].map(el => el.textContent);
+    if (!items.length) { showError('Nothing to copy — generate first.'); return; }
+    await copyText(items.join('\n'));
+    showSuccess(`Copied ${items.length} item${items.length > 1 ? 's' : ''} to clipboard.`);
+}
+
+function clearAll() {
+    renderPwList('pwList',     'pwPlaceholder', []);
+    renderPwList('phraseList', 'phrasePlaceholder', []);
+    renderPwList('pinList',    'pinPlaceholder', []);
+    document.getElementById('statCount').textContent = '0';
+    document.getElementById('statLen').textContent   = '—';
+    clearBanners();
+    document.getElementById('pwPlaceholder').style.display      = '';
+    document.getElementById('phrasePlaceholder').style.display  = '';
+    document.getElementById('pinPlaceholder').style.display     = '';
+}
+
+/* ───────────────────────────────────────────
+   localStorage — persist settings (no passwords)
+──────────────────────────────────────────── */
+function saveState() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+        try {
+            const state = {
+                tab:       currentTab,
+                classicLen: lengthSlider.value,
+                classicCnt: countSlider.value,
+                upper:     document.getElementById('chkUpper').checked,
+                lower:     document.getElementById('chkLower').checked,
+                numbers:   document.getElementById('chkNumbers').checked,
+                symbols:   document.getElementById('chkSymbols').checked,
+                ambiguous: document.getElementById('chkAmbiguous').checked,
+                exclude:   document.getElementById('excludeInput').value,
+                phraseWords: wcSlider.value,
+                phraseCnt:   pcSlider.value,
+                phraseSep:   document.getElementById('separatorSelect').value,
+                phraseCapitalize: document.getElementById('chkCapitalize').checked,
+                phraseAddNum:     document.getElementById('chkAddNumber').checked,
+                phraseAddSym:     document.getElementById('chkAddSymbol').checked,
+                pinLen:  pinLength,
+                pinCnt:  document.getElementById('pinCountInput').value,
+                pinGroups: document.getElementById('chkPinGroups').checked,
+                pinNoAmb:  document.getElementById('chkPinNoAmbiguous').checked,
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch { /* quota exceeded — ignore */ }
+    }, 800);
+}
+
+function loadState() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const s = JSON.parse(raw);
+
+        // Restore classic
+        if (s.classicLen) { lengthSlider.value = s.classicLen; lengthDisplay.value = s.classicLen; }
+        if (s.classicCnt) { countSlider.value  = s.classicCnt; countDisplay.value  = s.classicCnt; }
+        if (s.upper   !== undefined) document.getElementById('chkUpper').checked    = s.upper;
+        if (s.lower   !== undefined) document.getElementById('chkLower').checked    = s.lower;
+        if (s.numbers !== undefined) document.getElementById('chkNumbers').checked  = s.numbers;
+        if (s.symbols !== undefined) document.getElementById('chkSymbols').checked  = s.symbols;
+        if (s.ambiguous !== undefined) document.getElementById('chkAmbiguous').checked = s.ambiguous;
+        if (s.exclude !== undefined) document.getElementById('excludeInput').value  = s.exclude;
+
+        // Restore passphrase
+        if (s.phraseWords) { wcSlider.value = s.phraseWords; wcDisplay.value = s.phraseWords; }
+        if (s.phraseCnt)   { pcSlider.value = s.phraseCnt;   pcDisplay.value = s.phraseCnt; }
+        if (s.phraseSep !== undefined) document.getElementById('separatorSelect').value = s.phraseSep;
+        if (s.phraseCapitalize !== undefined) document.getElementById('chkCapitalize').checked = s.phraseCapitalize;
+        if (s.phraseAddNum !== undefined) document.getElementById('chkAddNumber').checked = s.phraseAddNum;
+        if (s.phraseAddSym !== undefined) document.getElementById('chkAddSymbol').checked = s.phraseAddSym;
+
+        // Restore PIN
+        if (s.pinLen) {
+            pinLength = s.pinLen;
+            document.querySelectorAll('.pin-btn').forEach(b => {
+                b.classList.toggle('active', parseInt(b.dataset.len) === pinLength);
+            });
+        }
+        if (s.pinCnt) document.getElementById('pinCountInput').value = s.pinCnt;
+        if (s.pinGroups !== undefined) document.getElementById('chkPinGroups').checked    = s.pinGroups;
+        if (s.pinNoAmb  !== undefined) document.getElementById('chkPinNoAmbiguous').checked = s.pinNoAmb;
+
+        // Restore active tab
+        if (s.tab && ['classic','passphrase','pin'].includes(s.tab)) switchTab(s.tab);
+
+    } catch { /* corrupt state — ignore */ }
+}
+
+/* ── Init ── */
+loadState();
+updateClassicEntropy();
+updatePhraseEntropy();
+updatePinEntropy();
+</script>
+</body>
+</html>
