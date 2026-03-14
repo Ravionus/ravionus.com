@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+    <title>Text Statistics — Ravionus Dev Tools</title>
+    <meta name="description" content="Analyse any text instantly — word count, character count, sentences, paragraphs, reading time, and word frequency. No server, no sign-up.">
+    <link rel="canonical" href="https://ravionus.com/tools/text-stats/">
+    <meta property="og:title" content="Text Statistics — Ravionus Dev Tools">
+    <meta property="og:description" content="Analyse any text instantly — word count, character count, sentences, paragraphs, reading time, and word frequency. No server, no sign-up.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ravionus.com/tools/text-stats/">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none';">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0a0f;    --surface: #12121a;   --surface2: #0e0e16;
+            --border: #1e1e2e; --border2: #2a2a3e;
+            --text: #e2e2f0;   --muted: #7878a0;
+            --purple: #a855f7;  --cyan: #22d3ee;
+            --green: #22c55e;   --red: #ef4444;
+            --accent-g: linear-gradient(135deg, #a855f7, #22d3ee);
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Nav ── */
+        nav {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+        nav a { color: var(--muted); text-decoration: none; transition: color 0.15s; }
+        nav a:hover { color: var(--text); }
+        .nav-sep { color: var(--border2); }
+        .nav-links { margin-left: auto; display: flex; gap: 16px; }
+        .nav-links a { font-size: 0.8rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+        .nav-links a:hover { color: var(--cyan); }
+
+        /* ── Page Header ── */
+        .page-header {
+            padding: 24px 20px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .page-header h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            background: var(--accent-g);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 6px;
+        }
+        .page-header p {
+            color: var(--muted);
+            font-size: 0.875rem;
+            max-width: 640px;
+        }
+
+        /* ── Toolbar ── */
+        .toolbar {
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface2);
+        }
+        .tb-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            border: 1px solid var(--border2);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text);
+            font-size: 0.82rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s, color 0.15s;
+            font-family: inherit;
+        }
+        .tb-btn:hover { background: var(--surface); }
+        .tb-btn.primary {
+            background: linear-gradient(135deg, #a855f7, #7c3aed);
+            border-color: transparent;
+            color: #fff;
+        }
+        .tb-btn.primary:hover { opacity: 0.9; }
+        .tb-btn.danger { color: var(--red); border-color: rgba(239,68,68,0.3); }
+        .tb-btn.danger:hover { background: rgba(239,68,68,0.1); }
+        .tb-sep { width: 1px; height: 24px; background: var(--border); margin: 0 4px; }
+        .tb-spacer { flex: 1; }
+
+        button:focus-visible, .tb-btn:focus-visible, .mob-tab:focus-visible {
+            outline: 2px solid var(--cyan);
+            outline-offset: 2px;
+        }
+
+        /* ── Mobile Tabs ── */
+        .mobile-tabs { display: none; }
+
+        @media (max-width: 700px) {
+            .mobile-tabs {
+                display: flex;
+                border-bottom: 1px solid var(--border);
+                background: var(--surface2);
+            }
+        }
+        .mob-tab {
+            flex: 1;
+            padding: 10px;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--muted);
+            font-size: 0.82rem;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: inherit;
+            transition: color 0.15s, border-color 0.15s;
+        }
+        .mob-tab.active { color: var(--cyan); border-bottom-color: var(--cyan); }
+
+        /* ── Editor Layout ── */
+        .editor-layout {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            min-height: 520px;
+        }
+
+        @media (max-width: 700px) {
+            .editor-layout { flex-direction: column; min-height: 0; }
+            .pane-divider { display: none; }
+        }
+
+        .pane {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-width: 0;
+        }
+
+        .pane-divider {
+            width: 1px;
+            background: var(--border);
+            flex-shrink: 0;
+        }
+
+        /* Mobile pane visibility */
+        @media (max-width: 700px) {
+            .pane { display: none; }
+            .pane.mob-visible { display: flex; }
+        }
+
+        .pane-header {
+            padding: 8px 14px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        /* ── Input Pane ── */
+        #paneInput { flex: 1; min-width: 280px; }
+
+        #textInput {
+            flex: 1;
+            resize: none;
+            border: none;
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            padding: 14px 16px;
+            line-height: 1.65;
+            outline: none;
+            overflow-y: auto;
+        }
+        #textInput::placeholder { color: var(--muted); font-style: italic; }
+
+        .pane-footer {
+            padding: 6px 14px;
+            font-size: 0.72rem;
+            color: var(--muted);
+            border-top: 1px solid var(--border);
+            background: var(--surface2);
+            flex-shrink: 0;
+        }
+
+        /* ── Stats Pane ── */
+        #paneStats {
+            flex: 0 0 360px;
+            min-width: 280px;
+        }
+        @media (max-width: 700px) { #paneStats { flex: 1; } }
+
+        .stats-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* ── Stats Grid ── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .stat-card {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 6px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            background: var(--accent-g);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+        }
+
+        .stat-label {
+            font-size: 0.66rem;
+            font-weight: 500;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 3px;
+        }
+
+        /* ── Detail Sections ── */
+        .detail-section {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .detail-header {
+            padding: 8px 12px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .detail-body { padding: 10px 12px; }
+
+        /* ── Breakdown rows ── */
+        .breakdown-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            padding: 3px 0;
+        }
+        .breakdown-row span:first-child { color: var(--muted); }
+        .breakdown-row span:last-child { font-weight: 500; font-variant-numeric: tabular-nums; }
+
+        /* ── Stopword toggle ── */
+        .sw-toggle {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.7rem;
+            color: var(--muted);
+            cursor: pointer;
+            font-weight: 400;
+            text-transform: none;
+            letter-spacing: 0;
+            white-space: nowrap;
+        }
+        .sw-toggle input { cursor: pointer; accent-color: var(--purple); }
+
+        /* ── Word frequency bars ── */
+        .freq-bar-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.78rem;
+            padding: 3px 0;
+        }
+        .freq-word {
+            font-family: var(--font-mono);
+            color: var(--text);
+            width: 72px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .freq-track {
+            flex: 1;
+            background: var(--border);
+            border-radius: 2px;
+            height: 6px;
+            overflow: hidden;
+        }
+        .freq-fill {
+            height: 100%;
+            background: var(--accent-g);
+            border-radius: 2px;
+            transition: width 0.25s ease;
+        }
+        .freq-count {
+            font-variant-numeric: tabular-nums;
+            color: var(--muted);
+            min-width: 22px;
+            text-align: right;
+            font-size: 0.72rem;
+            flex-shrink: 0;
+        }
+        .freq-empty {
+            font-size: 0.78rem;
+            color: var(--muted);
+            font-style: italic;
+        }
+
+        /* ── Toast ── */
+        #toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 18px;
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            border-radius: 8px;
+            font-size: 0.82rem;
+            color: var(--text);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            transform: translateY(20px);
+            opacity: 0;
+            transition: opacity 0.2s, transform 0.2s;
+            pointer-events: none;
+            z-index: 100;
+        }
+        #toast.show { opacity: 1; transform: translateY(0); }
+
+        /* ── Footer ── */
+        footer {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            font-size: 0.78rem;
+            color: var(--muted);
+        }
+        footer a { color: var(--muted); text-decoration: none; }
+        footer a:hover { color: var(--cyan); }
+    </style>
+</head>
+<body>
+
+    <!-- Nav / Breadcrumb -->
+    <nav>
+        <a href="/">Ravionus</a>
+        <span class="nav-sep">›</span>
+        <a href="/tools/">Tools</a>
+        <span class="nav-sep">›</span>
+        <span>Text Statistics</span>
+        <div class="nav-links">
+            <a href="/learn/">Learn</a>
+            <a href="/tools/">Tools</a>
+            <a href="/playground/">Playground</a>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1>Text Statistics</h1>
+        <p>Paste or type any text for instant word count, character count, sentences, paragraphs, reading time, and top word frequency — all computed live in your browser.</p>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <button id="btnSample" class="tb-btn primary">🧪 Sample</button>
+        <div class="tb-sep"></div>
+        <button id="btnCopyStats" class="tb-btn">📋 Copy Stats</button>
+        <div class="tb-spacer"></div>
+        <button id="btnClear" class="tb-btn danger">🗑 Clear</button>
+    </div>
+
+    <!-- Mobile Tabs -->
+    <div class="mobile-tabs">
+        <button class="mob-tab active" id="tabInput">📥 Input</button>
+        <button class="mob-tab" id="tabOutput">📊 Stats</button>
+    </div>
+
+    <!-- Editor Layout -->
+    <div class="editor-layout">
+
+        <!-- Left pane: text input -->
+        <div class="pane mob-visible" id="paneInput">
+            <div class="pane-header">
+                <span>✏️ Text Input</span>
+            </div>
+            <textarea
+                id="textInput"
+                aria-label="Text to analyse"
+                spellcheck="false"
+                autocomplete="off"
+                placeholder="Paste or type your text here…&#10;&#10;Statistics update live as you type."></textarea>
+            <div class="pane-footer" id="inputFooter">0 characters · 0 words</div>
+        </div>
+
+        <div class="pane-divider"></div>
+
+        <!-- Right pane: stats -->
+        <div class="pane" id="paneStats">
+            <div class="pane-header">
+                <span>📊 Statistics</span>
+            </div>
+            <div class="stats-scroll">
+
+                <!-- Main stats grid -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="statWords">0</div>
+                        <div class="stat-label">Words</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statChars">0</div>
+                        <div class="stat-label">Characters</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statCharsNoSpace">0</div>
+                        <div class="stat-label">No Spaces</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statSentences">0</div>
+                        <div class="stat-label">Sentences</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statParagraphs">0</div>
+                        <div class="stat-label">Paragraphs</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statLines">0</div>
+                        <div class="stat-label">Lines</div>
+                    </div>
+                </div>
+
+                <!-- Reading time & unique words -->
+                <div class="detail-section">
+                    <div class="detail-header">Reading &amp; Unique Words</div>
+                    <div class="detail-body">
+                        <div class="breakdown-row">
+                            <span>Reading time <em style="font-size:0.7em">(200 wpm)</em></span>
+                            <span id="statReadingTime">—</span>
+                        </div>
+                        <div class="breakdown-row">
+                            <span>Unique words</span>
+                            <span id="statUniqueWords">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Character breakdown -->
+                <div class="detail-section">
+                    <div class="detail-header">Character Breakdown</div>
+                    <div class="detail-body">
+                        <div class="breakdown-row">
+                            <span>Letters</span>
+                            <span id="statLetters">0</span>
+                        </div>
+                        <div class="breakdown-row">
+                            <span>Digits</span>
+                            <span id="statDigits">0</span>
+                        </div>
+                        <div class="breakdown-row">
+                            <span>Spaces &amp; newlines</span>
+                            <span id="statSpaces">0</span>
+                        </div>
+                        <div class="breakdown-row">
+                            <span>Punctuation</span>
+                            <span id="statPunctuation">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Word frequency -->
+                <div class="detail-section">
+                    <div class="detail-header">
+                        <span>Top Words</span>
+                        <label class="sw-toggle">
+                            <input type="checkbox" id="ignoreStopWords"> Ignore common
+                        </label>
+                    </div>
+                    <div class="detail-body">
+                        <div id="freqChart"><span class="freq-empty">Type something to see top words.</span></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" aria-live="polite"></div>
+
+    <!-- Footer -->
+    <footer>Made with ❤️ by <a href="/">Ravionus</a></footer>
+
+    <script>
+        'use strict';
+
+        const STORAGE_KEY = 'ravionus_tool_text_stats';
+        const WPM = 200;
+
+        // Common English stopwords
+        const STOP_WORDS = new Set([
+            'a','an','the','and','but','or','nor','for','yet','so',
+            'at','by','in','of','on','to','as','be','is','are','was','were',
+            'been','being','have','has','had','do','does','did','will','would',
+            'could','should','may','might','must','shall','can','need','used',
+            'it','its','i','me','my','we','our','you','your','he','him','his',
+            'she','her','they','them','their','this','that','these','those',
+            'with','from','not','no','if','then','than','when','where','what',
+            'which','who','how','about','into','over','after','before','out',
+            'all','both','each','more','most','other','some','such','only',
+            'own','same','too','very','just','also','any','here','there',
+            'up','down','again','off','through','during','between','under',
+            'above','below','among','against','around','because','while',
+            'once','upon','since','although','though','until','unless'
+        ]);
+
+        // Sample text (~130 words, 4 paragraphs, multiple sentences)
+        const SAMPLE_TEXT = `The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs. How vexingly quick daft zebras jump!
+
+The history of natural language processing started in the 1950s. Alan Turing published an article proposing what is now called the Turing test. This became a cornerstone of artificial intelligence research.
+
+Innovation distinguishes between a leader and a follower. The best way to predict the future is to invent it. Stay hungry, stay foolish.
+
+Fly like a butterfly, sting like a bee. Muhammad Ali was one of the greatest boxing champions of all time. His quick reflexes and powerful punches made him nearly unbeatable.`;
+
+        // ── DOM refs ──
+        const textInput       = document.getElementById('textInput');
+        const btnSample       = document.getElementById('btnSample');
+        const btnCopyStats    = document.getElementById('btnCopyStats');
+        const btnClear        = document.getElementById('btnClear');
+        const ignoreStopWords = document.getElementById('ignoreStopWords');
+        const freqChart       = document.getElementById('freqChart');
+        const toast           = document.getElementById('toast');
+        const inputFooter     = document.getElementById('inputFooter');
+        const tabInput        = document.getElementById('tabInput');
+        const tabOutput       = document.getElementById('tabOutput');
+        const paneInput       = document.getElementById('paneInput');
+        const paneStats       = document.getElementById('paneStats');
+
+        const statWords        = document.getElementById('statWords');
+        const statChars        = document.getElementById('statChars');
+        const statCharsNoSpace = document.getElementById('statCharsNoSpace');
+        const statLines        = document.getElementById('statLines');
+        const statSentences    = document.getElementById('statSentences');
+        const statParagraphs   = document.getElementById('statParagraphs');
+        const statUniqueWords  = document.getElementById('statUniqueWords');
+        const statReadingTime  = document.getElementById('statReadingTime');
+        const statLetters      = document.getElementById('statLetters');
+        const statDigits       = document.getElementById('statDigits');
+        const statSpaces       = document.getElementById('statSpaces');
+        const statPunctuation  = document.getElementById('statPunctuation');
+
+        let debounceTimer = null;
+        let toastTimer    = null;
+        let lastStats     = null;
+
+        // ── Analysis ──
+        function analyzeText(text) {
+            if (!text) {
+                return {
+                    words: 0, chars: 0, charsNoSpace: 0, lines: 0,
+                    sentences: 0, paragraphs: 0, uniqueWords: 0,
+                    letters: 0, digits: 0, spaces: 0, punctuation: 0,
+                    cleanWords: []
+                };
+            }
+
+            const chars = text.length;
+            const charsNoSpace = text.replace(/\s/g, '').length;
+            const lines = text.split('\n').length;
+
+            // Words: split on whitespace, filter empties
+            const rawWords = text.trim() === '' ? [] : text.trim().split(/\s+/);
+            const words = rawWords.length;
+
+            // Sentences: ending punctuation [.!?] followed by whitespace or end-of-string
+            const sentences = (text.match(/[.!?]+(?=\s|$)/g) || []).length;
+
+            // Paragraphs: blocks of text separated by one or more blank lines
+            const paragraphs = text.trim() === ''
+                ? 0
+                : text.trim().split(/\n[ \t]*\n+/).filter(p => p.trim().length > 0).length;
+
+            // Clean words for frequency analysis (lowercase, strip punctuation)
+            const cleanWords = rawWords
+                .map(w => w.toLowerCase().replace(/[^a-z0-9']/g, ''))
+                .filter(w => w.length > 0);
+
+            const uniqueWords = new Set(cleanWords).size;
+
+            // Character breakdown
+            const letters     = (text.match(/[a-zA-Z]/g) || []).length;
+            const digits      = (text.match(/\d/g) || []).length;
+            const spaces      = (text.match(/\s/g) || []).length;
+            const punctuation = (text.match(/[^\w\s]/g) || []).length;
+
+            return {
+                words, chars, charsNoSpace, lines, sentences, paragraphs,
+                uniqueWords, letters, digits, spaces, punctuation, cleanWords
+            };
+        }
+
+        function getTopWords(cleanWords, ignoreStop, limit) {
+            limit = limit || 10;
+            const words = ignoreStop ? cleanWords.filter(w => !STOP_WORDS.has(w)) : cleanWords;
+            const freq = {};
+            words.forEach(function(w) { if (w) freq[w] = (freq[w] || 0) + 1; });
+            return Object.entries(freq)
+                .sort(function(a, b) { return b[1] - a[1]; })
+                .slice(0, limit);
+        }
+
+        function formatReadingTime(words) {
+            if (words === 0) return '—';
+            const totalSec = Math.round(words / WPM * 60);
+            if (totalSec < 60) return totalSec + ' sec';
+            const mins = Math.floor(totalSec / 60);
+            const secs = totalSec % 60;
+            return secs > 0 ? mins + ' min ' + secs + ' sec' : mins + ' min';
+        }
+
+        function fmt(n) {
+            return n.toLocaleString();
+        }
+
+        function escHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        // ── Render ──
+        function renderFreqChart(cleanWords) {
+            const topWords = getTopWords(cleanWords, ignoreStopWords.checked);
+            if (topWords.length === 0) {
+                freqChart.innerHTML = '<span class="freq-empty">Type something to see top words.</span>';
+                return;
+            }
+            const maxCount = topWords[0][1];
+            freqChart.innerHTML = topWords.map(function(entry) {
+                const word = entry[0], count = entry[1];
+                const pct = maxCount > 0 ? Math.round((count / maxCount) * 100) : 0;
+                return '<div class="freq-bar-row">' +
+                    '<span class="freq-word">' + escHtml(word) + '</span>' +
+                    '<div class="freq-track"><div class="freq-fill" style="width:' + pct + '%"></div></div>' +
+                    '<span class="freq-count">' + count + '</span>' +
+                    '</div>';
+            }).join('');
+        }
+
+        function renderStats(stats) {
+            lastStats = stats;
+
+            statWords.textContent        = fmt(stats.words);
+            statChars.textContent        = fmt(stats.chars);
+            statCharsNoSpace.textContent = fmt(stats.charsNoSpace);
+            statLines.textContent        = fmt(stats.lines);
+            statSentences.textContent    = fmt(stats.sentences);
+            statParagraphs.textContent   = fmt(stats.paragraphs);
+            statUniqueWords.textContent  = fmt(stats.uniqueWords);
+            statReadingTime.textContent  = formatReadingTime(stats.words);
+            statLetters.textContent      = fmt(stats.letters);
+            statDigits.textContent       = fmt(stats.digits);
+            statSpaces.textContent       = fmt(stats.spaces);
+            statPunctuation.textContent  = fmt(stats.punctuation);
+
+            inputFooter.textContent =
+                fmt(stats.chars) + ' character' + (stats.chars !== 1 ? 's' : '') +
+                ' · ' + fmt(stats.words) + ' word' + (stats.words !== 1 ? 's' : '');
+
+            renderFreqChart(stats.cleanWords);
+        }
+
+        function updateStats() {
+            const stats = analyzeText(textInput.value);
+            renderStats(stats);
+        }
+
+        // ── Toast ──
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(function() { toast.classList.remove('show'); }, 2500);
+        }
+
+        // ── Copy Stats ──
+        async function copyStats() {
+            if (!lastStats) return;
+            const s = lastStats;
+            const text = [
+                'Text Statistics',
+                '───────────────',
+                'Words:          ' + fmt(s.words),
+                'Characters:     ' + fmt(s.chars),
+                'No spaces:      ' + fmt(s.charsNoSpace),
+                'Lines:          ' + fmt(s.lines),
+                'Sentences:      ' + fmt(s.sentences),
+                'Paragraphs:     ' + fmt(s.paragraphs),
+                'Unique words:   ' + fmt(s.uniqueWords),
+                'Reading time:   ' + formatReadingTime(s.words),
+                'Letters:        ' + fmt(s.letters),
+                'Digits:         ' + fmt(s.digits),
+                'Spaces:         ' + fmt(s.spaces),
+                'Punctuation:    ' + fmt(s.punctuation),
+            ].join('\n');
+            try {
+                await navigator.clipboard.writeText(text);
+                showToast('Stats copied!');
+            } catch {
+                showToast('Copy failed — try selecting and copying manually');
+            }
+        }
+
+        // ── Event Listeners ──
+        textInput.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(function() {
+                updateStats();
+                saveInput();
+            }, 200);
+        });
+
+        btnSample.addEventListener('click', function() {
+            textInput.value = SAMPLE_TEXT;
+            updateStats();
+            saveInput();
+        });
+
+        btnClear.addEventListener('click', function() {
+            textInput.value = '';
+            updateStats();
+            saveInput();
+        });
+
+        btnCopyStats.addEventListener('click', copyStats);
+
+        ignoreStopWords.addEventListener('change', function() {
+            if (lastStats) renderFreqChart(lastStats.cleanWords);
+        });
+
+        // ── Mobile Tabs ──
+        function isMobile() { return window.innerWidth <= 700; }
+
+        function setActivePane(which) {
+            const showInput = which === 'input';
+            tabInput.classList.toggle('active', showInput);
+            tabOutput.classList.toggle('active', !showInput);
+            if (isMobile()) {
+                paneInput.classList.toggle('mob-visible', showInput);
+                paneStats.classList.toggle('mob-visible', !showInput);
+            }
+        }
+
+        tabInput.addEventListener('click', function() { setActivePane('input'); });
+        tabOutput.addEventListener('click', function() { setActivePane('output'); });
+
+        window.addEventListener('resize', function() {
+            if (!isMobile()) {
+                paneInput.classList.remove('mob-visible');
+                paneStats.classList.remove('mob-visible');
+            }
+        });
+
+        // ── localStorage ──
+        function saveInput() {
+            try { localStorage.setItem(STORAGE_KEY, textInput.value); } catch { /* ignore */ }
+        }
+
+        function loadInput() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved !== null) {
+                    textInput.value = saved;
+                    updateStats();
+                    return;
+                }
+            } catch { /* ignore */ }
+            updateStats(); // render zeros
+        }
+
+        // ── Init ──
+        loadInput();
+    </script>
+</body>
+</html>
