@@ -77,6 +77,7 @@ jobs:
       password_gen:   ${{ steps.filter.outputs.password_gen }}
       jwt:            ${{ steps.filter.outputs.jwt }}
       text_stats:     ${{ steps.filter.outputs.text_stats }}
+      cron:           ${{ steps.filter.outputs.cron }}
     steps:
       - uses: actions/checkout@v4
 
@@ -172,6 +173,9 @@ jobs:
             text_stats:
               - 'tools/text-stats/**'
               - 'tests/text-stats.spec.js'
+            cron:
+              - 'tools/cron/**'
+              - 'tests/cron.spec.js'
 
   # ── Job 1: Learn — catalog + topic tests ─────────────────────────────────
   # Runs when:  learn/** or its spec files change
@@ -1275,13 +1279,50 @@ jobs:
           path: tests/playwright-report/
           retention-days: 7
 
-  # ── Job 37: Deploy to GitHub Pages ────────────────────────────────────────
+  # ── Job 37: Cron Expression Parser tests ────────────────────────────────────
+  test_cron:
+    name: "Test › Cron Expression Parser"
+    needs: changes
+    if: >-
+      needs.changes.outputs.cron == 'true' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install test dependencies
+        run: npm install
+        working-directory: tests
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+        working-directory: tests
+
+      - name: Run Cron Expression Parser tests
+        run: npx playwright test cron.spec.js
+        working-directory: tests
+
+      - name: Upload report on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: cron-report
+          path: tests/playwright-report/
+          retention-days: 7
+
+  # ── Job 38: Deploy to GitHub Pages ────────────────────────────────────────
   # Only runs on pushes to main.
   # Requires ALL test jobs to have PASSED or been SKIPPED.
   # On main, no jobs are skipped (all run as pre-deploy gate), so all must pass.
   deploy:
     name: Deploy
-    needs: [test_learn, test_json, test_markdown, test_base64, test_url, test_csv, test_yaml, test_regex, test_formatter, test_hash, test_diff, test_uuid, test_password, test_lorem, test_case, test_color, test_minifier, test_qr, test_syntax, test_repl, test_css_layout, test_json_explorer, test_git_sim, test_color_palette, test_datetime, test_base_converter, test_password_gen, test_jwt, test_text_stats]
+    needs: [test_learn, test_json, test_markdown, test_base64, test_url, test_csv, test_yaml, test_regex, test_formatter, test_hash, test_diff, test_uuid, test_password, test_lorem, test_case, test_color, test_minifier, test_qr, test_syntax, test_repl, test_css_layout, test_json_explorer, test_git_sim, test_color_palette, test_datetime, test_base_converter, test_password_gen, test_jwt, test_text_stats, test_cron]
     if: >-
       always() &&
       github.event_name == 'push' &&
@@ -1314,7 +1355,8 @@ jobs:
       (needs.test_base_converter.result  == 'success' || needs.test_base_converter.result  == 'skipped') &&
       (needs.test_password_gen.result     == 'success' || needs.test_password_gen.result     == 'skipped') &&
       (needs.test_jwt.result               == 'success' || needs.test_jwt.result               == 'skipped') &&
-      (needs.test_text_stats.result         == 'success' || needs.test_text_stats.result         == 'skipped')
+      (needs.test_text_stats.result         == 'success' || needs.test_text_stats.result         == 'skipped') &&
+      (needs.test_cron.result                == 'success' || needs.test_cron.result                == 'skipped')
     runs-on: ubuntu-latest
     environment:
       name: github-pages

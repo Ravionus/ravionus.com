@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+    <title>Cron Expression Parser — Ravionus Dev Tools</title>
+    <meta name="description" content="Parse cron expressions into human-readable schedules and preview the next run times. No server, no sign-up.">
+    <link rel="canonical" href="https://ravionus.com/tools/cron/">
+    <meta property="og:title" content="Cron Expression Parser — Ravionus Dev Tools">
+    <meta property="og:description" content="Parse cron expressions into human-readable schedules and preview the next run times. No server, no sign-up.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ravionus.com/tools/cron/">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none';">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0a0f;    --surface: #12121a;   --surface2: #0e0e16;
+            --border: #1e1e2e; --border2: #2a2a3e;
+            --text: #e2e2f0;   --muted: #7878a0;
+            --purple: #a855f7;  --cyan: #22d3ee;
+            --green: #22c55e;   --red: #ef4444;
+            --accent-g: linear-gradient(135deg, #a855f7, #22d3ee);
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Nav ── */
+        nav {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+        nav a { color: var(--muted); text-decoration: none; transition: color 0.15s; }
+        nav a:hover { color: var(--text); }
+        .nav-sep { color: var(--border2); }
+        .nav-links { margin-left: auto; display: flex; gap: 16px; }
+        .nav-links a { font-size: 0.8rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+        .nav-links a:hover { color: var(--cyan); }
+
+        /* ── Page Header ── */
+        .page-header {
+            padding: 24px 20px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .page-header h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            background: var(--accent-g);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 6px;
+        }
+        .page-header p {
+            color: var(--muted);
+            font-size: 0.875rem;
+            max-width: 640px;
+        }
+
+        /* ── Toolbar ── */
+        .toolbar {
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface2);
+        }
+        .tb-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            border: 1px solid var(--border2);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text);
+            font-size: 0.82rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s, color 0.15s;
+            font-family: inherit;
+        }
+        .tb-btn:hover { background: var(--surface); }
+        .tb-btn.primary {
+            background: linear-gradient(135deg, #a855f7, #7c3aed);
+            border-color: transparent;
+            color: #fff;
+        }
+        .tb-btn.primary:hover { opacity: 0.9; }
+        .tb-btn.danger { color: var(--red); border-color: rgba(239,68,68,0.3); }
+        .tb-btn.danger:hover { background: rgba(239,68,68,0.1); }
+        .tb-sep { width: 1px; height: 24px; background: var(--border); margin: 0 4px; }
+        .tb-spacer { flex: 1; }
+
+        button:focus-visible, .tb-btn:focus-visible, .mob-tab:focus-visible {
+            outline: 2px solid var(--cyan);
+            outline-offset: 2px;
+        }
+
+        /* ── Mobile tabs ── */
+        .mobile-tabs {
+            display: none;
+            border-bottom: 1px solid var(--border);
+        }
+        .mob-tab {
+            flex: 1;
+            padding: 10px;
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: color 0.15s, border-color 0.15s;
+        }
+        .mob-tab.active {
+            color: var(--cyan);
+            border-bottom-color: var(--cyan);
+        }
+        @media (max-width: 700px) {
+            .mobile-tabs { display: flex; }
+        }
+
+        /* ── Editor Layout ── */
+        .editor-layout {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        .pane {
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            padding: 16px;
+            gap: 14px;
+        }
+        #paneInput {
+            flex: 0 0 380px;
+            border-right: 1px solid var(--border);
+        }
+        #paneOutput {
+            flex: 1;
+        }
+        .pane-divider { width: 1px; background: var(--border); flex-shrink: 0; }
+
+        @media (max-width: 700px) {
+            .editor-layout { display: block; }
+            .pane { display: none; height: auto; overflow-y: visible; }
+            .pane.mob-visible { display: flex; }
+            #paneInput { border-right: none; flex: auto; }
+            .pane-divider { display: none; }
+        }
+
+        /* ── Pane-level labels ── */
+        .pane-label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+        }
+
+        /* ── Cron Input ── */
+        .cron-input-wrap {
+            position: relative;
+        }
+        #cronInput {
+            width: 100%;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: var(--font-mono);
+            font-size: 1.2rem;
+            font-weight: 500;
+            padding: 14px 16px;
+            letter-spacing: 0.1em;
+            transition: border-color 0.15s;
+            caret-color: var(--cyan);
+        }
+        #cronInput:focus { outline: none; border-color: var(--purple); }
+        #cronInput::placeholder { color: var(--muted); letter-spacing: 0.05em; font-size: 1rem; }
+        #cronInput.is-error { border-color: var(--red); }
+        #cronInput.is-valid { border-color: var(--green); }
+
+        /* ── Field legend ── */
+        .field-legend {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .field-pill {
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            padding: 3px 10px;
+            border-radius: 999px;
+            border: 1px solid;
+        }
+        .field-pill.min   { color: #f472b6; border-color: rgba(244,114,182,0.4); background: rgba(244,114,182,0.08); }
+        .field-pill.hour  { color: #fb923c; border-color: rgba(251,146,60,0.4);  background: rgba(251,146,60,0.08);  }
+        .field-pill.dom   { color: #facc15; border-color: rgba(250,204,21,0.4);  background: rgba(250,204,21,0.08);  }
+        .field-pill.month { color: var(--green); border-color: rgba(34,197,94,0.4); background: rgba(34,197,94,0.08); }
+        .field-pill.dow   { color: var(--cyan);  border-color: rgba(34,211,238,0.4); background: rgba(34,211,238,0.08); }
+        .field-sep { color: var(--border2); font-size: 0.8rem; }
+
+        /* ── Field reference table ── */
+        .field-ref {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .field-ref table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.78rem;
+        }
+        .field-ref th {
+            padding: 7px 10px;
+            text-align: left;
+            color: var(--muted);
+            background: var(--surface2);
+            font-weight: 600;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            border-bottom: 1px solid var(--border);
+        }
+        .field-ref td {
+            padding: 6px 10px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+        }
+        .field-ref tr:last-child td { border-bottom: none; }
+        .field-ref td:first-child { color: var(--muted); }
+        .field-ref td code {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--cyan);
+            background: rgba(34,211,238,0.08);
+            padding: 1px 5px;
+            border-radius: 3px;
+        }
+        .syntax-row {
+            padding: 8px 10px;
+            font-size: 0.76rem;
+            color: var(--muted);
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .syntax-row code {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--purple);
+        }
+
+        /* ── Presets ── */
+        .presets-label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+        .presets-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .preset-btn {
+            padding: 5px 12px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--muted);
+            font-size: 0.78rem;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.15s, border-color 0.15s, color 0.15s;
+        }
+        .preset-btn:hover {
+            background: var(--border);
+            border-color: var(--purple);
+            color: var(--text);
+        }
+
+        /* ── Error banner ── */
+        #errorBanner {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            background: rgba(239,68,68,0.08);
+            border: 1px solid rgba(239,68,68,0.25);
+            border-radius: 8px;
+            color: var(--red);
+            font-size: 0.83rem;
+            font-weight: 500;
+        }
+        #errorBanner.visible { display: flex; }
+
+        /* ── Output cards ── */
+        .out-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .out-card-header {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--muted);
+            background: var(--surface2);
+        }
+        .out-card-body {
+            padding: 14px;
+        }
+
+        /* ── Description ── */
+        #description {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text);
+            line-height: 1.5;
+        }
+        #description.placeholder {
+            color: var(--muted);
+            font-weight: 400;
+            font-size: 0.875rem;
+        }
+
+        /* ── Fields breakdown ── */
+        .fields-breakdown {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 12px;
+        }
+        .field-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.8rem;
+        }
+        .field-row-name {
+            width: 70px;
+            color: var(--muted);
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+        .field-row-val {
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            color: var(--cyan);
+            background: rgba(34,211,238,0.07);
+            padding: 2px 8px;
+            border-radius: 4px;
+            flex: 0 0 auto;
+        }
+        .field-row-desc {
+            color: var(--text);
+            flex: 1;
+        }
+
+        /* ── Next runs list ── */
+        #nextRunsList {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .run-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            font-size: 0.85rem;
+        }
+        .run-item-n {
+            font-size: 0.7rem;
+            color: var(--purple);
+            font-weight: 700;
+            width: 20px;
+            text-align: center;
+        }
+        .run-item-date {
+            color: var(--muted);
+            font-size: 0.78rem;
+            flex: 0 0 auto;
+        }
+        .run-item-time {
+            font-family: var(--font-mono);
+            font-size: 0.82rem;
+            color: var(--cyan);
+            margin-left: auto;
+        }
+        .run-placeholder {
+            color: var(--muted);
+            font-size: 0.83rem;
+        }
+
+        /* ── Toast ── */
+        #toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(12px);
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            border-radius: 8px;
+            padding: 10px 18px;
+            font-size: 0.83rem;
+            color: var(--text);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s, transform 0.2s;
+            white-space: nowrap;
+            z-index: 999;
+        }
+        #toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav>
+        <a href="../../">Ravionus</a>
+        <span class="nav-sep">›</span>
+        <a href="../../tools/">Dev Tools</a>
+        <span class="nav-sep">›</span>
+        <span>Cron Parser</span>
+        <div class="nav-links">
+            <a href="../../learn/">✨ Learn</a>
+            <a href="../../tools/">🛠️ Tools</a>
+            <a href="../../playground/">🧪 Playgrounds</a>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <header class="page-header">
+        <h1>Cron Expression Parser</h1>
+        <p>Decode any cron expression into a plain-English schedule and preview the next scheduled run times — all in your browser.</p>
+    </header>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <button class="tb-btn primary" id="btnParse">▶ Parse</button>
+        <div class="tb-sep"></div>
+        <button class="tb-btn" id="btnCopy">📋 Copy</button>
+        <div class="tb-spacer"></div>
+        <button class="tb-btn danger" id="btnClear">✕ Clear</button>
+    </div>
+
+    <!-- Mobile tabs -->
+    <div class="mobile-tabs">
+        <button class="mob-tab active" id="tabInput">📥 Input</button>
+        <button class="mob-tab" id="tabOutput">📤 Output</button>
+    </div>
+
+    <!-- Editor layout -->
+    <div class="editor-layout">
+
+        <!-- Left pane: Input + Reference + Presets -->
+        <div class="pane mob-visible" id="paneInput">
+
+            <div class="pane-label">Expression</div>
+
+            <input type="text" id="cronInput"
+                   aria-label="Cron expression"
+                   placeholder="* * * * *"
+                   autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+
+            <!-- Field legend -->
+            <div class="field-legend" id="fieldLegend">
+                <span class="field-pill min">MIN</span>
+                <span class="field-sep">·</span>
+                <span class="field-pill hour">HOUR</span>
+                <span class="field-sep">·</span>
+                <span class="field-pill dom">DAY</span>
+                <span class="field-sep">·</span>
+                <span class="field-pill month">MONTH</span>
+                <span class="field-sep">·</span>
+                <span class="field-pill dow">WEEKDAY</span>
+            </div>
+
+            <!-- Field reference table -->
+            <div class="field-ref" id="fieldRef">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Field</th>
+                            <th>Position</th>
+                            <th>Range</th>
+                            <th>Names</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="field-pill min" style="font-size:.65rem;padding:2px 7px">MIN</span></td>
+                            <td>1st</td>
+                            <td>0 – 59</td>
+                            <td>—</td>
+                        </tr>
+                        <tr>
+                            <td><span class="field-pill hour" style="font-size:.65rem;padding:2px 7px">HOUR</span></td>
+                            <td>2nd</td>
+                            <td>0 – 23</td>
+                            <td>—</td>
+                        </tr>
+                        <tr>
+                            <td><span class="field-pill dom" style="font-size:.65rem;padding:2px 7px">DAY</span></td>
+                            <td>3rd</td>
+                            <td>1 – 31</td>
+                            <td>—</td>
+                        </tr>
+                        <tr>
+                            <td><span class="field-pill month" style="font-size:.65rem;padding:2px 7px">MONTH</span></td>
+                            <td>4th</td>
+                            <td>1 – 12</td>
+                            <td>JAN–DEC</td>
+                        </tr>
+                        <tr>
+                            <td><span class="field-pill dow" style="font-size:.65rem;padding:2px 7px">WEEKDAY</span></td>
+                            <td>5th</td>
+                            <td>0 – 7</td>
+                            <td>SUN–SAT (0,7=Sun)</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="syntax-row">
+                    <span><code>*</code> any</span>
+                    <span><code>*/N</code> every N</span>
+                    <span><code>N-M</code> range</span>
+                    <span><code>N,M</code> list</span>
+                    <span><code>N-M/K</code> range+step</span>
+                </div>
+            </div>
+
+            <!-- Presets -->
+            <div>
+                <div class="presets-label">Common Presets</div>
+                <div class="presets-grid" id="presetsGrid"></div>
+            </div>
+
+        </div>
+
+        <div class="pane-divider"></div>
+
+        <!-- Right pane: Output -->
+        <div class="pane" id="paneOutput">
+
+            <div id="errorBanner" role="alert"></div>
+
+            <!-- Description card -->
+            <div class="out-card" id="descriptionCard">
+                <div class="out-card-header">📖 Human-Readable Schedule</div>
+                <div class="out-card-body">
+                    <div id="description" class="placeholder">Enter a cron expression to see its schedule.</div>
+                    <div class="fields-breakdown" id="fieldsBreakdown" style="display:none"></div>
+                </div>
+            </div>
+
+            <!-- Next runs card -->
+            <div class="out-card" id="nextRunsCard">
+                <div class="out-card-header">⏰ Next 5 Run Times</div>
+                <div class="out-card-body">
+                    <ul id="nextRunsList">
+                        <li class="run-placeholder">—</li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" aria-live="polite"></div>
+
+    <script>
+    (() => {
+        'use strict';
+
+        // ── Constants ──────────────────────────────────────────────────────
+        const STORAGE_KEY = 'ravionus_tool_cron';
+        const NEXT_RUNS_COUNT = 5;
+        const MAX_ITER = 527040; // 366 days * 24 * 60
+
+        const MONTH_SHORT = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+        const MONTH_NAMES = ['January','February','March','April','May','June',
+                             'July','August','September','October','November','December'];
+        const DAY_SHORT   = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+        const DAY_NAMES   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+        const ORDINAL = n => {
+            const s = ['th','st','nd','rd'];
+            const v = n % 100;
+            return n + (s[(v - 20) % 10] || s[v] || s[0]);
+        };
+
+        const PRESETS = [
+            { label: '* * * * *',     cron: '* * * * *',     title: 'Every minute' },
+            { label: '*/5 * * * *',   cron: '*/5 * * * *',   title: 'Every 5 minutes' },
+            { label: '*/15 * * * *',  cron: '*/15 * * * *',  title: 'Every 15 minutes' },
+            { label: '0 * * * *',     cron: '0 * * * *',     title: 'Every hour' },
+            { label: '0 */6 * * *',   cron: '0 */6 * * *',   title: 'Every 6 hours' },
+            { label: '0 9 * * *',     cron: '0 9 * * *',     title: 'Daily at 9 AM' },
+            { label: '0 9 * * 1-5',   cron: '0 9 * * 1-5',   title: 'Weekdays 9 AM' },
+            { label: '0 9 * * 1',     cron: '0 9 * * 1',     title: 'Mondays 9 AM' },
+            { label: '30 8 * * 1-5',  cron: '30 8 * * 1-5',  title: 'Weekdays 8:30 AM' },
+            { label: '0 0 1 * *',     cron: '0 0 1 * *',     title: '1st of every month' },
+            { label: '0 0 1 1 *',     cron: '0 0 1 1 *',     title: 'January 1st (annual)' },
+            { label: '0 0 * * 0',     cron: '0 0 * * 0',     title: 'Every Sunday midnight' },
+        ];
+
+        // ── Field parser ───────────────────────────────────────────────────
+        function parseField(raw, min, max, nameMap) {
+            let str = raw.toUpperCase();
+            // Replace month/weekday names with numbers
+            if (nameMap) {
+                nameMap.forEach((name, idx) => {
+                    str = str.replace(new RegExp('\\b' + name + '\\b', 'g'), String(min + idx));
+                });
+            }
+
+            if (str === '*') return { type: 'any' };
+
+            if (/^\*\/\d+$/.test(str)) {
+                const step = parseInt(str.slice(2), 10);
+                if (step < 1 || step > max) throw new Error(`Step ${step} out of range`);
+                return { type: 'step', start: min, end: max, step };
+            }
+
+            if (str.includes(',')) {
+                // Can contain ranges in lists
+                const parts = str.split(',').map(p => {
+                    if (p.includes('-')) {
+                        const [a, b] = p.split('-').map(Number);
+                        if (isNaN(a) || isNaN(b) || a < min || b > max || a > b) throw new Error(`Invalid range ${p}`);
+                        return { type: 'range', start: a, end: b };
+                    }
+                    const n = Number(p);
+                    if (isNaN(n) || n < min || n > max) throw new Error(`Value ${p} out of [${min}-${max}]`);
+                    return { type: 'value', value: n };
+                });
+                return { type: 'list', parts };
+            }
+
+            if (str.includes('/')) {
+                const [rangeStr, stepStr] = str.split('/');
+                const step = parseInt(stepStr, 10);
+                if (isNaN(step) || step < 1) throw new Error(`Invalid step ${stepStr}`);
+                let start = min, end = max;
+                if (rangeStr !== '*') {
+                    const rangeNums = rangeStr.split('-').map(Number);
+                    if (rangeNums.length !== 2 || isNaN(rangeNums[0]) || isNaN(rangeNums[1]))
+                        throw new Error(`Invalid range ${rangeStr}`);
+                    [start, end] = rangeNums;
+                    if (start < min || end > max || start > end) throw new Error(`Range ${rangeStr} out of [${min}-${max}]`);
+                }
+                return { type: 'step', start, end, step };
+            }
+
+            if (str.includes('-')) {
+                const [a, b] = str.split('-').map(Number);
+                if (isNaN(a) || isNaN(b) || a < min || b > max || a > b)
+                    throw new Error(`Range ${str} out of [${min}-${max}]`);
+                return { type: 'range', start: a, end: b };
+            }
+
+            const n = Number(str);
+            if (isNaN(n) || n < min || n > max)
+                throw new Error(`Value ${raw} out of [${min}-${max}]`);
+            return { type: 'value', value: n };
+        }
+
+        function matchField(parsed, n) {
+            switch (parsed.type) {
+                case 'any':  return true;
+                case 'value': return n === parsed.value;
+                case 'range': return n >= parsed.start && n <= parsed.end;
+                case 'step':  return n >= parsed.start && n <= parsed.end && (n - parsed.start) % parsed.step === 0;
+                case 'list':  return parsed.parts.some(p => matchField(p, n));
+            }
+            return false;
+        }
+
+        // ── Cron parser ────────────────────────────────────────────────────
+        function parseCron(expr) {
+            const parts = expr.trim().split(/\s+/);
+            if (parts.length !== 5)
+                throw new Error(`Expected 5 fields, got ${parts.length}`);
+
+            return {
+                raw: parts,
+                min:   parseField(parts[0], 0,  59),
+                hour:  parseField(parts[1], 0,  23),
+                dom:   parseField(parts[2], 1,  31),
+                month: parseField(parts[3], 1,  12, MONTH_SHORT),
+                dow:   parseField(parts[4], 0,   7, DAY_SHORT),
+            };
+        }
+
+        function matchCron(parsed, date) {
+            const min   = date.getMinutes();
+            const hour  = date.getHours();
+            const dom   = date.getDate();
+            const month = date.getMonth() + 1;
+            const dow   = date.getDay(); // 0-6, 0=Sun
+
+            // dow 7 is also Sunday
+            const dowMatch = parsed.dow.type === 'any'
+                ? true
+                : matchField(parsed.dow, dow) || (dow === 0 && matchField(parsed.dow, 7));
+
+            return matchField(parsed.min,   min)   &&
+                   matchField(parsed.hour,  hour)  &&
+                   matchField(parsed.dom,   dom)   &&
+                   matchField(parsed.month, month) &&
+                   dowMatch;
+        }
+
+        // ── Next runs ──────────────────────────────────────────────────────
+        function getNextRuns(expr, count, from) {
+            const parsed = parseCron(expr);
+            const results = [];
+            const cur = new Date(from || Date.now());
+            cur.setSeconds(0, 0);
+            cur.setMinutes(cur.getMinutes() + 1);
+
+            let iter = 0;
+            while (results.length < count && iter < MAX_ITER) {
+                if (matchCron(parsed, cur)) results.push(new Date(cur));
+                cur.setMinutes(cur.getMinutes() + 1);
+                iter++;
+            }
+            return results;
+        }
+
+        // ── Human-readable description ─────────────────────────────────────
+
+        function fmt12(h, m) {
+            const mm = String(m).padStart(2, '0');
+            if (h === 0 && m === 0)  return 'midnight';
+            if (h === 12 && m === 0) return 'noon';
+            const suffix = h < 12 ? 'AM' : 'PM';
+            const h12 = h % 12 || 12;
+            return `${h12}:${mm} ${suffix}`;
+        }
+
+        function describeFieldRaw(raw, fieldName) {
+            const str = raw.toUpperCase();
+            if (str === '*') return `every ${fieldName}`;
+
+            if (/^\*\/\d+$/.test(str)) {
+                const n = parseInt(str.slice(2), 10);
+                return `every ${n} ${fieldName}${n > 1 ? 's' : ''}`;
+            }
+
+            switch (fieldName) {
+                case 'minute': {
+                    if (/^\d+$/.test(str)) return `at :${str.padStart(2,'0')}`;
+                    if (/^\d+-\d+$/.test(str)) return `minutes ${str}`;
+                    return `at minute ${raw}`;
+                }
+                case 'hour': {
+                    if (/^\d+$/.test(str)) {
+                        const h = parseInt(str, 10);
+                        return `at ${fmt12(h, 0)}`;
+                    }
+                    return `at hour ${raw}`;
+                }
+                case 'day-of-month': {
+                    if (/^\d+$/.test(str)) return `on the ${ORDINAL(parseInt(str, 10))}`;
+                    return `on day(s) ${raw}`;
+                }
+                case 'month': {
+                    if (/^\d+$/.test(str)) {
+                        const m = parseInt(str, 10);
+                        return `in ${MONTH_NAMES[m - 1]}`;
+                    }
+                    return `in month(s) ${raw}`;
+                }
+                case 'weekday': {
+                    if (/^\d+$/.test(str)) {
+                        const d = parseInt(str, 10) % 7;
+                        return `on ${DAY_NAMES[d]}`;
+                    }
+                    if (str === '1-5') return 'on weekdays (Mon–Fri)';
+                    if (str === '0,6' || str === '6,0') return 'on weekends';
+                    if (/^\d+-\d+$/.test(str)) {
+                        const [a, b] = str.split('-').map(n => DAY_NAMES[parseInt(n,10) % 7]);
+                        return `on ${a}–${b}`;
+                    }
+                    if (/^[\d,]+$/.test(str)) {
+                        const names = str.split(',').map(n => DAY_NAMES[parseInt(n,10) % 7]);
+                        return `on ${names.join(' and ')}`;
+                    }
+                    return `on weekday(s) ${raw}`;
+                }
+            }
+            return raw;
+        }
+
+        function describeCron(expr) {
+            const parts = expr.trim().split(/\s+/);
+            if (parts.length !== 5) return null;
+            const [min, hour, dom, month, dow] = parts;
+            const s = (f) => f.toUpperCase();
+
+            const isAny    = f => s(f) === '*';
+            const isValue  = f => /^\d+$/.test(s(f));
+            const isStep   = f => /^\*\/\d+$/.test(s(f));
+            const stepOf   = f => parseInt(f.slice(2), 10);
+
+            // ── Pattern shortcuts ──────────────────────────────────────────
+
+            // * * * * *
+            if ([min, hour, dom, month, dow].every(isAny))
+                return 'Every minute';
+
+            // */N * * * *
+            if (isStep(min) && isAny(hour) && isAny(dom) && isAny(month) && isAny(dow)) {
+                const n = stepOf(min);
+                return `Every ${n} minute${n !== 1 ? 's' : ''}`;
+            }
+
+            // 0 * * * *   (or N * * * *)
+            if (isAny(hour) && isAny(dom) && isAny(month) && isAny(dow)) {
+                if (min === '0') return 'Every hour, at the start of the hour';
+                if (isValue(min)) return `Every hour, at minute ${min}`;
+                if (isStep(min)) {
+                    const n = stepOf(min);
+                    return `Every ${n} minute${n !== 1 ? 's' : ''}`;
+                }
+                return `Every hour, at minute(s) ${min}`;
+            }
+
+            // 0 */N * * *
+            if (isStep(hour) && isAny(dom) && isAny(month) && isAny(dow)) {
+                const n = stepOf(hour);
+                const mDesc = min === '0' ? '' : ` at minute ${min}`;
+                return `Every ${n} hour${n !== 1 ? 's' : ''}${mDesc}`;
+            }
+
+            // Specific time combinations
+            const hasSpecificTime = isValue(min) && isValue(hour);
+            if (hasSpecificTime) {
+                const timeStr = fmt12(parseInt(hour, 10), parseInt(min, 10));
+
+                // Daily at time
+                if (isAny(dom) && isAny(month) && isAny(dow))
+                    return `Daily at ${timeStr}`;
+
+                // Specific weekday at time
+                if (isAny(dom) && isAny(month) && isValue(dow)) {
+                    const d = parseInt(dow, 10) % 7;
+                    return `Every ${DAY_NAMES[d]} at ${timeStr}`;
+                }
+
+                // Weekdays at time
+                if (isAny(dom) && isAny(month) && s(dow) === '1-5')
+                    return `Every weekday (Mon–Fri) at ${timeStr}`;
+
+                // Weekends at time
+                if (isAny(dom) && isAny(month) && (s(dow) === '0,6' || s(dow) === '6,0'))
+                    return `Every weekend at ${timeStr}`;
+
+                // Multiple weekdays
+                if (isAny(dom) && isAny(month) && /^\d+-\d+$/.test(s(dow))) {
+                    const [a, b] = dow.split('-').map(n => DAY_NAMES[parseInt(n,10) % 7]);
+                    return `Every ${a}–${b} at ${timeStr}`;
+                }
+
+                // Monthly on specific day
+                if (isValue(dom) && isAny(month) && isAny(dow))
+                    return `Monthly on the ${ORDINAL(parseInt(dom,10))} at ${timeStr}`;
+
+                // Specific month + day
+                if (isValue(dom) && isValue(month) && isAny(dow)) {
+                    const mo = MONTH_NAMES[parseInt(month,10) - 1];
+                    return `Annually on ${mo} ${ORDINAL(parseInt(dom,10))} at ${timeStr}`;
+                }
+
+                // Day of month + month + weekday
+                if (isValue(dom) && isAny(month) && isValue(dow)) {
+                    const d = parseInt(dow, 10) % 7;
+                    return `Every ${DAY_NAMES[d]}, on the ${ORDINAL(parseInt(dom,10))} at ${timeStr}`;
+                }
+            }
+
+            // Midnight / noon shortcuts  (0 0 …  /  0 12 …)
+            if (min === '0' && hour === '0') {
+                if (isAny(dom) && isAny(month) && isAny(dow)) return 'Daily at midnight';
+                if (isAny(dom) && isAny(month) && isValue(dow)) {
+                    const d = parseInt(dow, 10) % 7;
+                    return `Every ${DAY_NAMES[d]} at midnight`;
+                }
+                if (isAny(dom) && isAny(month) && s(dow) === '1-5') return 'Every weekday at midnight';
+                if (isValue(dom) && isAny(month) && isAny(dow))
+                    return `Monthly on the ${ORDINAL(parseInt(dom,10))} at midnight`;
+                if (isValue(dom) && isValue(month) && isAny(dow)) {
+                    const mo = MONTH_NAMES[parseInt(month,10) - 1];
+                    return `Annually on ${mo} ${ORDINAL(parseInt(dom,10))} at midnight`;
+                }
+            }
+
+            // ── Fallback: combine field descriptions ──────────────────────
+            const bits = [];
+
+            if (!isAny(min) && !isAny(hour) && isValue(min) && isValue(hour)) {
+                bits.push(`At ${fmt12(parseInt(hour,10), parseInt(min,10))}`);
+            } else {
+                if (!isAny(min)) bits.push(describeFieldRaw(min, 'minute'));
+                if (!isAny(hour)) bits.push(describeFieldRaw(hour, 'hour'));
+            }
+            if (isAny(min) && isAny(hour)) bits.push('Every minute');
+
+            if (!isAny(dom))   bits.push(describeFieldRaw(dom,   'day-of-month'));
+            if (!isAny(month)) bits.push(describeFieldRaw(month, 'month'));
+            if (!isAny(dow))   bits.push(describeFieldRaw(dow,   'weekday'));
+
+            return bits.length ? bits.join(', ') : 'Every minute';
+        }
+
+        // ── Field-level description (for breakdown panel) ──────────────────
+        function describeFieldHuman(raw, fieldName) {
+            const s = raw.toUpperCase();
+            if (s === '*') return `Any ${fieldName}`;
+            if (/^\*\/\d+$/.test(s)) {
+                const n = parseInt(s.slice(2), 10);
+                return `Every ${n} ${fieldName}${n !== 1 ? 's' : ''}`;
+            }
+
+            switch (fieldName) {
+                case 'minute':
+                    if (/^\d+$/.test(s)) return `Minute ${raw} (exactly)`;
+                    if (/^\d+-\d+$/.test(s)) return `Minutes ${raw}`;
+                    if (/^[\d,]+$/.test(s)) return `Minutes ${raw}`;
+                    return raw;
+                case 'hour': {
+                    if (/^\d+$/.test(s)) {
+                        const h = parseInt(s, 10);
+                        return `Hour ${h} (${fmt12(h, 0)})`;
+                    }
+                    if (/^\*\/\d+$/.test(s)) return describeFieldRaw(raw, 'hour');
+                    return raw;
+                }
+                case 'day-of-month':
+                    if (/^\d+$/.test(s)) return `Day ${raw} of month`;
+                    return `Day(s) ${raw} of month`;
+                case 'month': {
+                    if (/^\d+$/.test(s)) return `${MONTH_NAMES[parseInt(s,10)-1]} only`;
+                    if (/^[A-Z]{3}$/.test(s)) return `${MONTH_NAMES[MONTH_SHORT.indexOf(s)]} only`;
+                    return raw;
+                }
+                case 'weekday': {
+                    if (/^\d+$/.test(s)) return `${DAY_NAMES[parseInt(s,10)%7]} only`;
+                    if (s === '1-5') return 'Monday through Friday';
+                    if (s === '0,6' || s === '6,0') return 'Saturday and Sunday';
+                    if (/^[A-Z]{3}$/.test(s)) {
+                        const idx = DAY_SHORT.indexOf(s);
+                        return idx >= 0 ? `${DAY_NAMES[idx]} only` : s;
+                    }
+                    return `Weekday(s) ${raw}`;
+                }
+            }
+            return raw;
+        }
+
+        // ── Format run time for display ────────────────────────────────────
+        function formatRunDate(d) {
+            const days   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            return `${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+        }
+        function formatRunTime(d) {
+            return fmt12(d.getHours(), d.getMinutes());
+        }
+
+        // ── DOM references ─────────────────────────────────────────────────
+        const cronInput        = document.getElementById('cronInput');
+        const description      = document.getElementById('description');
+        const fieldsBreakdown  = document.getElementById('fieldsBreakdown');
+        const nextRunsList     = document.getElementById('nextRunsList');
+        const errorBanner      = document.getElementById('errorBanner');
+        const presetsGrid      = document.getElementById('presetsGrid');
+        const btnParse         = document.getElementById('btnParse');
+        const btnCopy          = document.getElementById('btnCopy');
+        const btnClear         = document.getElementById('btnClear');
+        const tabInput         = document.getElementById('tabInput');
+        const tabOutput        = document.getElementById('tabOutput');
+        const paneInput        = document.getElementById('paneInput');
+        const paneOutput       = document.getElementById('paneOutput');
+        const toast            = document.getElementById('toast');
+
+        // ── Render presets ─────────────────────────────────────────────────
+        PRESETS.forEach(p => {
+            const btn = document.createElement('button');
+            btn.className = 'preset-btn';
+            btn.dataset.cron = p.cron;
+            btn.textContent = p.label;
+            btn.title = p.title;
+            btn.addEventListener('click', () => {
+                cronInput.value = p.cron;
+                doParse();
+                saveToStorage();
+            });
+            presetsGrid.appendChild(btn);
+        });
+
+        // ── Toast helper ───────────────────────────────────────────────────
+        let toastTimer;
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        // ── Render next runs ───────────────────────────────────────────────
+        function renderNextRuns(runs) {
+            nextRunsList.innerHTML = '';
+            if (!runs || runs.length === 0) {
+                nextRunsList.innerHTML = '<li class="run-placeholder">No upcoming runs found in the next year.</li>';
+                return;
+            }
+            runs.forEach((d, i) => {
+                const li = document.createElement('li');
+                li.className = 'run-item';
+                li.innerHTML = `
+                    <span class="run-item-n">#${i + 1}</span>
+                    <span class="run-item-date">${formatRunDate(d)}</span>
+                    <span class="run-item-time">${formatRunTime(d)}</span>
+                `;
+                nextRunsList.appendChild(li);
+            });
+        }
+
+        // ── Render fields breakdown ───────────────────────────────────────
+        function renderBreakdown(parts) {
+            fieldsBreakdown.style.display = 'flex';
+            fieldsBreakdown.innerHTML = '';
+            const fields = [
+                { label: 'Minute',  raw: parts[0], key: 'minute' },
+                { label: 'Hour',    raw: parts[1], key: 'hour' },
+                { label: 'Day',     raw: parts[2], key: 'day-of-month' },
+                { label: 'Month',   raw: parts[3], key: 'month' },
+                { label: 'Weekday', raw: parts[4], key: 'weekday' },
+            ];
+            fields.forEach(f => {
+                const row = document.createElement('div');
+                row.className = 'field-row';
+                row.innerHTML = `
+                    <span class="field-row-name">${f.label}</span>
+                    <span class="field-row-val">${f.raw}</span>
+                    <span class="field-row-desc">${describeFieldHuman(f.raw, f.key)}</span>
+                `;
+                fieldsBreakdown.appendChild(row);
+            });
+        }
+
+        // ── Main parse ─────────────────────────────────────────────────────
+        function doParse() {
+            const expr = cronInput.value.trim();
+
+            // Clear state
+            errorBanner.textContent = '';
+            errorBanner.classList.remove('visible');
+            cronInput.classList.remove('is-error', 'is-valid');
+
+            if (!expr) {
+                description.textContent = 'Enter a cron expression to see its schedule.';
+                description.classList.add('placeholder');
+                fieldsBreakdown.style.display = 'none';
+                nextRunsList.innerHTML = '<li class="run-placeholder">—</li>';
+                return;
+            }
+
+            try {
+                parseCron(expr); // validate first (throws on error)
+                const parts = expr.split(/\s+/);
+                const desc = describeCron(expr);
+
+                // Update description
+                description.textContent = desc;
+                description.classList.remove('placeholder');
+                cronInput.classList.add('is-valid');
+
+                // Render fields breakdown
+                renderBreakdown(parts);
+
+                // Render next runs
+                const runs = getNextRuns(expr, NEXT_RUNS_COUNT);
+                renderNextRuns(runs);
+
+            } catch (err) {
+                cronInput.classList.add('is-error');
+                errorBanner.textContent = '⚠ ' + err.message;
+                errorBanner.classList.add('visible');
+                description.textContent = 'Enter a cron expression to see its schedule.';
+                description.classList.add('placeholder');
+                fieldsBreakdown.style.display = 'none';
+                nextRunsList.innerHTML = '<li class="run-placeholder">—</li>';
+            }
+        }
+
+        // ── localStorage ───────────────────────────────────────────────────
+        let saveTimer;
+        function saveToStorage() {
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(() => {
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify({ expr: cronInput.value }));
+                } catch (_) {}
+            }, 400);
+        }
+
+        function restoreFromStorage() {
+            try {
+                const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+                if (saved && typeof saved.expr === 'string') {
+                    cronInput.value = saved.expr;
+                }
+            } catch (_) {}
+        }
+
+        // ── Event listeners ────────────────────────────────────────────────
+        cronInput.addEventListener('input', () => {
+            doParse();
+            saveToStorage();
+        });
+
+        btnParse.addEventListener('click', () => {
+            doParse();
+        });
+
+        btnCopy.addEventListener('click', async () => {
+            const val = cronInput.value.trim();
+            if (!val) { showToast('Nothing to copy'); return; }
+            try {
+                await navigator.clipboard.writeText(val);
+                showToast('Copied to clipboard!');
+            } catch (_) {
+                showToast('Copy failed — please copy manually');
+            }
+        });
+
+        btnClear.addEventListener('click', () => {
+            cronInput.value = '';
+            doParse();
+            try { localStorage.removeItem(STORAGE_KEY); } catch (_) {}
+        });
+
+        // Mobile tabs
+        tabInput.addEventListener('click', () => {
+            tabInput.classList.add('active');
+            tabOutput.classList.remove('active');
+            paneInput.classList.add('mob-visible');
+            paneOutput.classList.remove('mob-visible');
+        });
+        tabOutput.addEventListener('click', () => {
+            tabOutput.classList.add('active');
+            tabInput.classList.remove('active');
+            paneOutput.classList.add('mob-visible');
+            paneInput.classList.remove('mob-visible');
+        });
+
+        // ── Init ───────────────────────────────────────────────────────────
+        restoreFromStorage();
+        doParse();
+
+    })();
+    </script>
+</body>
+</html>
