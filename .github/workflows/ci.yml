@@ -72,6 +72,7 @@ jobs:
       json_explorer: ${{ steps.filter.outputs.json_explorer }}
       git_sim:       ${{ steps.filter.outputs.git_sim }}
       color_palette: ${{ steps.filter.outputs.color_palette }}
+      datetime:      ${{ steps.filter.outputs.datetime }}
     steps:
       - uses: actions/checkout@v4
 
@@ -152,6 +153,9 @@ jobs:
             color_palette:
               - 'playground/color-palette/**'
               - 'tests/color-palette.spec.js'
+            datetime:
+              - 'playground/datetime/**'
+              - 'tests/datetime.spec.js'
 
   # ── Job 1: Learn — catalog + topic tests ─────────────────────────────────
   # Runs when:  learn/** or its spec files change
@@ -1075,13 +1079,49 @@ jobs:
           path: tests/playwright-report/
           retention-days: 7
 
-  # ── Job 32: Deploy to GitHub Pages ────────────────────────────────────────
+  test_datetime:
+    name: "Test › Date/Time Utilities"
+    needs: changes
+    if: >-
+      needs.changes.outputs.datetime == 'true' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install test dependencies
+        run: npm install
+        working-directory: tests
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+        working-directory: tests
+
+      - name: Run Date/Time Utilities tests
+        run: npx playwright test datetime.spec.js
+        working-directory: tests
+
+      - name: Upload report on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: datetime-report
+          path: tests/playwright-report/
+          retention-days: 7
+
+  # ── Job 33: Deploy to GitHub Pages ────────────────────────────────────────
   # Only runs on pushes to main.
   # Requires ALL test jobs to have PASSED or been SKIPPED.
   # On main, no jobs are skipped (all run as pre-deploy gate), so all must pass.
   deploy:
     name: Deploy
-    needs: [test_learn, test_json, test_markdown, test_base64, test_url, test_csv, test_yaml, test_regex, test_formatter, test_hash, test_diff, test_uuid, test_password, test_lorem, test_case, test_color, test_minifier, test_qr, test_syntax, test_repl, test_css_layout, test_json_explorer, test_git_sim, test_color_palette]
+    needs: [test_learn, test_json, test_markdown, test_base64, test_url, test_csv, test_yaml, test_regex, test_formatter, test_hash, test_diff, test_uuid, test_password, test_lorem, test_case, test_color, test_minifier, test_qr, test_syntax, test_repl, test_css_layout, test_json_explorer, test_git_sim, test_color_palette, test_datetime]
     if: >-
       always() &&
       github.event_name == 'push' &&
@@ -1109,7 +1149,8 @@ jobs:
       (needs.test_css_layout.result    == 'success' || needs.test_css_layout.result    == 'skipped') &&
       (needs.test_json_explorer.result  == 'success' || needs.test_json_explorer.result  == 'skipped') &&
       (needs.test_git_sim.result       == 'success' || needs.test_git_sim.result       == 'skipped') &&
-      (needs.test_color_palette.result  == 'success' || needs.test_color_palette.result  == 'skipped')
+      (needs.test_color_palette.result  == 'success' || needs.test_color_palette.result  == 'skipped') &&
+      (needs.test_datetime.result       == 'success' || needs.test_datetime.result       == 'skipped')
     runs-on: ubuntu-latest
     environment:
       name: github-pages

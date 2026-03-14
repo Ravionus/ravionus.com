@@ -1,0 +1,1563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+    <title>Date/Time Utilities — Ravionus Dev Tools</title>
+    <meta name="description" content="Convert timezones, calculate date differences, parse Unix timestamps, and format dates in any locale. No server, no sign-up.">
+    <link rel="canonical" href="https://ravionus.com/playground/datetime/">
+    <meta property="og:title" content="Date/Time Utilities — Ravionus Dev Tools">
+    <meta property="og:description" content="Convert timezones, calculate date differences, parse Unix timestamps, and format dates in any locale. No server, no sign-up.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ravionus.com/playground/datetime/">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none';">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0a0f;
+            --surface: #12121a;
+            --surface2: #0e0e16;
+            --border: #1e1e2e;
+            --border2: #2a2a3e;
+            --text: #e2e2f0;
+            --muted: #7878a0;
+            --purple: #a855f7;
+            --cyan: #22d3ee;
+            --green: #22c55e;
+            --red: #ef4444;
+            --accent-g: linear-gradient(135deg, #a855f7, #22d3ee);
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+        }
+
+        html, body {
+            height: 100%;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', system-ui, sans-serif;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        /* ── Nav ── */
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--border);
+            background: rgba(10,10,15,.9);
+            backdrop-filter: blur(12px);
+        }
+        .nav-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px;
+            height: 54px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: .85rem;
+            color: var(--muted);
+            flex-shrink: 0;
+        }
+        .breadcrumb a { color: var(--muted); text-decoration: none; }
+        .breadcrumb a:hover { color: var(--text); }
+        .breadcrumb .sep { opacity: .5; }
+        .breadcrumb .current { color: var(--text); font-weight: 600; }
+        .nav-links {
+            display: flex;
+            gap: 4px;
+        }
+        .nav-links a {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: .83rem;
+            font-weight: 500;
+            text-decoration: none;
+            color: var(--muted);
+            transition: color .15s, background .15s;
+        }
+        .nav-links a:hover { color: var(--text); background: var(--surface); }
+
+        /* ── Header ── */
+        .page-header {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 1.5rem 20px .75rem;
+        }
+        .page-header h1 {
+            font-size: clamp(1.4rem, 3vw, 1.9rem);
+            font-weight: 800;
+            letter-spacing: -.03em;
+            margin-bottom: .3rem;
+        }
+        .page-header p {
+            color: var(--muted);
+            font-size: .9rem;
+            max-width: 640px;
+        }
+
+        /* ── Toolbar ── */
+        .toolbar {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: .5rem 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .tb-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border2);
+            background: var(--surface);
+            color: var(--text);
+            font-family: inherit;
+            font-size: .83rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: border-color .15s, background .15s;
+        }
+        .tb-btn:hover { border-color: var(--border2); background: var(--surface2); }
+        .tb-btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+        .tb-btn.primary {
+            background: linear-gradient(135deg, #7c3aed, #0891b2);
+            border-color: transparent;
+            color: #fff;
+            font-weight: 600;
+        }
+        .tb-btn.primary:hover { opacity: .88; }
+        .tb-btn.danger { color: var(--red); border-color: #ef44441a; }
+        .tb-btn.danger:hover { background: #ef44440d; }
+        .tb-sep { width: 1px; height: 22px; background: var(--border); margin: 0 4px; }
+
+        /* ── Utility tabs ── */
+        .util-tabs {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            gap: 4px;
+            border-bottom: 1px solid var(--border);
+        }
+        .util-tab {
+            padding: 8px 16px;
+            border: none;
+            border-bottom: 2px solid transparent;
+            background: none;
+            color: var(--muted);
+            font-family: inherit;
+            font-size: .85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: color .15s, border-color .15s;
+            margin-bottom: -1px;
+        }
+        .util-tab:hover { color: var(--text); }
+        .util-tab.active { color: var(--purple); border-bottom-color: var(--purple); }
+        .util-tab:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+        /* ── Main wrap ── */
+        .main-wrap {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 1.5rem 20px 2rem;
+        }
+
+        /* ── Utility panel ── */
+        .util-panel { display: none; }
+        .util-panel.active { display: block; }
+
+        .panel-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 700px) {
+            .panel-grid { grid-template-columns: 1fr; }
+            .tb-btn { font-size: .78rem; padding: 5px 10px; }
+            .util-tabs { overflow-x: auto; }
+        }
+
+        /* ── Cards (inside panels) ── */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem;
+        }
+        .card-title {
+            font-size: .78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: var(--purple);
+            margin-bottom: 1rem;
+        }
+
+        /* ── Form controls ── */
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-bottom: .9rem;
+        }
+        .field:last-child { margin-bottom: 0; }
+        .field label {
+            font-size: .78rem;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .05em;
+        }
+        .field input, .field select {
+            background: var(--bg);
+            border: 1px solid var(--border2);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: inherit;
+            font-size: .9rem;
+            padding: 7px 10px;
+            width: 100%;
+            transition: border-color .15s;
+        }
+        .field input:focus, .field select:focus {
+            outline: none;
+            border-color: var(--purple);
+        }
+        .field input:focus-visible, .field select:focus-visible {
+            outline: 2px solid var(--cyan);
+            outline-offset: 2px;
+        }
+        select option { background: var(--surface); }
+        .inline-fields { display: flex; gap: 8px; }
+        .inline-fields .field { flex: 1; }
+
+        /* ── Action button (inside panels) ── */
+        .btn-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 7px 16px;
+            border-radius: 8px;
+            border: none;
+            background: linear-gradient(135deg, #7c3aed, #0891b2);
+            color: #fff;
+            font-family: inherit;
+            font-size: .85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity .15s;
+            margin-top: .5rem;
+        }
+        .btn-action:hover { opacity: .88; }
+        .btn-action:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+        .btn-icon {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border2);
+            background: var(--surface);
+            color: var(--muted);
+            font-family: inherit;
+            font-size: .8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: color .15s, border-color .15s;
+            margin-top: .5rem;
+        }
+        .btn-icon:hover { color: var(--text); border-color: var(--border2); }
+        .btn-icon:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+        .btn-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+        /* ── Result rows ── */
+        .result-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .result-row {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .result-label {
+            font-size: .72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .07em;
+            color: var(--muted);
+        }
+        .result-value {
+            font-family: var(--font-mono);
+            font-size: .88rem;
+            color: var(--cyan);
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 5px 10px;
+            word-break: break-all;
+            cursor: pointer;
+            transition: border-color .15s;
+            min-height: 2rem;
+            display: flex;
+            align-items: center;
+        }
+        .result-value:hover { border-color: var(--border2); }
+        .result-value.empty { color: var(--muted); font-style: italic; font-family: inherit; font-size: .83rem; }
+        .result-value.highlight { color: var(--green); }
+        .result-value.accent { color: var(--purple); }
+
+        /* ── Format table ── */
+        .fmt-table {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .fmt-row {
+            display: grid;
+            grid-template-columns: 160px 1fr;
+            gap: 8px;
+            align-items: center;
+        }
+        @media (max-width: 500px) { .fmt-row { grid-template-columns: 1fr; } }
+        .fmt-label {
+            font-size: .78rem;
+            font-weight: 600;
+            color: var(--muted);
+        }
+        .fmt-value {
+            font-family: var(--font-mono);
+            font-size: .82rem;
+            color: var(--cyan);
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 4px 9px;
+            cursor: pointer;
+            transition: border-color .15s;
+            word-break: break-all;
+        }
+        .fmt-value:hover { border-color: var(--border2); }
+        .fmt-value.empty { color: var(--muted); font-style: italic; font-family: inherit; font-size: .8rem; }
+
+        /* ── Divider inside Calculator ── */
+        .section-divider {
+            grid-column: 1 / -1;
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: .5rem 0;
+        }
+        .section-heading {
+            font-size: .78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: var(--purple);
+            margin-bottom: .8rem;
+        }
+
+        /* ── Banners ── */
+        .error-banner, .success-banner {
+            max-width: 1100px;
+            margin: 0 auto .5rem;
+            padding: 0 20px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: .88rem;
+            font-weight: 500;
+        }
+        .error-banner.visible { display: flex; background: #ef44441a; color: var(--red); border: 1px solid #ef444433; margin: .5rem 20px; }
+        .success-banner.visible { display: flex; background: #22c55e1a; color: var(--green); border: 1px solid #22c55e33; margin: .5rem 20px; }
+
+        /* ── Status bar ── */
+        .status-bar {
+            max-width: 1100px;
+            margin: 1.5rem auto 0;
+            padding: 0 20px;
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            font-size: .78rem;
+            color: var(--muted);
+            border-top: 1px solid var(--border);
+            padding-top: .75rem;
+        }
+        .status-bar strong { color: var(--text); }
+
+        /* ── Toast ── */
+        #toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            border-radius: 10px;
+            padding: 10px 18px;
+            font-size: .85rem;
+            font-weight: 500;
+            color: var(--text);
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity .2s, transform .2s;
+            pointer-events: none;
+            max-width: 280px;
+        }
+        #toast.show { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="nav-inner">
+        <div class="breadcrumb">
+            <a href="../../">Ravionus</a>
+            <span class="sep">›</span>
+            <a href="../../playground/">Playgrounds</a>
+            <span class="sep">›</span>
+            <span class="current">Date/Time Utilities</span>
+        </div>
+        <div class="nav-links" role="navigation">
+            <a href="../../learn/">✨ Learn</a>
+            <a href="../../tools/">🛠️ Tools</a>
+            <a href="../../playground/">🧪 Playgrounds</a>
+        </div>
+    </div>
+</nav>
+
+<header class="page-header">
+    <h1>📅 Date/Time Utilities</h1>
+    <p>Convert timezones, calculate date differences, parse Unix timestamps, and format dates in any locale — all in your browser.</p>
+</header>
+
+<!-- Toolbar -->
+<div class="toolbar">
+    <button class="tb-btn primary" id="btnNow">📅 Fill Now</button>
+    <div class="tb-sep"></div>
+    <button class="tb-btn" id="btnCopyResult">📋 Copy Result</button>
+    <button class="tb-btn danger" id="btnClear">✕ Clear</button>
+</div>
+
+<!-- Utility tabs -->
+<div class="util-tabs" role="tablist" aria-label="Date/Time utilities">
+    <button class="util-tab active" id="tabTimestamp" role="tab" aria-selected="true"  aria-controls="panelTimestamp">⏱ Timestamp</button>
+    <button class="util-tab"        id="tabCalculator" role="tab" aria-selected="false" aria-controls="panelCalculator">🧮 Calculator</button>
+    <button class="util-tab"        id="tabTimezone"   role="tab" aria-selected="false" aria-controls="panelTimezone">🌍 Timezone</button>
+    <button class="util-tab"        id="tabFormats"    role="tab" aria-selected="false" aria-controls="panelFormats">📋 Formats</button>
+</div>
+
+<!-- Error / Success banners -->
+<div class="error-banner"   id="errorBanner"   role="alert"></div>
+<div class="success-banner" id="successBanner" aria-live="polite"></div>
+
+<!-- ── Tab panels ── -->
+<div class="main-wrap">
+
+    <!-- ── Panel 1: Timestamp Converter ── -->
+    <div class="util-panel active" id="panelTimestamp" role="tabpanel" aria-labelledby="tabTimestamp">
+        <div class="panel-grid">
+
+            <!-- Inputs -->
+            <div class="card">
+                <div class="card-title">Unix → Human</div>
+
+                <div class="field">
+                    <label for="tsInput">Unix Timestamp</label>
+                    <input type="text" id="tsInput" placeholder="e.g. 1741910400" aria-label="Unix timestamp value">
+                </div>
+                <div class="field">
+                    <label for="tsUnit">Unit</label>
+                    <select id="tsUnit" aria-label="Timestamp unit: seconds or milliseconds">
+                        <option value="s">Seconds (s)</option>
+                        <option value="ms">Milliseconds (ms)</option>
+                    </select>
+                </div>
+                <div class="btn-row">
+                    <button class="btn-action" id="btnTsDecode">→ Decode</button>
+                    <button class="btn-icon"   id="btnTsNow">⏱ Now</button>
+                </div>
+
+                <hr style="border:none;border-top:1px solid var(--border);margin:1.25rem 0;">
+
+                <div class="card-title">Human → Unix</div>
+                <div class="inline-fields">
+                    <div class="field">
+                        <label for="humanDateInput">Date</label>
+                        <input type="date" id="humanDateInput" aria-label="Human-readable date">
+                    </div>
+                    <div class="field">
+                        <label for="humanTimeInput">Time</label>
+                        <input type="time" id="humanTimeInput" value="00:00" aria-label="Human-readable time">
+                    </div>
+                </div>
+                <div class="btn-row">
+                    <button class="btn-action" id="btnHumanEncode">→ Encode</button>
+                    <button class="btn-icon"   id="btnHumanNow">📅 Today</button>
+                </div>
+            </div>
+
+            <!-- Results -->
+            <div class="card">
+                <div class="card-title">Results</div>
+                <div class="result-grid">
+                    <div class="result-row">
+                        <div class="result-label">Local Time</div>
+                        <div class="result-value empty" id="tsLocalResult">—</div>
+                    </div>
+                    <div class="result-row">
+                        <div class="result-label">UTC</div>
+                        <div class="result-value empty" id="tsUtcResult">—</div>
+                    </div>
+                    <div class="result-row">
+                        <div class="result-label">ISO 8601</div>
+                        <div class="result-value empty" id="tsIsoResult">—</div>
+                    </div>
+                    <div class="result-row">
+                        <div class="result-label">Relative</div>
+                        <div class="result-value empty" id="tsRelResult">—</div>
+                    </div>
+                    <div class="result-row">
+                        <div class="result-label">Unix (seconds)</div>
+                        <div class="result-value empty highlight" id="tsSecResult">—</div>
+                    </div>
+                    <div class="result-row">
+                        <div class="result-label">Unix (ms)</div>
+                        <div class="result-value empty accent" id="tsMsResult">—</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ── Panel 2: Date Calculator ── -->
+    <div class="util-panel" id="panelCalculator" role="tabpanel" aria-labelledby="tabCalculator">
+        <div class="panel-grid">
+
+            <!-- Add / Subtract -->
+            <div class="card">
+                <div class="section-heading">Add / Subtract</div>
+
+                <div class="field">
+                    <label for="calcDate">Start Date</label>
+                    <input type="date" id="calcDate" aria-label="Calculator start date">
+                </div>
+                <div class="inline-fields">
+                    <div class="field">
+                        <label for="calcOp">Operation</label>
+                        <select id="calcOp" aria-label="Add or subtract">
+                            <option value="add">Add +</option>
+                            <option value="sub">Subtract −</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="calcAmount">Amount</label>
+                        <input type="number" id="calcAmount" min="0" max="9999" value="7" aria-label="Amount to add or subtract">
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="calcUnit">Unit</label>
+                    <select id="calcUnit" aria-label="Calendar unit">
+                        <option value="day">Days</option>
+                        <option value="week">Weeks</option>
+                        <option value="month">Months</option>
+                        <option value="year">Years</option>
+                        <option value="hour">Hours</option>
+                        <option value="minute">Minutes</option>
+                    </select>
+                </div>
+                <div class="btn-row">
+                    <button class="btn-action" id="btnCalc">Calculate</button>
+                    <button class="btn-icon"   id="btnCalcToday">📅 Today</button>
+                </div>
+
+                <div style="margin-top:1rem;">
+                    <div class="result-row">
+                        <div class="result-label">Result Date</div>
+                        <div class="result-value empty" id="calcResult">—</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Date Difference -->
+            <div class="card">
+                <div class="section-heading">Date Difference</div>
+
+                <div class="field">
+                    <label for="diffDate1">From Date</label>
+                    <input type="date" id="diffDate1" aria-label="Difference start date">
+                </div>
+                <div class="field">
+                    <label for="diffDate2">To Date</label>
+                    <input type="date" id="diffDate2" aria-label="Difference end date">
+                </div>
+                <div class="btn-row">
+                    <button class="btn-action" id="btnDiff">Calculate Difference</button>
+                </div>
+
+                <div style="margin-top:1rem;" class="result-grid">
+                    <div class="result-row">
+                        <div class="result-label">Days</div>
+                        <div class="result-value empty" id="diffDays">—</div>
+                    </div>
+                    <div class="result-row">
+                        <div class="result-label">Weeks</div>
+                        <div class="result-value empty" id="diffWeeks">—</div>
+                    </div>
+                    <div class="result-row">
+                        <div class="result-label">Months (approx)</div>
+                        <div class="result-value empty" id="diffMonths">—</div>
+                    </div>
+                    <div class="result-row">
+                        <div class="result-label">Years (approx)</div>
+                        <div class="result-value empty" id="diffYears">—</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ── Panel 3: Timezone Converter ── -->
+    <div class="util-panel" id="panelTimezone" role="tabpanel" aria-labelledby="tabTimezone">
+        <div class="panel-grid">
+
+            <!-- Inputs -->
+            <div class="card">
+                <div class="card-title">Convert</div>
+
+                <div class="inline-fields">
+                    <div class="field">
+                        <label for="tzDate">Date</label>
+                        <input type="date" id="tzDate" aria-label="Timezone conversion date">
+                    </div>
+                    <div class="field">
+                        <label for="tzTime">Time</label>
+                        <input type="time" id="tzTime" value="12:00" aria-label="Timezone conversion time">
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="tzFrom">From Timezone</label>
+                    <select id="tzFrom" aria-label="Source timezone">
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="tzTo">To Timezone</label>
+                    <select id="tzTo" aria-label="Target timezone">
+                    </select>
+                </div>
+                <div class="btn-row">
+                    <button class="btn-action" id="btnTzConvert">→ Convert</button>
+                    <button class="btn-icon"   id="btnTzSwap">⇄ Swap</button>
+                    <button class="btn-icon"   id="btnTzNow">📅 Now</button>
+                </div>
+            </div>
+
+            <!-- Results -->
+            <div class="card">
+                <div class="card-title">Result</div>
+                <div class="result-grid">
+                    <div class="result-row">
+                        <div class="result-label">Converted Time</div>
+                        <div class="result-value empty" id="tzResult">—</div>
+                    </div>
+                    <div class="result-row">
+                        <div class="result-label">ISO 8601</div>
+                        <div class="result-value empty" id="tzIsoResult">—</div>
+                    </div>
+                    <div class="result-row">
+                        <div class="result-label">Unix (seconds)</div>
+                        <div class="result-value empty highlight" id="tzTsResult">—</div>
+                    </div>
+                    <div class="result-row">
+                        <div class="result-label">UTC Offset (From)</div>
+                        <div class="result-value empty" id="tzFromOffset">—</div>
+                    </div>
+                    <div class="result-row">
+                        <div class="result-label">UTC Offset (To)</div>
+                        <div class="result-value empty" id="tzToOffset">—</div>
+                    </div>
+                    <div class="result-row">
+                        <div class="result-label">Time Difference</div>
+                        <div class="result-value empty accent" id="tzDiff">—</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ── Panel 4: Format Showcase ── -->
+    <div class="util-panel" id="panelFormats" role="tabpanel" aria-labelledby="tabFormats">
+        <div class="panel-grid">
+
+            <!-- Input -->
+            <div class="card">
+                <div class="card-title">Input Date</div>
+                <div class="inline-fields">
+                    <div class="field">
+                        <label for="fmtDate">Date</label>
+                        <input type="date" id="fmtDate" aria-label="Format showcase date">
+                    </div>
+                    <div class="field">
+                        <label for="fmtTime">Time</label>
+                        <input type="time" id="fmtTime" value="00:00" aria-label="Format showcase time">
+                    </div>
+                </div>
+                <div class="btn-row">
+                    <button class="btn-action" id="btnFmtShow">Show Formats</button>
+                    <button class="btn-icon"   id="btnFmtNow">📅 Now</button>
+                </div>
+            </div>
+
+            <!-- Formats -->
+            <div class="card">
+                <div class="card-title">All Formats</div>
+                <div class="fmt-table" id="fmtTable" aria-label="Date format results">
+                    <div class="fmt-row">
+                        <div class="fmt-label">—</div>
+                        <div class="fmt-value empty" id="fmtPlaceholder">Enter a date and click Show Formats</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<!-- Status bar -->
+<div class="status-bar">
+    <span>Utility: <strong id="statTab">Timestamp</strong></span>
+    <span>Local TZ: <strong id="statTz">—</strong></span>
+    <span>UTC Offset: <strong id="statOffset">—</strong></span>
+</div>
+
+<div id="toast" aria-live="polite"></div>
+
+<script>
+'use strict';
+
+const STORAGE_KEY = 'ravionus_tool_datetime';
+
+// ── DOM refs ──────────────────────────────────────────────────────────────────
+const btnNow         = document.getElementById('btnNow');
+const btnCopyResult  = document.getElementById('btnCopyResult');
+const btnClear       = document.getElementById('btnClear');
+
+const tabTimestamp   = document.getElementById('tabTimestamp');
+const tabCalculator  = document.getElementById('tabCalculator');
+const tabTimezone    = document.getElementById('tabTimezone');
+const tabFormats     = document.getElementById('tabFormats');
+const panelTimestamp = document.getElementById('panelTimestamp');
+const panelCalculator= document.getElementById('panelCalculator');
+const panelTimezone  = document.getElementById('panelTimezone');
+const panelFormats   = document.getElementById('panelFormats');
+
+// Timestamp panel
+const tsInput        = document.getElementById('tsInput');
+const tsUnit         = document.getElementById('tsUnit');
+const btnTsDecode    = document.getElementById('btnTsDecode');
+const btnTsNow       = document.getElementById('btnTsNow');
+const humanDateInput = document.getElementById('humanDateInput');
+const humanTimeInput = document.getElementById('humanTimeInput');
+const btnHumanEncode = document.getElementById('btnHumanEncode');
+const btnHumanNow    = document.getElementById('btnHumanNow');
+const tsLocalResult  = document.getElementById('tsLocalResult');
+const tsUtcResult    = document.getElementById('tsUtcResult');
+const tsIsoResult    = document.getElementById('tsIsoResult');
+const tsRelResult    = document.getElementById('tsRelResult');
+const tsSecResult    = document.getElementById('tsSecResult');
+const tsMsResult     = document.getElementById('tsMsResult');
+
+// Calculator panel
+const calcDate       = document.getElementById('calcDate');
+const calcOp         = document.getElementById('calcOp');
+const calcAmount     = document.getElementById('calcAmount');
+const calcUnit       = document.getElementById('calcUnit');
+const btnCalc        = document.getElementById('btnCalc');
+const btnCalcToday   = document.getElementById('btnCalcToday');
+const calcResult     = document.getElementById('calcResult');
+const diffDate1      = document.getElementById('diffDate1');
+const diffDate2      = document.getElementById('diffDate2');
+const btnDiff        = document.getElementById('btnDiff');
+const diffDays       = document.getElementById('diffDays');
+const diffWeeks      = document.getElementById('diffWeeks');
+const diffMonths     = document.getElementById('diffMonths');
+const diffYears      = document.getElementById('diffYears');
+
+// Timezone panel
+const tzDate         = document.getElementById('tzDate');
+const tzTime         = document.getElementById('tzTime');
+const tzFrom         = document.getElementById('tzFrom');
+const tzTo           = document.getElementById('tzTo');
+const btnTzConvert   = document.getElementById('btnTzConvert');
+const btnTzSwap      = document.getElementById('btnTzSwap');
+const btnTzNow       = document.getElementById('btnTzNow');
+const tzResult       = document.getElementById('tzResult');
+const tzIsoResult    = document.getElementById('tzIsoResult');
+const tzTsResult     = document.getElementById('tzTsResult');
+const tzFromOffset   = document.getElementById('tzFromOffset');
+const tzToOffset     = document.getElementById('tzToOffset');
+const tzDiff         = document.getElementById('tzDiff');
+
+// Formats panel
+const fmtDate        = document.getElementById('fmtDate');
+const fmtTime        = document.getElementById('fmtTime');
+const btnFmtShow     = document.getElementById('btnFmtShow');
+const btnFmtNow      = document.getElementById('btnFmtNow');
+const fmtTable       = document.getElementById('fmtTable');
+
+// Status bar
+const statTab        = document.getElementById('statTab');
+const statTz         = document.getElementById('statTz');
+const statOffset     = document.getElementById('statOffset');
+
+// Banners
+const errorBanner    = document.getElementById('errorBanner');
+const successBanner  = document.getElementById('successBanner');
+
+// ── Timezones ─────────────────────────────────────────────────────────────────
+const TIMEZONES = [
+    'UTC',
+    'America/New_York',
+    'America/Chicago',
+    'America/Denver',
+    'America/Los_Angeles',
+    'America/Anchorage',
+    'America/Honolulu',
+    'America/Toronto',
+    'America/Vancouver',
+    'America/Mexico_City',
+    'America/Bogota',
+    'America/Lima',
+    'America/Santiago',
+    'America/Sao_Paulo',
+    'America/Buenos_Aires',
+    'Europe/London',
+    'Europe/Dublin',
+    'Europe/Lisbon',
+    'Europe/Paris',
+    'Europe/Berlin',
+    'Europe/Amsterdam',
+    'Europe/Brussels',
+    'Europe/Madrid',
+    'Europe/Rome',
+    'Europe/Warsaw',
+    'Europe/Stockholm',
+    'Europe/Helsinki',
+    'Europe/Athens',
+    'Europe/Bucharest',
+    'Europe/Istanbul',
+    'Europe/Moscow',
+    'Asia/Dubai',
+    'Asia/Karachi',
+    'Asia/Kolkata',
+    'Asia/Dhaka',
+    'Asia/Bangkok',
+    'Asia/Singapore',
+    'Asia/Shanghai',
+    'Asia/Tokyo',
+    'Asia/Seoul',
+    'Asia/Taipei',
+    'Asia/Hong_Kong',
+    'Asia/Jakarta',
+    'Australia/Perth',
+    'Australia/Adelaide',
+    'Australia/Sydney',
+    'Australia/Brisbane',
+    'Pacific/Auckland',
+    'Pacific/Fiji',
+    'Pacific/Honolulu',
+    'Africa/Cairo',
+    'Africa/Nairobi',
+    'Africa/Johannesburg',
+    'Africa/Lagos',
+];
+
+// Populate timezone selectors
+function populateTimezones() {
+    const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    TIMEZONES.forEach(tz => {
+        const o1 = document.createElement('option');
+        o1.value = tz;
+        o1.textContent = tz.replace(/_/g, ' ');
+        if (tz === localTz) o1.selected = true;
+        tzFrom.appendChild(o1);
+
+        const o2 = document.createElement('option');
+        o2.value = tz;
+        o2.textContent = tz.replace(/_/g, ' ');
+        if (tz === 'UTC') o2.selected = true;
+        tzTo.appendChild(o2);
+    });
+}
+populateTimezones();
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function showError(msg) {
+    errorBanner.textContent = msg;
+    errorBanner.classList.add('visible');
+    successBanner.classList.remove('visible');
+}
+function showSuccess(msg) {
+    successBanner.textContent = msg;
+    successBanner.classList.add('visible');
+    errorBanner.classList.remove('visible');
+}
+function clearBanners() {
+    errorBanner.classList.remove('visible');
+    successBanner.classList.remove('visible');
+}
+
+let toastTimer;
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function setResult(el, val, cls) {
+    el.textContent = val;
+    el.classList.remove('empty', 'highlight', 'accent');
+    if (cls) el.classList.add(cls);
+    if (!val || val === '—') el.classList.add('empty');
+}
+
+function todayStr() {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
+function nowTimeStr() {
+    const now = new Date();
+    return `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+}
+
+function relativeTime(ms) {
+    const now = Date.now();
+    const diff = ms - now;
+    const absDiff = Math.abs(diff);
+    const s  = Math.floor(absDiff / 1000);
+    const m  = Math.floor(s / 60);
+    const h  = Math.floor(m / 60);
+    const d  = Math.floor(h / 24);
+    const mo = Math.floor(d / 30.44);
+    const y  = Math.floor(d / 365.25);
+    const future = diff > 0;
+    const prefix = future ? 'in ' : '';
+    const suffix = future ? '' : ' ago';
+    if (y >= 1)  return `${prefix}${y} year${y > 1 ? 's' : ''}${suffix}`;
+    if (mo >= 1) return `${prefix}${mo} month${mo > 1 ? 's' : ''}${suffix}`;
+    if (d >= 1)  return `${prefix}${d} day${d > 1 ? 's' : ''}${suffix}`;
+    if (h >= 1)  return `${prefix}${h} hour${h > 1 ? 's' : ''}${suffix}`;
+    if (m >= 1)  return `${prefix}${m} minute${m > 1 ? 's' : ''}${suffix}`;
+    if (s >= 0)  return s <= 5 ? 'just now' : `${prefix}${s} second${s > 1 ? 's' : ''}${suffix}`;
+    return 'just now';
+}
+
+function getUtcOffset(tz, date) {
+    const fmt = new Intl.DateTimeFormat('en', { timeZone: tz, timeZoneName: 'shortOffset' });
+    const parts = fmt.formatToParts(date);
+    const off = parts.find(p => p.type === 'timeZoneName');
+    return off ? off.value : '';
+}
+
+function getOffsetMinutes(tz, date) {
+    // Trick: format a known UTC time in the target tz and calculate offset
+    const utcStr = new Intl.DateTimeFormat('en-CA', {
+        timeZone: tz,
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', hour12: false
+    }).format(date);
+    // Parse result and compare to UTC
+    const utcMs = date.getTime();
+    // Format in UTC
+    const utcBaseStr = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'UTC',
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', hour12: false
+    }).format(date);
+    return { utcStr, utcBaseStr };
+}
+
+function parseLocalDatetime(dateStr, timeStr, tz) {
+    // Parse "YYYY-MM-DD" and "HH:MM" as if they're in the given timezone
+    // Use the trick of formatting with en-CA to get a parseable string
+    const [y, mo, d] = dateStr.split('-').map(Number);
+    const [h, mi] = timeStr.split(':').map(Number);
+
+    // Build a Date assuming UTC, then correct for timezone offset
+    const utcDate = new Date(Date.UTC(y, mo - 1, d, h, mi, 0));
+
+    // Get what time it would display in the target TZ
+    const parts = new Intl.DateTimeFormat('en', {
+        timeZone: tz,
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+        hour12: false
+    }).formatToParts(utcDate);
+
+    const get = type => Number(parts.find(p => p.type === type)?.value ?? 0);
+    const tzH = get('hour') === 24 ? 0 : get('hour');
+    const tzMi = get('minute');
+
+    // Difference between what it shows in TZ vs what we input
+    const diffH = h - tzH;
+    const diffMi = mi - tzMi;
+
+    const corrected = new Date(utcDate.getTime() + (diffH * 60 + diffMi) * 60000);
+    return corrected;
+}
+
+function formatInTz(date, tz) {
+    return new Intl.DateTimeFormat('en-US', {
+        timeZone: tz,
+        year: 'numeric', month: 'short', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+        timeZoneName: 'short',
+        hour12: true
+    }).format(date);
+}
+
+// ── Last computed result (for "Copy Result") ──────────────────────────────────
+let lastResultText = '';
+
+// ── Tab switching ─────────────────────────────────────────────────────────────
+const TABS = [
+    { btn: tabTimestamp,  panel: panelTimestamp,  label: 'Timestamp'  },
+    { btn: tabCalculator, panel: panelCalculator, label: 'Calculator' },
+    { btn: tabTimezone,   panel: panelTimezone,   label: 'Timezone'   },
+    { btn: tabFormats,    panel: panelFormats,    label: 'Formats'    },
+];
+let activeTab = 'Timestamp';
+
+function switchTab(name) {
+    TABS.forEach(({ btn, panel, label }) => {
+        const active = label === name;
+        btn.classList.toggle('active', active);
+        btn.setAttribute('aria-selected', String(active));
+        panel.classList.toggle('active', active);
+    });
+    activeTab = name;
+    statTab.textContent = name;
+    clearBanners();
+    debouncedSave();
+}
+
+tabTimestamp.addEventListener('click',  () => switchTab('Timestamp'));
+tabCalculator.addEventListener('click', () => switchTab('Calculator'));
+tabTimezone.addEventListener('click',   () => switchTab('Timezone'));
+tabFormats.addEventListener('click',    () => switchTab('Formats'));
+
+// ── Timestamp tab ─────────────────────────────────────────────────────────────
+function decodeTsPanel() {
+    clearBanners();
+    const raw = tsInput.value.trim();
+    if (!raw) { showError('Enter a Unix timestamp.'); return; }
+    let ms;
+    const num = Number(raw);
+    if (isNaN(num)) { showError('Invalid timestamp — must be a number.'); return; }
+    ms = tsUnit.value === 'ms' ? num : num * 1000;
+
+    const d = new Date(ms);
+    if (isNaN(d.getTime())) { showError('Timestamp out of range.'); return; }
+
+    const local = d.toLocaleString();
+    const utc   = d.toUTCString();
+    const iso   = d.toISOString();
+    const rel   = relativeTime(ms);
+    const sec   = Math.floor(ms / 1000).toString();
+    const msStr = ms.toString();
+
+    setResult(tsLocalResult, local,  'highlight');
+    setResult(tsUtcResult,   utc,    '');
+    setResult(tsIsoResult,   iso,    '');
+    setResult(tsRelResult,   rel,    'accent');
+    setResult(tsSecResult,   sec,    'highlight');
+    setResult(tsMsResult,    msStr,  'accent');
+
+    lastResultText = `Local: ${local}\nUTC: ${utc}\nISO: ${iso}\nRelative: ${rel}\nUnix(s): ${sec}\nUnix(ms): ${msStr}`;
+    showSuccess('Decoded successfully.');
+}
+
+function encodeTsPanel() {
+    clearBanners();
+    const dateVal = humanDateInput.value;
+    const timeVal = humanTimeInput.value || '00:00';
+    if (!dateVal) { showError('Enter a date.'); return; }
+
+    const d = new Date(`${dateVal}T${timeVal}:00`);
+    if (isNaN(d.getTime())) { showError('Invalid date/time.'); return; }
+
+    const sec   = Math.floor(d.getTime() / 1000).toString();
+    const ms    = d.getTime().toString();
+    const local = d.toLocaleString();
+    const utc   = d.toUTCString();
+    const iso   = d.toISOString();
+    const rel   = relativeTime(d.getTime());
+
+    setResult(tsLocalResult, local,  'highlight');
+    setResult(tsUtcResult,   utc,    '');
+    setResult(tsIsoResult,   iso,    '');
+    setResult(tsRelResult,   rel,    'accent');
+    setResult(tsSecResult,   sec,    'highlight');
+    setResult(tsMsResult,    ms,     'accent');
+
+    lastResultText = `Unix(s): ${sec}\nUnix(ms): ${ms}\nISO: ${iso}`;
+    showSuccess('Encoded successfully.');
+}
+
+btnTsDecode.addEventListener('click', decodeTsPanel);
+btnHumanEncode.addEventListener('click', encodeTsPanel);
+
+btnTsNow.addEventListener('click', () => {
+    const now = Date.now();
+    tsInput.value = String(Math.floor(now / 1000));
+    tsUnit.value = 's';
+    decodeTsPanel();
+});
+
+btnHumanNow.addEventListener('click', () => {
+    humanDateInput.value = todayStr();
+    humanTimeInput.value = nowTimeStr();
+    encodeTsPanel();
+});
+
+// Click result values to copy
+[tsLocalResult, tsUtcResult, tsIsoResult, tsRelResult, tsSecResult, tsMsResult].forEach(el => {
+    el.addEventListener('click', () => {
+        const txt = el.textContent;
+        if (!txt || txt === '—') return;
+        copyToClipboard(txt);
+    });
+});
+
+// ── Calculator tab ────────────────────────────────────────────────────────────
+function runCalc() {
+    clearBanners();
+    const dateVal = calcDate.value;
+    if (!dateVal) { showError('Enter a start date.'); return; }
+    const amount  = parseInt(calcAmount.value, 10);
+    if (isNaN(amount) || amount < 0) { showError('Enter a valid positive amount.'); return; }
+    const op      = calcOp.value;
+    const unit    = calcUnit.value;
+    const sign    = op === 'add' ? 1 : -1;
+
+    const d = new Date(dateVal + 'T00:00:00');
+    switch (unit) {
+        case 'minute': d.setMinutes(d.getMinutes() + sign * amount); break;
+        case 'hour':   d.setHours(d.getHours() + sign * amount);   break;
+        case 'day':    d.setDate(d.getDate() + sign * amount);      break;
+        case 'week':   d.setDate(d.getDate() + sign * amount * 7); break;
+        case 'month':  d.setMonth(d.getMonth() + sign * amount);    break;
+        case 'year':   d.setFullYear(d.getFullYear() + sign * amount); break;
+    }
+
+    const yy  = d.getFullYear();
+    const mm  = String(d.getMonth() + 1).padStart(2, '0');
+    const dd  = String(d.getDate()).padStart(2, '0');
+    const iso = `${yy}-${mm}-${dd}`;
+    const formatted = d.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    setResult(calcResult, `${iso}  (${formatted})`, 'highlight');
+    lastResultText = iso;
+    showSuccess('Calculated.');
+}
+
+function runDiff() {
+    clearBanners();
+    const v1 = diffDate1.value;
+    const v2 = diffDate2.value;
+    if (!v1 || !v2) { showError('Enter both dates.'); return; }
+
+    const d1 = new Date(v1 + 'T00:00:00');
+    const d2 = new Date(v2 + 'T00:00:00');
+    const ms  = d2.getTime() - d1.getTime();
+    const absDays = Math.abs(Math.round(ms / 86400000));
+    const sign    = ms >= 0 ? '' : '-';
+
+    setResult(diffDays,   `${sign}${absDays} day${absDays !== 1 ? 's' : ''}`, 'highlight');
+    setResult(diffWeeks,  `${sign}${(absDays / 7).toFixed(2)} weeks`, '');
+    setResult(diffMonths, `${sign}${(absDays / 30.44).toFixed(2)} months (approx)`, '');
+    setResult(diffYears,  `${sign}${(absDays / 365.25).toFixed(4)} years (approx)`, 'accent');
+
+    lastResultText = `${sign}${absDays} days`;
+    showSuccess('Difference calculated.');
+}
+
+btnCalc.addEventListener('click', runCalc);
+btnCalcToday.addEventListener('click', () => {
+    calcDate.value = todayStr();
+    runCalc();
+});
+btnDiff.addEventListener('click', runDiff);
+
+[calcResult, diffDays, diffWeeks, diffMonths, diffYears].forEach(el => {
+    el.addEventListener('click', () => {
+        const txt = el.textContent;
+        if (!txt || txt === '—') return;
+        copyToClipboard(txt);
+    });
+});
+
+// ── Timezone tab ──────────────────────────────────────────────────────────────
+function runTzConvert() {
+    clearBanners();
+    const dateVal = tzDate.value;
+    const timeVal = tzTime.value || '00:00';
+    if (!dateVal) { showError('Enter a date.'); return; }
+    const fromTz = tzFrom.value;
+    const toTz   = tzTo.value;
+    if (!fromTz || !toTz) { showError('Select both timezones.'); return; }
+
+    try {
+        const d = parseLocalDatetime(dateVal, timeVal, fromTz);
+        const converted = formatInTz(d, toTz);
+        const iso       = d.toISOString();
+        const sec       = Math.floor(d.getTime() / 1000).toString();
+        const offFrom   = getUtcOffset(fromTz, d);
+        const offTo     = getUtcOffset(toTz, d);
+
+        // Calculate hour difference between zones
+        const fmtH = new Intl.DateTimeFormat('en-US', { timeZone: fromTz, hour: 'numeric', hour12: false });
+        const toH  = new Intl.DateTimeFormat('en-US', { timeZone: toTz,   hour: 'numeric', hour12: false });
+        const fH   = parseInt(fmtH.format(d));
+        const tH   = parseInt(toH.format(d));
+        let diffH  = tH - fH;
+        if (diffH > 12)  diffH -= 24;
+        if (diffH < -12) diffH += 24;
+        const diffStr = diffH === 0 ? 'Same time' :
+                        diffH > 0  ? `${toTz.replace('_',' ')} is ${diffH}h ahead` :
+                                     `${toTz.replace('_',' ')} is ${Math.abs(diffH)}h behind`;
+
+        setResult(tzResult,     converted, 'highlight');
+        setResult(tzIsoResult,  iso,       '');
+        setResult(tzTsResult,   sec,       'highlight');
+        setResult(tzFromOffset, offFrom,   '');
+        setResult(tzToOffset,   offTo,     '');
+        setResult(tzDiff,       diffStr,   'accent');
+
+        lastResultText = `${converted}\nISO: ${iso}\nUnix: ${sec}`;
+        showSuccess('Converted successfully.');
+    } catch (e) {
+        showError('Conversion failed: ' + e.message);
+    }
+}
+
+btnTzConvert.addEventListener('click', runTzConvert);
+
+btnTzSwap.addEventListener('click', () => {
+    const from = tzFrom.value;
+    tzFrom.value = tzTo.value;
+    tzTo.value = from;
+});
+
+btnTzNow.addEventListener('click', () => {
+    tzDate.value = todayStr();
+    tzTime.value = nowTimeStr();
+    runTzConvert();
+});
+
+[tzResult, tzIsoResult, tzTsResult].forEach(el => {
+    el.addEventListener('click', () => {
+        const txt = el.textContent;
+        if (!txt || txt === '—') return;
+        copyToClipboard(txt);
+    });
+});
+
+// ── Formats tab ───────────────────────────────────────────────────────────────
+function buildFormats(d) {
+    const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    const fmt = (opts, tz) =>
+        new Intl.DateTimeFormat('en-US', { timeZone: tz || localTz, ...opts }).format(d);
+
+    const yy  = String(d.getFullYear()).padStart(4, '0');
+    const mo  = String(d.getMonth() + 1).padStart(2, '0');
+    const dd  = String(d.getDate()).padStart(2, '0');
+    const hh  = String(d.getHours()).padStart(2, '0');
+    const mi  = String(d.getMinutes()).padStart(2, '0');
+    const ss  = String(d.getSeconds()).padStart(2, '0');
+    const tzo = d.getTimezoneOffset();
+    const tzSign = tzo <= 0 ? '+' : '-';
+    const tzHH   = String(Math.floor(Math.abs(tzo) / 60)).padStart(2, '0');
+    const tzMM   = String(Math.abs(tzo) % 60).padStart(2, '0');
+    const isoLocal = `${yy}-${mo}-${dd}T${hh}:${mi}:${ss}${tzSign}${tzHH}:${tzMM}`;
+    const isoDate  = `${yy}-${mo}-${dd}`;
+
+    const sec   = Math.floor(d.getTime() / 1000);
+    const msVal = d.getTime();
+
+    const dayOfWeek  = fmt({ weekday: 'long' });
+    const monthLong  = fmt({ month: 'long' });
+    const weekNum    = getWeekNumber(d);
+    const daysInMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    const isLeapYear  = (y => (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0)(d.getFullYear());
+    const isWeekend   = [0, 6].includes(d.getDay());
+    const dayOfYear   = getDayOfYear(d);
+
+    return [
+        { label: 'ISO 8601',          value: isoLocal },
+        { label: 'ISO Date',          value: isoDate },
+        { label: 'US Long',           value: fmt({ year:'numeric', month:'long',  day:'numeric', weekday:'long' }) },
+        { label: 'US Short',          value: fmt({ year:'numeric', month:'2-digit', day:'2-digit' }) },
+        { label: 'EU Long',           value: fmt({ year:'numeric', month:'long',  day:'numeric' }, 'UTC').replace(/(\w+)\s(\d+),\s(\d+)/, '$2 $1 $3') },
+        { label: 'EU Short (dd/mm)',  value: fmt({ year:'numeric', month:'2-digit', day:'2-digit' }).replace(/(\d+)\/(\d+)\/(\d+)/, '$2/$1/$3') },
+        { label: 'Time (12h)',         value: fmt({ hour:'2-digit', minute:'2-digit', second:'2-digit', hour12: true }) },
+        { label: 'Time (24h)',         value: fmt({ hour:'2-digit', minute:'2-digit', second:'2-digit', hour12: false }) },
+        { label: 'Date + Time (local)',value: d.toLocaleString('en-US') },
+        { label: 'UTC String',         value: d.toUTCString() },
+        { label: 'Unix (seconds)',     value: String(sec) },
+        { label: 'Unix (ms)',          value: String(msVal) },
+        { label: 'Day of Week',        value: dayOfWeek },
+        { label: 'Week Number',        value: `Week ${weekNum}` },
+        { label: 'Day of Year',        value: `Day ${dayOfYear}` },
+        { label: 'Days in Month',      value: String(daysInMonth) },
+        { label: 'Leap Year',          value: isLeapYear ? 'Yes' : 'No' },
+        { label: 'Weekday/Weekend',    value: isWeekend ? 'Weekend' : 'Weekday' },
+        { label: 'Relative',           value: relativeTime(msVal) },
+    ];
+}
+
+function getWeekNumber(d) {
+    const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    const day  = date.getUTCDay() || 7;
+    date.setUTCDate(date.getUTCDate() + 4 - day);
+    const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+    return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+}
+
+function getDayOfYear(d) {
+    const start = new Date(d.getFullYear(), 0, 0);
+    const diff  = d - start;
+    return Math.floor(diff / 86400000);
+}
+
+function showFormats() {
+    clearBanners();
+    const dateVal = fmtDate.value;
+    const timeVal = fmtTime.value || '00:00';
+    if (!dateVal) { showError('Enter a date.'); return; }
+
+    const d = new Date(`${dateVal}T${timeVal}:00`);
+    if (isNaN(d.getTime())) { showError('Invalid date/time.'); return; }
+
+    const rows = buildFormats(d);
+    fmtTable.innerHTML = '';
+    rows.forEach(({ label, value }) => {
+        const row = document.createElement('div');
+        row.className = 'fmt-row';
+        const l = document.createElement('div');
+        l.className = 'fmt-label';
+        l.textContent = label;
+        const v = document.createElement('div');
+        v.className = 'fmt-value';
+        v.textContent = value;
+        v.title = 'Click to copy';
+        v.addEventListener('click', () => copyToClipboard(value));
+        row.appendChild(l);
+        row.appendChild(v);
+        fmtTable.appendChild(row);
+    });
+
+    lastResultText = rows.map(r => `${r.label}: ${r.value}`).join('\n');
+    showSuccess('Formats generated.');
+}
+
+btnFmtShow.addEventListener('click', showFormats);
+btnFmtNow.addEventListener('click', () => {
+    fmtDate.value = todayStr();
+    fmtTime.value = nowTimeStr();
+    showFormats();
+});
+
+// ── Global toolbar ────────────────────────────────────────────────────────────
+btnNow.addEventListener('click', () => {
+    const today = todayStr();
+    const now   = nowTimeStr();
+    const ts    = String(Math.floor(Date.now() / 1000));
+
+    // Fill all inputs
+    tsInput.value       = ts;
+    tsUnit.value        = 's';
+    humanDateInput.value = today;
+    humanTimeInput.value = now;
+    calcDate.value       = today;
+    diffDate1.value      = today;
+    diffDate2.value      = today;
+    tzDate.value         = today;
+    tzTime.value         = now;
+    fmtDate.value        = today;
+    fmtTime.value        = now;
+
+    // Run the active panel
+    if (activeTab === 'Timestamp')  decodeTsPanel();
+    if (activeTab === 'Calculator') runCalc();
+    if (activeTab === 'Timezone')   runTzConvert();
+    if (activeTab === 'Formats')    showFormats();
+    debouncedSave();
+});
+
+btnCopyResult.addEventListener('click', () => {
+    if (!lastResultText) { showError('Nothing to copy yet.'); return; }
+    copyToClipboard(lastResultText, 'Result copied!');
+});
+
+btnClear.addEventListener('click', () => {
+    clearBanners();
+    tsInput.value = '';
+    humanDateInput.value = '';
+    humanTimeInput.value = '00:00';
+    calcDate.value = '';
+    calcAmount.value = '7';
+    calcOp.value = 'add';
+    calcUnit.value = 'day';
+    diffDate1.value = '';
+    diffDate2.value = '';
+    tzDate.value = '';
+    tzTime.value = '12:00';
+    fmtDate.value = '';
+    fmtTime.value = '00:00';
+
+    [tsLocalResult, tsUtcResult, tsIsoResult, tsRelResult, tsSecResult, tsMsResult,
+     calcResult, diffDays, diffWeeks, diffMonths, diffYears,
+     tzResult, tzIsoResult, tzTsResult, tzFromOffset, tzToOffset, tzDiff].forEach(el => {
+        setResult(el, '—');
+        el.classList.add('empty');
+    });
+    fmtTable.innerHTML = '<div class="fmt-row"><div class="fmt-label">—</div><div class="fmt-value empty">Enter a date and click Show Formats</div></div>';
+    lastResultText = '';
+    showToast('Cleared.');
+    debouncedSave();
+});
+
+// ── Clipboard ─────────────────────────────────────────────────────────────────
+async function copyToClipboard(text, msg) {
+    try {
+        await navigator.clipboard.writeText(text);
+        showToast(msg || 'Copied!');
+    } catch {
+        try {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            showToast(msg || 'Copied!');
+        } catch {
+            showError('Could not copy to clipboard.');
+        }
+    }
+}
+
+// ── Status bar ────────────────────────────────────────────────────────────────
+function updateStatusBar() {
+    const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    statTz.textContent = localTz;
+
+    const offset = -new Date().getTimezoneOffset();
+    const sign   = offset >= 0 ? '+' : '-';
+    const h      = String(Math.floor(Math.abs(offset) / 60)).padStart(2, '0');
+    const m      = String(Math.abs(offset) % 60).padStart(2, '0');
+    statOffset.textContent = `UTC${sign}${h}:${m}`;
+}
+updateStatusBar();
+
+// ── localStorage ─────────────────────────────────────────────────────────────
+function save() {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            tab:          activeTab,
+            tsInput:      tsInput.value,
+            tsUnit:       tsUnit.value,
+            humanDate:    humanDateInput.value,
+            humanTime:    humanTimeInput.value,
+            calcDate:     calcDate.value,
+            calcOp:       calcOp.value,
+            calcAmount:   calcAmount.value,
+            calcUnit:     calcUnit.value,
+            diffDate1:    diffDate1.value,
+            diffDate2:    diffDate2.value,
+            tzDate:       tzDate.value,
+            tzTime:       tzTime.value,
+            tzFrom:       tzFrom.value,
+            tzTo:         tzTo.value,
+            fmtDate:      fmtDate.value,
+            fmtTime:      fmtTime.value,
+        }));
+    } catch { /* quota */ }
+}
+
+let saveTimer;
+function debouncedSave() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(save, 800);
+}
+
+(function restore() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const s = JSON.parse(raw);
+        if (s.tab)        switchTab(s.tab);
+        if (s.tsInput)    tsInput.value        = s.tsInput;
+        if (s.tsUnit)     tsUnit.value         = s.tsUnit;
+        if (s.humanDate)  humanDateInput.value  = s.humanDate;
+        if (s.humanTime)  humanTimeInput.value  = s.humanTime;
+        if (s.calcDate)   calcDate.value        = s.calcDate;
+        if (s.calcOp)     calcOp.value          = s.calcOp;
+        if (s.calcAmount) calcAmount.value      = s.calcAmount;
+        if (s.calcUnit)   calcUnit.value        = s.calcUnit;
+        if (s.diffDate1)  diffDate1.value       = s.diffDate1;
+        if (s.diffDate2)  diffDate2.value       = s.diffDate2;
+        if (s.tzDate)     tzDate.value          = s.tzDate;
+        if (s.tzTime)     tzTime.value          = s.tzTime;
+        if (s.tzFrom && TIMEZONES.includes(s.tzFrom)) tzFrom.value = s.tzFrom;
+        if (s.tzTo   && TIMEZONES.includes(s.tzTo))   tzTo.value   = s.tzTo;
+        if (s.fmtDate)    fmtDate.value         = s.fmtDate;
+        if (s.fmtTime)    fmtTime.value         = s.fmtTime;
+    } catch { /* ignore */ }
+})();
+
+// Debounce save on all inputs
+[tsInput, tsUnit, humanDateInput, humanTimeInput,
+ calcDate, calcOp, calcAmount, calcUnit, diffDate1, diffDate2,
+ tzDate, tzTime, tzFrom, tzTo, fmtDate, fmtTime].forEach(el => {
+    el.addEventListener('change', debouncedSave);
+    if (el.tagName === 'INPUT') el.addEventListener('input', debouncedSave);
+});
+</script>
+</body>
+</html>
