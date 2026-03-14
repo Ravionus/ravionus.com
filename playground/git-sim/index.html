@@ -1,0 +1,1497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+    <title>Git Simulator — Ravionus Dev Tools</title>
+    <meta name="description" content="Practice Git commands in a safe, virtual environment. Learn branching, merging, rebasing and more interactively. No server, no sign-up.">
+    <link rel="canonical" href="https://ravionus.com/playground/git-sim/">
+    <meta property="og:title" content="Git Simulator — Ravionus Dev Tools">
+    <meta property="og:description" content="Practice Git commands in a safe, virtual environment. Learn branching, merging, rebasing and more interactively. No server, no sign-up.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ravionus.com/playground/git-sim/">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none';">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0a0f;
+            --surface: #12121a;
+            --surface2: #0e0e16;
+            --border: #1e1e2e;
+            --border2: #2a2a3e;
+            --text: #e2e2f0;
+            --muted: #7878a0;
+            --purple: #a855f7;
+            --cyan: #22d3ee;
+            --green: #22c55e;
+            --red: #ef4444;
+            --orange: #f97316;
+            --yellow: #eab308;
+            --accent-g: linear-gradient(135deg, #a855f7, #22d3ee);
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Nav ── */
+        nav {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 52px;
+            flex-shrink: 0;
+        }
+        .breadcrumb { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: var(--muted); }
+        .breadcrumb a { color: var(--cyan); text-decoration: none; }
+        .breadcrumb a:hover { text-decoration: underline; }
+        .breadcrumb .sep { color: var(--border2); }
+        .breadcrumb .current { color: var(--text); font-weight: 600; }
+        .nav-links { display: flex; gap: 1.25rem; }
+        .nav-links a { font-size: 0.85rem; color: var(--muted); text-decoration: none; white-space: nowrap; }
+        .nav-links a:hover { color: var(--text); }
+
+        /* ── Page header ── */
+        .page-header { padding: 2rem 1.5rem 1rem; max-width: 1400px; width: 100%; margin: 0 auto; }
+        .page-header h1 {
+            font-size: 1.75rem; font-weight: 800;
+            background: var(--accent-g);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+        .page-header p { font-size: 0.95rem; color: var(--muted); max-width: 680px; line-height: 1.6; }
+
+        /* ── Main wrap ── */
+        .main-wrap {
+            flex: 1; display: flex; flex-direction: column;
+            max-width: 1400px; width: 100%; margin: 0 auto;
+            padding: 0 1.5rem 2rem; gap: 0.75rem;
+        }
+
+        /* ── Toolbar ── */
+        .toolbar { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+        .tb-btn {
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            padding: 0.45rem 1rem; border-radius: 6px; font-size: 0.875rem; font-weight: 600;
+            cursor: pointer; border: 1px solid var(--border2); background: var(--surface);
+            color: var(--text); font-family: inherit; transition: background 0.15s, border-color 0.15s;
+            white-space: nowrap;
+        }
+        .tb-btn:hover { background: var(--border); }
+        .tb-btn.primary { background: var(--purple); border-color: var(--purple); color: #fff; }
+        .tb-btn.primary:hover { background: #9333ea; border-color: #9333ea; }
+        .tb-btn.danger { color: var(--red); border-color: var(--red); }
+        .tb-btn.danger:hover { background: rgba(239,68,68,.12); }
+        .tb-btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+        .tb-sep { flex: 1; }
+
+        .scenario-select {
+            background: var(--surface); border: 1px solid var(--border2);
+            color: var(--text); font-size: 0.875rem; padding: 0.45rem 0.75rem;
+            border-radius: 6px; cursor: pointer; font-family: 'Inter', sans-serif;
+        }
+        .scenario-select:focus { outline: 2px solid var(--cyan); outline-offset: 2px; }
+        .scenario-select option { background: var(--surface); }
+
+        /* ── Editor layout ── */
+        .editor-layout {
+            display: grid; grid-template-columns: 1fr 4px 1fr;
+            min-height: 520px; border: 1px solid var(--border); border-radius: 8px;
+            overflow: hidden; background: var(--surface2);
+        }
+        .pane { display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+        .pane-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.5rem 0.75rem; background: var(--surface);
+            border-bottom: 1px solid var(--border); font-size: 0.8rem; font-weight: 600;
+            color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em;
+            flex-shrink: 0; gap: 0.5rem;
+        }
+        .pane-header .ph-right { display: flex; gap: 0.4rem; align-items: center; }
+        .ph-btn {
+            background: none; border: 1px solid var(--border2); color: var(--muted);
+            padding: 0.2rem 0.55rem; border-radius: 4px; font-size: 0.75rem;
+            cursor: pointer; font-family: inherit; transition: color 0.15s, border-color 0.15s;
+            white-space: nowrap;
+        }
+        .ph-btn:hover { color: var(--text); border-color: var(--cyan); }
+        .ph-btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+        .pane-divider { background: var(--border); flex-shrink: 0; cursor: col-resize; }
+
+        /* ── Terminal pane ── */
+        .terminal-wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        #terminalOutput {
+            flex: 1; overflow-y: auto; padding: 0.75rem 1rem;
+            font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.6;
+            background: #0c0c12;
+        }
+        .term-line { display: flex; gap: 0.4rem; margin-bottom: 0.1rem; }
+        .term-prompt { color: var(--cyan); flex-shrink: 0; white-space: nowrap; }
+        .term-cmd    { color: var(--text); white-space: pre-wrap; word-break: break-all; }
+        .term-out    { color: var(--muted); white-space: pre-wrap; padding-left: 0; word-break: break-all; }
+        .term-out.ok    { color: var(--green); }
+        .term-out.warn  { color: var(--yellow); }
+        .term-out.error { color: var(--red); }
+        .term-out.info  { color: var(--cyan); }
+        .term-out.log   { color: var(--text); }
+
+        .terminal-input-row {
+            display: flex; align-items: center; gap: 0.5rem;
+            padding: 0.5rem 1rem; border-top: 1px solid var(--border);
+            background: #0c0c12;
+        }
+        .term-input-prompt { color: var(--cyan); font-family: var(--font-mono); font-size: 0.82rem; white-space: nowrap; flex-shrink: 0; }
+        #terminalInput {
+            flex: 1; background: transparent; border: none; outline: none;
+            color: var(--text); font-family: var(--font-mono); font-size: 0.82rem;
+            caret-color: var(--cyan);
+        }
+        #terminalInput::placeholder { color: var(--muted); }
+
+        /* ── Graph pane ── */
+        .graph-pane { flex: 1; overflow: auto; padding: 1rem; }
+        #graphCanvas {
+            display: block; min-width: 100%; min-height: 200px;
+        }
+
+        /* ── Ref sidebar inside graph pane ── */
+        .ref-section { margin-top: 1rem; }
+        .ref-title { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 0.4rem; }
+        .ref-list { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+        .ref-tag {
+            font-family: var(--font-mono); font-size: 0.72rem; padding: 0.15rem 0.5rem;
+            border-radius: 10px; border: 1px solid; white-space: nowrap;
+        }
+        .ref-tag.branch { color: var(--green); border-color: rgba(34,197,94,.4); background: rgba(34,197,94,.06); }
+        .ref-tag.remote { color: var(--orange); border-color: rgba(249,115,22,.4); background: rgba(249,115,22,.06); }
+        .ref-tag.head   { color: var(--purple); border-color: rgba(168,85,247,.4); background: rgba(168,85,247,.1); }
+        .ref-tag.tag    { color: var(--yellow); border-color: rgba(234,179,8,.4); background: rgba(234,179,8,.06); }
+
+        /* ── Banners ── */
+        .error-banner, .success-banner { display: none; padding: 0.6rem 1rem; border-radius: 6px; font-size: 0.875rem; font-weight: 500; }
+        .error-banner   { background: rgba(239,68,68,.12); color: var(--red);   border: 1px solid rgba(239,68,68,.3); }
+        .error-banner.visible { display: block; }
+        .success-banner { background: rgba(34,197,94,.10); color: var(--green); border: 1px solid rgba(34,197,94,.25); }
+        .success-banner.visible { display: block; }
+
+        /* ── Status bar ── */
+        .status-bar { display: flex; gap: 1.5rem; padding: 0.45rem 0.25rem; font-size: 0.78rem; color: var(--muted); flex-wrap: wrap; }
+        .status-bar span strong { color: var(--text); font-weight: 600; }
+
+        /* ── Toast ── */
+        #toast {
+            position: fixed; bottom: 1.5rem; right: 1.5rem;
+            background: var(--surface); border: 1px solid var(--border2);
+            color: var(--text); padding: 0.65rem 1.1rem; border-radius: 8px;
+            font-size: 0.875rem; font-weight: 500; opacity: 0; transform: translateY(8px);
+            pointer-events: none; transition: opacity 0.2s, transform 0.2s; z-index: 1000;
+        }
+        #toast.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+        /* ── Mobile tabs ── */
+        .mobile-tabs { display: none; gap: 0.5rem; }
+        .mob-tab {
+            flex: 1; padding: 0.5rem; border-radius: 6px;
+            background: var(--surface); border: 1px solid var(--border2);
+            color: var(--muted); font-size: 0.875rem; font-weight: 600;
+            cursor: pointer; font-family: inherit;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+        }
+        .mob-tab.active { background: var(--purple); border-color: var(--purple); color: #fff; }
+        .mob-tab:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+        @media (max-width: 700px) {
+            .mobile-tabs { display: flex; }
+            .editor-layout { grid-template-columns: 1fr; min-height: 360px; }
+            .pane-divider { display: none; }
+            .pane { display: none; }
+            .pane.mob-visible { display: flex; }
+            .page-header { padding: 1rem 1rem 0.5rem; }
+            .main-wrap { padding: 0 0.75rem 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="breadcrumb">
+            <a href="../../">Ravionus</a>
+            <span class="sep">›</span>
+            <a href="../../playground/">Playgrounds</a>
+            <span class="sep">›</span>
+            <span class="current">Git Simulator</span>
+        </div>
+        <div class="nav-links" role="navigation">
+            <a href="../../learn/">✨ Learn</a>
+            <a href="../../tools/">🛠️ Tools</a>
+            <a href="../../playground/">🧪 Playgrounds</a>
+        </div>
+    </nav>
+
+    <header class="page-header">
+        <h1>🔀 Git Simulator</h1>
+        <p>Practice Git commands in a safe, virtual environment — no real repo required. Type commands in the terminal, watch the commit graph update instantly, and build muscle memory for branching, merging, rebasing and more.</p>
+    </header>
+
+    <div class="main-wrap">
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <button id="btnRun" class="tb-btn primary">▶ Run</button>
+
+            <select id="scenarioSelect" class="scenario-select" aria-label="Load scenario">
+                <option value="">📂 Load scenario…</option>
+                <option value="basic">Basic workflow</option>
+                <option value="branching">Branching &amp; merging</option>
+                <option value="rebase">Rebase workflow</option>
+                <option value="conflict">Conflict simulation</option>
+                <option value="tags">Tagging a release</option>
+                <option value="stash">Stashing changes</option>
+            </select>
+
+            <div class="tb-sep"></div>
+
+            <button id="btnHelp"  class="tb-btn">❓ Help</button>
+            <button id="btnCopyLog" class="tb-btn">📋 Copy log</button>
+            <button id="btnReset" class="tb-btn danger">✕ Reset</button>
+        </div>
+
+        <!-- Mobile tabs -->
+        <div class="mobile-tabs">
+            <button class="mob-tab active" id="tabInput">📥 Terminal</button>
+            <button class="mob-tab"        id="tabOutput">📤 Graph</button>
+        </div>
+
+        <!-- Editor layout -->
+        <div class="editor-layout">
+            <!-- Left: terminal -->
+            <div class="pane mob-visible" id="paneInput">
+                <div class="pane-header">
+                    <span>Terminal</span>
+                    <div class="ph-right">
+                        <span id="cmdCount" style="font-size:0.72rem;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;">0 commands</span>
+                        <button class="ph-btn" id="btnClearTerminal">Clear</button>
+                    </div>
+                </div>
+                <div class="terminal-wrap">
+                    <div id="terminalOutput" aria-live="polite" aria-label="Terminal output"></div>
+                    <div class="terminal-input-row">
+                        <span class="term-input-prompt" id="termPrompt">~/repo (main) $</span>
+                        <input id="terminalInput"
+                            type="text"
+                            aria-label="Git command input"
+                            placeholder="git init, git commit, git branch…"
+                            autocomplete="off"
+                            spellcheck="false">
+                    </div>
+                </div>
+            </div>
+
+            <div class="pane-divider"></div>
+
+            <!-- Right: commit graph + refs -->
+            <div class="pane" id="paneOutput">
+                <div class="pane-header">
+                    <span>Commit Graph</span>
+                    <div class="ph-right">
+                        <span id="graphInfo" style="font-size:0.72rem;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;"></span>
+                    </div>
+                </div>
+                <div class="graph-pane" id="graphPane">
+                    <canvas id="graphCanvas" width="500" height="300" aria-label="Git commit graph"></canvas>
+                    <div class="ref-section">
+                        <div class="ref-title">Refs</div>
+                        <div class="ref-list" id="refList"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Banners -->
+        <div class="error-banner"   id="errorBanner"   role="alert"></div>
+        <div class="success-banner" id="successBanner" aria-live="polite"></div>
+
+        <!-- Status bar -->
+        <div class="status-bar">
+            <span>Branch: <strong id="statBranch">main</strong></span>
+            <span>Commits: <strong id="statCommits">0</strong></span>
+            <span>Branches: <strong id="statBranches">1</strong></span>
+            <span>Status: <strong id="statStatus">clean</strong></span>
+        </div>
+    </div>
+
+    <div id="toast" aria-live="polite"></div>
+
+    <script>
+    'use strict';
+
+    const STORAGE_KEY = 'ravionus_tool_git_sim';
+
+    // ── DOM refs ──────────────────────────────────────────────────────────────
+    const terminalOutput  = document.getElementById('terminalOutput');
+    const terminalInput   = document.getElementById('terminalInput');
+    const termPrompt      = document.getElementById('termPrompt');
+    const graphCanvas     = document.getElementById('graphCanvas');
+    const refList         = document.getElementById('refList');
+    const graphInfo       = document.getElementById('graphInfo');
+    const cmdCountEl      = document.getElementById('cmdCount');
+    const btnRun          = document.getElementById('btnRun');
+    const btnHelp         = document.getElementById('btnHelp');
+    const btnCopyLog      = document.getElementById('btnCopyLog');
+    const btnReset        = document.getElementById('btnReset');
+    const btnClearTerminal= document.getElementById('btnClearTerminal');
+    const scenarioSelect  = document.getElementById('scenarioSelect');
+    const errorBanner     = document.getElementById('errorBanner');
+    const successBanner   = document.getElementById('successBanner');
+    const statBranch      = document.getElementById('statBranch');
+    const statCommits     = document.getElementById('statCommits');
+    const statBranches    = document.getElementById('statBranches');
+    const statStatus      = document.getElementById('statStatus');
+    const paneInput       = document.getElementById('paneInput');
+    const paneOutput      = document.getElementById('paneOutput');
+    const tabInput        = document.getElementById('tabInput');
+    const tabOutput       = document.getElementById('tabOutput');
+    const toast           = document.getElementById('toast');
+
+    // ── Virtual Git state ─────────────────────────────────────────────────────
+    /**
+     * Commit: { id, hash, message, parents: [hash], branch, author, timestamp }
+     * Branch: { name, head: hash }
+     * Tag: { name, hash }
+     * Stash: [{ message, branch }]
+     */
+    let repo = null;
+    let cmdHistory = [];
+    let historyIndex = -1;
+    let totalCmds = 0;
+
+    function newRepo() {
+        return {
+            commits: {},          // hash → commit
+            branches: {           // name → hash (head)
+                main: null
+            },
+            HEAD: 'main',         // branch name OR detached hash
+            tags: {},             // name → hash
+            stash: [],            // [{message, branch, hash}]
+            index: [],            // staged files (simulated)
+            workingTree: [],      // modified files (simulated)
+            initialized: false,
+            remotes: {},          // name → url
+            mergeInProgress: null,
+            rebaseInProgress: null,
+        };
+    }
+
+    function initRepo() {
+        repo = newRepo();
+        repo.initialized = true;
+        // Auto-create initial commit
+        makeCommit('Initial commit', []);
+    }
+
+    // ── Hash generation ───────────────────────────────────────────────────────
+    let _hashSeed = 1;
+    function shortHash() {
+        const h = (_hashSeed++ * 0x9e3779b9) >>> 0;
+        return h.toString(16).padStart(7, '0').slice(0, 7);
+    }
+
+    // ── Commit creation ───────────────────────────────────────────────────────
+    function currentBranchName() {
+        if (!repo) return 'main';
+        if (repo.HEAD.startsWith('detached:')) return null;
+        return repo.HEAD;
+    }
+
+    function headHash() {
+        const b = currentBranchName();
+        if (b) return repo.branches[b] || null;
+        return repo.HEAD.replace('detached:', '');
+    }
+
+    function makeCommit(message, parents) {
+        if (parents === undefined) {
+            const h = headHash();
+            parents = h ? [h] : [];
+        }
+        const hash = shortHash();
+        const branch = currentBranchName();
+        const commit = {
+            id:       hash,
+            hash:     hash,
+            message:  message,
+            parents:  parents,
+            branch:   branch,
+            timestamp: Date.now(),
+        };
+        repo.commits[hash] = commit;
+        // Advance branch pointer
+        if (branch && branch in repo.branches) {
+            repo.branches[branch] = hash;
+        } else if (!branch) {
+            repo.HEAD = 'detached:' + hash;
+        }
+        repo.index = [];
+        repo.workingTree = [];
+        updateUI();
+        return hash;
+    }
+
+    // ── Scenarios ─────────────────────────────────────────────────────────────
+    const SCENARIOS = {
+        basic: [
+            'git init',
+            'git add README.md',
+            'git commit -m "Initial commit"',
+            'git commit -m "Add homepage"',
+            'git commit -m "Fix typo"',
+        ],
+        branching: [
+            'git init',
+            'git commit -m "Initial commit"',
+            'git branch feature/login',
+            'git checkout feature/login',
+            'git commit -m "Add login form"',
+            'git commit -m "Add auth logic"',
+            'git checkout main',
+            'git merge feature/login',
+        ],
+        rebase: [
+            'git init',
+            'git commit -m "Initial commit"',
+            'git branch feature/api',
+            'git checkout feature/api',
+            'git commit -m "Add API client"',
+            'git checkout main',
+            'git commit -m "Hotfix: patch security issue"',
+            'git checkout feature/api',
+            'git rebase main',
+        ],
+        conflict: [
+            'git init',
+            'git commit -m "Base commit"',
+            'git branch dev',
+            'git checkout dev',
+            'git commit -m "Edit index.html on dev"',
+            'git checkout main',
+            'git commit -m "Edit index.html on main"',
+            'git merge dev',
+        ],
+        tags: [
+            'git init',
+            'git commit -m "Initial commit"',
+            'git commit -m "Add features for v1.0"',
+            'git tag v1.0.0',
+            'git commit -m "Post-release fixes"',
+            'git tag v1.0.1',
+        ],
+        stash: [
+            'git init',
+            'git commit -m "Initial commit"',
+            'git add .',
+            'git stash',
+            'git commit -m "Emergency hotfix"',
+            'git stash pop',
+        ],
+    };
+
+    // ── Command processing ────────────────────────────────────────────────────
+    function parseArgs(cmdStr) {
+        // Simple tokeniser: handles quoted strings
+        const tokens = [];
+        let cur = '';
+        let inQuote = false;
+        let quoteChar = '';
+        for (const ch of cmdStr) {
+            if (inQuote) {
+                if (ch === quoteChar) { inQuote = false; tokens.push(cur); cur = ''; }
+                else cur += ch;
+            } else if (ch === '"' || ch === "'") {
+                inQuote = true; quoteChar = ch;
+            } else if (ch === ' ') {
+                if (cur) { tokens.push(cur); cur = ''; }
+            } else {
+                cur += ch;
+            }
+        }
+        if (cur) tokens.push(cur);
+        return tokens;
+    }
+
+    /**
+     * Execute a single command string.
+     * Returns array of {type, text} output lines.
+     */
+    function execCommand(raw) {
+        const trimmed = raw.trim();
+        if (!trimmed) return [];
+        const tokens = parseArgs(trimmed);
+        const cmd = tokens[0];
+        const sub = tokens[1];
+        const rest = tokens.slice(2);
+
+        if (cmd === 'clear') {
+            clearTerminal();
+            return [];
+        }
+
+        if (cmd === 'help') {
+            return helpOutput();
+        }
+
+        if (cmd !== 'git') {
+            return [{ type: 'error', text: `Command not found: ${cmd}. Try "git" commands or "help".` }];
+        }
+
+        if (!repo && sub !== 'init') {
+            return [{ type: 'error', text: 'fatal: not a git repository. Run "git init" first.' }];
+        }
+        if (repo && !repo.initialized && sub !== 'init') {
+            return [{ type: 'error', text: 'fatal: not a git repository. Run "git init" first.' }];
+        }
+
+        switch (sub) {
+            case 'init':       return gitInit();
+            case 'add':        return gitAdd(tokens.slice(2));
+            case 'commit':     return gitCommit(tokens.slice(2));
+            case 'status':     return gitStatus();
+            case 'log':        return gitLog(tokens.slice(2));
+            case 'branch':     return gitBranch(tokens.slice(2));
+            case 'checkout':   return gitCheckout(tokens.slice(2));
+            case 'switch':     return gitSwitch(tokens.slice(2));
+            case 'merge':      return gitMerge(tokens.slice(2));
+            case 'rebase':     return gitRebase(tokens.slice(2));
+            case 'tag':        return gitTag(tokens.slice(2));
+            case 'stash':      return gitStash(tokens.slice(2));
+            case 'diff':       return gitDiff(tokens.slice(2));
+            case 'reset':      return gitReset(tokens.slice(2));
+            case 'remote':     return gitRemote(tokens.slice(2));
+            case 'push':       return gitPush(tokens.slice(2));
+            case 'pull':       return gitPull(tokens.slice(2));
+            case 'fetch':      return gitFetch(tokens.slice(2));
+            case 'clone':      return gitClone(tokens.slice(2));
+            case 'show':       return gitShow(tokens.slice(2));
+            case 'cherry-pick':return gitCherryPick(tokens.slice(2));
+            default:
+                return [{ type: 'error', text: `git: '${sub}' is not a git command. See "git help".` }];
+        }
+    }
+
+    // ── Individual git commands ───────────────────────────────────────────────
+
+    function gitInit() {
+        if (repo && repo.initialized) {
+            return [{ type: 'warn', text: 'Reinitialized existing Git repository (virtual)' }];
+        }
+        repo = newRepo();
+        repo.initialized = true;
+        return [{ type: 'ok', text: 'Initialized empty Git repository (virtual)' }];
+    }
+
+    function gitAdd(args) {
+        if (!args.length) return [{ type: 'error', text: 'Nothing specified, nothing added.' }];
+        const files = args.filter(a => !a.startsWith('-'));
+        files.forEach(f => {
+            if (!repo.workingTree.includes(f)) repo.workingTree.push(f);
+            if (!repo.index.includes(f)) repo.index.push(f);
+        });
+        return [{ type: 'ok', text: `Staged: ${files.join(', ')}` }];
+    }
+
+    function gitCommit(args) {
+        const mIdx = args.indexOf('-m');
+        let message = 'Update';
+        if (mIdx !== -1 && args[mIdx + 1]) {
+            message = args[mIdx + 1];
+        }
+        if (!message.trim()) return [{ type: 'error', text: 'Aborting commit due to empty commit message.' }];
+        // Simulate: even without explicit add, allow commit in this sandbox
+        const hash = makeCommit(message);
+        return [
+            { type: 'ok', text: `[${currentBranchName() || 'HEAD'} ${hash}] ${message}` },
+        ];
+    }
+
+    function gitStatus() {
+        const branch = currentBranchName() || 'HEAD (detached)';
+        const head = headHash();
+        const lines = [];
+        lines.push({ type: 'info', text: `On branch ${branch}` });
+        if (repo.index.length) {
+            lines.push({ type: 'ok', text: `Changes to be committed:` });
+            repo.index.forEach(f => lines.push({ type: 'log', text: `  new file: ${f}` }));
+        }
+        if (!head) {
+            lines.push({ type: 'warn', text: 'No commits yet' });
+        } else if (!repo.index.length && !repo.workingTree.length) {
+            lines.push({ type: 'ok', text: 'nothing to commit, working tree clean' });
+        }
+        return lines;
+    }
+
+    function gitLog(args) {
+        const oneline = args.includes('--oneline');
+        const all     = args.includes('--all');
+        const commits = Object.values(repo.commits).sort((a, b) => b.timestamp - a.timestamp);
+        if (!commits.length) return [{ type: 'warn', text: 'No commits yet.' }];
+        const lines = [];
+        const shown = new Set();
+
+        function walk(hash, depth) {
+            if (!hash || shown.has(hash) || depth > 50) return;
+            shown.add(hash);
+            const c = repo.commits[hash];
+            if (!c) return;
+            if (oneline) {
+                lines.push({ type: 'log', text: `${c.hash} ${c.message}` });
+            } else {
+                lines.push({ type: 'info', text: `commit ${c.hash}` });
+                lines.push({ type: 'log', text: `    ${c.message}` });
+                lines.push({ type: 'log', text: '' });
+            }
+            c.parents.forEach(p => walk(p, depth + 1));
+        }
+
+        if (all) {
+            Object.values(repo.branches).filter(Boolean).forEach(h => walk(h, 0));
+        } else {
+            walk(headHash(), 0);
+        }
+        return lines.length ? lines : [{ type: 'warn', text: 'No commits reachable.' }];
+    }
+
+    function gitBranch(args) {
+        const deleteFlag = args.includes('-d') || args.includes('-D');
+        const names = args.filter(a => !a.startsWith('-'));
+
+        if (!names.length && !deleteFlag) {
+            // List branches
+            const lines = [];
+            Object.keys(repo.branches).forEach(b => {
+                const isCurrent = b === currentBranchName();
+                lines.push({ type: isCurrent ? 'ok' : 'log', text: `${isCurrent ? '*' : ' '} ${b}` });
+            });
+            return lines.length ? lines : [{ type: 'log', text: '(no branches)' }];
+        }
+
+        if (deleteFlag && names.length) {
+            const name = names[0];
+            if (name === currentBranchName()) return [{ type: 'error', text: `error: Cannot delete the currently checked-out branch '${name}'.` }];
+            if (!repo.branches[name]) return [{ type: 'error', text: `error: branch '${name}' not found.` }];
+            delete repo.branches[name];
+            updateUI();
+            return [{ type: 'ok', text: `Deleted branch ${name}.` }];
+        }
+
+        // Create branch(es)
+        const lines = [];
+        names.forEach(name => {
+            if (repo.branches[name] !== undefined) {
+                lines.push({ type: 'error', text: `fatal: A branch named '${name}' already exists.` });
+                return;
+            }
+            repo.branches[name] = headHash();
+            lines.push({ type: 'ok', text: `Created branch '${name}'` });
+        });
+        updateUI();
+        return lines;
+    }
+
+    function gitCheckout(args) {
+        const newBranchFlag = args.includes('-b');
+        const names = args.filter(a => !a.startsWith('-'));
+        if (!names.length) return [{ type: 'error', text: 'error: switch `--branch` requires a value' }];
+        const target = names[0];
+
+        if (newBranchFlag) {
+            if (repo.branches[target] !== undefined) return [{ type: 'error', text: `fatal: A branch named '${target}' already exists.` }];
+            repo.branches[target] = headHash();
+            repo.HEAD = target;
+            updateUI();
+            return [{ type: 'ok', text: `Switched to a new branch '${target}'` }];
+        }
+
+        // Checkout branch
+        if (repo.branches[target] !== undefined) {
+            repo.HEAD = target;
+            updateUI();
+            return [{ type: 'ok', text: `Switched to branch '${target}'` }];
+        }
+
+        // Checkout commit hash (detached HEAD)
+        if (repo.commits[target]) {
+            repo.HEAD = 'detached:' + target;
+            updateUI();
+            return [
+                { type: 'warn', text: `HEAD is now at ${target}` },
+                { type: 'log', text: `You are in 'detached HEAD' state.` },
+            ];
+        }
+
+        return [{ type: 'error', text: `error: pathspec '${target}' did not match any file(s) known to git.` }];
+    }
+
+    function gitSwitch(args) {
+        const createFlag = args.includes('-c') || args.includes('--create');
+        const names = args.filter(a => !a.startsWith('-'));
+        if (!names.length) return [{ type: 'error', text: 'fatal: missing branch name' }];
+        const target = names[0];
+
+        if (createFlag) {
+            if (repo.branches[target] !== undefined) return [{ type: 'error', text: `fatal: A branch named '${target}' already exists.` }];
+            repo.branches[target] = headHash();
+            repo.HEAD = target;
+            updateUI();
+            return [{ type: 'ok', text: `Switched to a new branch '${target}'` }];
+        }
+
+        if (repo.branches[target] !== undefined) {
+            repo.HEAD = target;
+            updateUI();
+            return [{ type: 'ok', text: `Switched to branch '${target}'` }];
+        }
+        return [{ type: 'error', text: `fatal: invalid reference: ${target}` }];
+    }
+
+    function gitMerge(args) {
+        const names = args.filter(a => !a.startsWith('-'));
+        if (!names.length) return [{ type: 'error', text: 'fatal: No branch name passed to merge.' }];
+        const target = names[0];
+        const abortFlag = args.includes('--abort');
+
+        if (abortFlag) {
+            repo.mergeInProgress = null;
+            return [{ type: 'ok', text: 'Merge aborted.' }];
+        }
+
+        if (!repo.branches[target] && !repo.commits[target]) {
+            return [{ type: 'error', text: `merge: ${target} - not something we can merge` }];
+        }
+
+        const currentB = currentBranchName();
+        if (!currentB) return [{ type: 'error', text: 'fatal: Not on a branch. Cannot merge.' }];
+
+        const targetHash = repo.branches[target] || target;
+        const currentHash = headHash();
+
+        if (targetHash === currentHash) {
+            return [{ type: 'ok', text: `Already up to date.` }];
+        }
+
+        // Fast-forward detection (simple): check if target is ancestor of current
+        function isAncestor(anc, desc) {
+            if (!desc || !anc) return false;
+            if (anc === desc) return true;
+            const c = repo.commits[desc];
+            if (!c) return false;
+            return c.parents.some(p => isAncestor(anc, p));
+        }
+
+        const lines = [];
+
+        if (isAncestor(currentHash, targetHash)) {
+            // Fast-forward
+            repo.branches[currentB] = targetHash;
+            lines.push({ type: 'ok', text: `Updating ${currentHash}..${targetHash}` });
+            lines.push({ type: 'ok', text: `Fast-forward` });
+        } else {
+            // Simulate a merge commit (no auto-conflict in sandbox — unless we flag it)
+            // For the 'conflict' scenario we detect by name
+            if (target === 'dev' && repo.commits[currentHash]?.message.includes('index.html')) {
+                lines.push({ type: 'error', text: `CONFLICT (content): Merge conflict in index.html` });
+                lines.push({ type: 'warn', text: `Automatic merge failed; fix conflicts and then commit the result.` });
+                repo.mergeInProgress = { from: targetHash, into: currentHash };
+                updateUI();
+                return lines;
+            }
+            const mergeHash = makeCommit(
+                `Merge branch '${target}' into ${currentB}`,
+                [currentHash, targetHash]
+            );
+            lines.push({ type: 'ok', text: `Merge made by the 'recursive' strategy.` });
+        }
+        updateUI();
+        return lines;
+    }
+
+    function gitRebase(args) {
+        const names = args.filter(a => !a.startsWith('-'));
+        if (!names.length) return [{ type: 'error', text: 'fatal: No upstream branch passed to rebase.' }];
+        const upstream = names[0];
+        const abortFlag = args.includes('--abort');
+        const continueFlag = args.includes('--continue');
+
+        if (abortFlag) {
+            repo.rebaseInProgress = null;
+            return [{ type: 'ok', text: 'Rebase aborted.' }];
+        }
+        if (continueFlag) {
+            repo.rebaseInProgress = null;
+            return [{ type: 'ok', text: 'Rebase continued (simulated).' }];
+        }
+
+        const upstreamHash = repo.branches[upstream];
+        if (!upstreamHash) return [{ type: 'error', text: `fatal: invalid upstream '${upstream}'` }];
+
+        const currentB = currentBranchName();
+        if (!currentB) return [{ type: 'error', text: 'fatal: Not on a branch. Cannot rebase.' }];
+
+        // Collect commits unique to current branch (not in upstream)
+        const upstreamSet = new Set();
+        function collectAncestors(h) {
+            if (!h || upstreamSet.has(h)) return;
+            upstreamSet.add(h);
+            (repo.commits[h]?.parents || []).forEach(collectAncestors);
+        }
+        collectAncestors(upstreamHash);
+
+        const uniqueCommits = [];
+        function walkUnique(h) {
+            if (!h || upstreamSet.has(h)) return;
+            const c = repo.commits[h];
+            if (!c) return;
+            c.parents.forEach(walkUnique);
+            uniqueCommits.push(c);
+        }
+        walkUnique(headHash());
+
+        const lines = [];
+        lines.push({ type: 'info', text: `Rebasing (${uniqueCommits.length} commits) onto ${upstreamHash}` });
+
+        // Re-create commits on top of upstream
+        let prev = upstreamHash;
+        uniqueCommits.forEach((c, i) => {
+            const newHash = makeCommit(c.message, [prev]);
+            prev = newHash;
+            lines.push({ type: 'log', text: `  ${i + 1}/${uniqueCommits.length}: ${c.message}` });
+        });
+        repo.branches[currentB] = prev;
+
+        lines.push({ type: 'ok', text: `Successfully rebased and updated refs/heads/${currentB}.` });
+        updateUI();
+        return lines;
+    }
+
+    function gitTag(args) {
+        const deleteFlag = args.includes('-d');
+        const names = args.filter(a => !a.startsWith('-'));
+
+        if (!names.length) {
+            // List tags
+            const tags = Object.keys(repo.tags);
+            if (!tags.length) return [{ type: 'log', text: '(no tags)' }];
+            return tags.map(t => ({ type: 'log', text: t }));
+        }
+
+        if (deleteFlag) {
+            const name = names[0];
+            if (!repo.tags[name]) return [{ type: 'error', text: `error: tag '${name}' not found.` }];
+            delete repo.tags[name];
+            updateUI();
+            return [{ type: 'ok', text: `Deleted tag '${name}'` }];
+        }
+
+        const name = names[0];
+        if (repo.tags[name]) return [{ type: 'error', text: `fatal: tag '${name}' already exists` }];
+        repo.tags[name] = headHash();
+        updateUI();
+        return [{ type: 'ok', text: `Tagged '${name}' → ${headHash()}` }];
+    }
+
+    function gitStash(args) {
+        const sub = args[0];
+
+        if (!sub || sub === 'push' || sub === 'save') {
+            const branch = currentBranchName() || 'HEAD';
+            const msg = args.includes('-m') && args[args.indexOf('-m') + 1]
+                ? args[args.indexOf('-m') + 1]
+                : `WIP on ${branch}`;
+            if (!repo.workingTree.length && !repo.index.length) {
+                return [{ type: 'warn', text: 'No local changes to save.' }];
+            }
+            repo.stash.unshift({ message: msg, branch, files: [...repo.workingTree, ...repo.index] });
+            repo.workingTree = [];
+            repo.index = [];
+            return [{ type: 'ok', text: `Saved working directory and index state "${msg}"` }];
+        }
+
+        if (sub === 'pop' || sub === 'apply') {
+            if (!repo.stash.length) return [{ type: 'error', text: 'error: refs/stash does not exist' }];
+            const entry = sub === 'pop' ? repo.stash.shift() : repo.stash[0];
+            entry.files.forEach(f => { if (!repo.workingTree.includes(f)) repo.workingTree.push(f); });
+            return [{ type: 'ok', text: `On branch ${currentBranchName() || 'HEAD'}; restored "${entry.message}"` }];
+        }
+
+        if (sub === 'list') {
+            if (!repo.stash.length) return [{ type: 'log', text: '(empty stash)' }];
+            return repo.stash.map((s, i) => ({ type: 'log', text: `stash@{${i}}: ${s.message}` }));
+        }
+
+        if (sub === 'drop') {
+            if (!repo.stash.length) return [{ type: 'error', text: 'error: refs/stash does not exist' }];
+            const dropped = repo.stash.shift();
+            return [{ type: 'ok', text: `Dropped stash@{0} (${dropped.message})` }];
+        }
+
+        if (sub === 'clear') {
+            repo.stash = [];
+            return [{ type: 'ok', text: 'Stash cleared.' }];
+        }
+
+        return [{ type: 'error', text: `unknown stash subcommand: ${sub}` }];
+    }
+
+    function gitDiff(args) {
+        return [{ type: 'info', text: '(diff output is simulated — no actual file changes in this sandbox)' }];
+    }
+
+    function gitReset(args) {
+        const mode = args.find(a => a.startsWith('--')) || '--mixed';
+        const target = args.find(a => !a.startsWith('-'));
+        if (mode === '--hard') {
+            repo.index = [];
+            repo.workingTree = [];
+            return [{ type: 'ok', text: `HEAD is now at ${headHash() || '(none)'}` }];
+        }
+        if (mode === '--soft') {
+            return [{ type: 'ok', text: `HEAD reset (soft) — index preserved.` }];
+        }
+        repo.index = [];
+        return [{ type: 'ok', text: `Reset mixed — unstaged changes preserved.` }];
+    }
+
+    function gitRemote(args) {
+        const sub = args[0];
+        if (!sub || sub === '-v') {
+            const names = Object.keys(repo.remotes);
+            if (!names.length) return [{ type: 'log', text: '(no remotes configured)' }];
+            return names.flatMap(n => [
+                { type: 'log', text: `${n}\t${repo.remotes[n]} (fetch)` },
+                { type: 'log', text: `${n}\t${repo.remotes[n]} (push)` },
+            ]);
+        }
+        if (sub === 'add') {
+            const name = args[1], url = args[2];
+            if (!name || !url) return [{ type: 'error', text: 'usage: git remote add <name> <url>' }];
+            repo.remotes[name] = url;
+            return [{ type: 'ok', text: `Remote '${name}' → ${url}` }];
+        }
+        if (sub === 'remove' || sub === 'rm') {
+            const name = args[1];
+            if (!name || !repo.remotes[name]) return [{ type: 'error', text: `error: No such remote: ${args[1]}` }];
+            delete repo.remotes[name];
+            return [{ type: 'ok', text: `Removed remote '${name}'` }];
+        }
+        return [{ type: 'error', text: `error: Unknown subcommand: ${sub}` }];
+    }
+
+    function gitPush(args) {
+        const remote = args[0] || 'origin';
+        const branch = args[1] || currentBranchName();
+        if (!repo.remotes[remote]) return [{ type: 'warn', text: `warning: remote '${remote}' not found (virtual — no network here)` }];
+        return [{ type: 'ok', text: `[simulated] Pushed ${branch} to ${remote}` }];
+    }
+
+    function gitPull(args) {
+        return [{ type: 'info', text: '[simulated] Pull from remote (no network in sandbox)' }];
+    }
+
+    function gitFetch(args) {
+        return [{ type: 'info', text: '[simulated] Fetch from remote (no network in sandbox)' }];
+    }
+
+    function gitClone(args) {
+        const url = args[0];
+        if (!url) return [{ type: 'error', text: 'usage: git clone <url>' }];
+        return [{ type: 'info', text: `[simulated] Cloning ${url}… (no network in sandbox)` }];
+    }
+
+    function gitShow(args) {
+        const target = args[0] || headHash();
+        const c = repo.commits[target] || Object.values(repo.commits).find(c => c.hash.startsWith(target));
+        if (!c) return [{ type: 'error', text: `fatal: ambiguous argument '${target}': unknown revision` }];
+        return [
+            { type: 'info', text: `commit ${c.hash}` },
+            { type: 'log',  text: `Author: user <user@example.com>` },
+            { type: 'log',  text: `    ${c.message}` },
+        ];
+    }
+
+    function gitCherryPick(args) {
+        const hash = args[0];
+        if (!hash) return [{ type: 'error', text: 'usage: git cherry-pick <commit>' }];
+        const c = repo.commits[hash] || Object.values(repo.commits).find(c => c.hash.startsWith(hash));
+        if (!c) return [{ type: 'error', text: `error: bad object ${hash}` }];
+        const newHash = makeCommit(c.message);
+        return [{ type: 'ok', text: `[${currentBranchName() || 'HEAD'} ${newHash}] ${c.message}` }];
+    }
+
+    // ── Help ──────────────────────────────────────────────────────────────────
+    function helpOutput() {
+        return [
+            { type: 'info', text: '── Git Simulator — Supported Commands ──' },
+            { type: 'log',  text: 'git init                    Initialize a repo' },
+            { type: 'log',  text: 'git add <file>              Stage a file' },
+            { type: 'log',  text: 'git commit -m "msg"         Create a commit' },
+            { type: 'log',  text: 'git status                  Working tree status' },
+            { type: 'log',  text: 'git log [--oneline] [--all] Commit history' },
+            { type: 'log',  text: 'git branch [name] [-d name] List / create / delete branch' },
+            { type: 'log',  text: 'git checkout [-b] <branch>  Switch / create branch' },
+            { type: 'log',  text: 'git switch [-c] <branch>    Switch / create branch' },
+            { type: 'log',  text: 'git merge <branch>          Merge a branch' },
+            { type: 'log',  text: 'git rebase <upstream>       Rebase onto upstream' },
+            { type: 'log',  text: 'git tag [name] [-d name]    List / create / delete tag' },
+            { type: 'log',  text: 'git stash [pop|list|drop]   Stash / restore changes' },
+            { type: 'log',  text: 'git reset [--soft|--mixed|--hard]' },
+            { type: 'log',  text: 'git remote add <name> <url> Add a remote' },
+            { type: 'log',  text: 'git show [hash]             Show a commit' },
+            { type: 'log',  text: 'git cherry-pick <hash>      Cherry-pick a commit' },
+            { type: 'log',  text: 'git push / pull / fetch     Simulated (no network)' },
+            { type: 'log',  text: 'clear                       Clear terminal' },
+        ];
+    }
+
+    // ── Terminal output ───────────────────────────────────────────────────────
+    function printPromptLine(cmd) {
+        const branch = (repo ? currentBranchName() : null) || 'main';
+        const row = document.createElement('div');
+        row.className = 'term-line';
+        const prompt = document.createElement('span');
+        prompt.className = 'term-prompt';
+        prompt.textContent = `~/repo (${branch}) $`;
+        const cmdSpan = document.createElement('span');
+        cmdSpan.className = 'term-cmd';
+        cmdSpan.textContent = ' ' + cmd;
+        row.appendChild(prompt);
+        row.appendChild(cmdSpan);
+        terminalOutput.appendChild(row);
+    }
+
+    function printOutputLines(lines) {
+        lines.forEach(({ type, text }) => {
+            if (text === '') {
+                const row = document.createElement('div');
+                row.className = 'term-out';
+                row.innerHTML = '&nbsp;';
+                terminalOutput.appendChild(row);
+                return;
+            }
+            const row = document.createElement('div');
+            row.className = `term-out ${type}`;
+            row.textContent = text;
+            terminalOutput.appendChild(row);
+        });
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+
+    function clearTerminal() {
+        terminalOutput.innerHTML = '';
+    }
+
+    // ── Run a command ─────────────────────────────────────────────────────────
+    function runCommand(raw) {
+        if (!raw.trim()) return;
+        printPromptLine(raw);
+        const output = execCommand(raw);
+        printOutputLines(output);
+        totalCmds++;
+        cmdCountEl.textContent = `${totalCmds} command${totalCmds !== 1 ? 's' : ''}`;
+        updatePrompt();
+        updateStatusBar();
+        debouncedSave();
+    }
+
+    function updatePrompt() {
+        const branch = (repo ? currentBranchName() : null) || (repo ? 'HEAD' : 'main');
+        termPrompt.textContent = `~/repo (${branch}) $`;
+    }
+
+    // ── Graph rendering ───────────────────────────────────────────────────────
+    const COMMIT_R  = 10;
+    const COL_W     = 24;
+    const ROW_H     = 36;
+    const PAD_X     = 20;
+    const PAD_Y     = 20;
+
+    // Branch colours (cycle)
+    const BRANCH_COLORS = ['#a855f7','#22d3ee','#22c55e','#f97316','#eab308','#ef4444','#60a5fa','#f472b6'];
+
+    function renderGraph() {
+        if (!repo) { clearCanvas(); return; }
+
+        const commits = Object.values(repo.commits);
+        if (!commits.length) { clearCanvas(); return; }
+
+        // Topological sort (Kahn's algorithm)
+        const inDegree = {};
+        commits.forEach(c => { inDegree[c.hash] = 0; });
+        commits.forEach(c => c.parents.forEach(p => { if (inDegree[p] !== undefined) inDegree[p]++; }));
+
+        const queue = commits.filter(c => !inDegree[c.hash]).map(c => c.hash);
+        const sorted = [];
+        const visited = new Set();
+        while (queue.length) {
+            const h = queue.shift();
+            if (visited.has(h)) continue;
+            visited.add(h);
+            sorted.push(h);
+            const c = repo.commits[h];
+            if (c) c.parents.forEach(p => {
+                if (inDegree[p] !== undefined) {
+                    inDegree[p]--;
+                    if (!inDegree[p]) queue.push(p);
+                }
+            });
+        }
+        sorted.reverse(); // oldest first
+
+        // Assign columns via lane tracking
+        const lanes = [];   // each entry is the last hash using that lane
+        const col   = {};   // hash → col index
+
+        sorted.forEach(h => {
+            const c = repo.commits[h];
+            // Try to inherit parent's lane
+            let assigned = -1;
+            if (c.parents.length) {
+                for (const p of c.parents) {
+                    const pc = col[p];
+                    if (pc !== undefined) {
+                        // Check if lane is still "open" (no other commit is blocking)
+                        if (lanes[pc] === p) { assigned = pc; break; }
+                    }
+                }
+            }
+            if (assigned === -1) {
+                // Find a free lane
+                assigned = lanes.findIndex(l => l === null);
+                if (assigned === -1) assigned = lanes.length;
+            }
+            lanes[assigned] = h;
+            col[h] = assigned;
+        });
+
+        const maxCol = Math.max(...Object.values(col));
+        const width  = PAD_X * 2 + (maxCol + 1) * COL_W + 160;
+        const height = PAD_Y * 2 + sorted.length * ROW_H;
+
+        const canvas = graphCanvas;
+        canvas.width  = Math.max(width, 400);
+        canvas.height = Math.max(height, 200);
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.font = '12px "JetBrains Mono", monospace';
+
+        const row = {}; // hash → y index (0 = bottom = oldest)
+        sorted.forEach((h, i) => { row[h] = i; });
+
+        function cx(h) { return PAD_X + col[h] * COL_W + COMMIT_R; }
+        function cy(h) { return PAD_Y + (sorted.length - 1 - row[h]) * ROW_H + COMMIT_R; }
+
+        // Draw edges first
+        sorted.forEach(h => {
+            const c = repo.commits[h];
+            c.parents.forEach(p => {
+                if (!row.hasOwnProperty(p)) return;
+                const color = BRANCH_COLORS[col[h] % BRANCH_COLORS.length];
+                ctx.strokeStyle = color;
+                ctx.lineWidth   = 2;
+                ctx.beginPath();
+                ctx.moveTo(cx(h), cy(h));
+                const dx = cx(p) - cx(h);
+                const dy = cy(p) - cy(h);
+                // Bezier for diagonal edges
+                ctx.bezierCurveTo(
+                    cx(h), cy(h) + dy * 0.4,
+                    cx(p), cy(p) - dy * 0.4,
+                    cx(p), cy(p)
+                );
+                ctx.stroke();
+            });
+        });
+
+        // Collect refs by hash
+        const branchRefs = {};
+        Object.entries(repo.branches).forEach(([name, h]) => {
+            if (!h) return;
+            (branchRefs[h] = branchRefs[h] || []).push({ name, type: 'branch', isCurrent: name === currentBranchName() });
+        });
+        Object.entries(repo.tags).forEach(([name, h]) => {
+            (branchRefs[h] = branchRefs[h] || []).push({ name, type: 'tag' });
+        });
+
+        // Draw commits
+        sorted.forEach(h => {
+            const c = repo.commits[h];
+            const color = BRANCH_COLORS[col[h] % BRANCH_COLORS.length];
+            const x = cx(h), y = cy(h);
+            const isHead = h === headHash();
+
+            // Circle
+            ctx.beginPath();
+            ctx.arc(x, y, COMMIT_R - 1, 0, Math.PI * 2);
+            ctx.fillStyle = isHead ? '#fff' : color;
+            ctx.fill();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Message text
+            let textX = PAD_X + (maxCol + 1) * COL_W + 12;
+            ctx.fillStyle = '#e2e2f0';
+            ctx.fillText(c.hash + ' ' + truncate(c.message, 28), textX, y + 4);
+        });
+
+        // Update ref list badges
+        renderRefs(branchRefs);
+        graphInfo.textContent = `${sorted.length} commit${sorted.length !== 1 ? 's' : ''} · ${Object.keys(repo.branches).length} branch${Object.keys(repo.branches).length !== 1 ? 'es' : ''}`;
+    }
+
+    function clearCanvas() {
+        const ctx = graphCanvas.getContext('2d');
+        graphCanvas.width  = 400;
+        graphCanvas.height = 200;
+        ctx.clearRect(0, 0, graphCanvas.width, graphCanvas.height);
+        ctx.fillStyle = '#7878a0';
+        ctx.font = '13px Inter, sans-serif';
+        ctx.fillText('No commits yet. Run "git init" and "git commit" to start.', 16, 100);
+        refList.innerHTML = '';
+        graphInfo.textContent = '';
+    }
+
+    function truncate(s, n) { return s.length > n ? s.slice(0, n) + '…' : s; }
+
+    function renderRefs(branchRefs) {
+        refList.innerHTML = '';
+        const headH = headHash();
+
+        // HEAD badge
+        const headTag = document.createElement('span');
+        headTag.className = 'ref-tag head';
+        headTag.textContent = `HEAD → ${currentBranchName() || 'detached:' + headH}`;
+        refList.appendChild(headTag);
+
+        // Branch badges
+        Object.entries(repo.branches).forEach(([name, h]) => {
+            const el = document.createElement('span');
+            el.className = 'ref-tag branch';
+            el.textContent = name + (h ? ` (${h})` : ' (empty)');
+            refList.appendChild(el);
+        });
+
+        // Tag badges
+        Object.entries(repo.tags).forEach(([name, h]) => {
+            const el = document.createElement('span');
+            el.className = 'ref-tag tag';
+            el.textContent = `🏷 ${name}`;
+            refList.appendChild(el);
+        });
+    }
+
+    // ── Status bar ────────────────────────────────────────────────────────────
+    function updateStatusBar() {
+        const branch = currentBranchName() || 'detached HEAD';
+        statBranch.textContent   = branch;
+        statCommits.textContent  = Object.keys(repo?.commits || {}).length;
+        statBranches.textContent = Object.keys(repo?.branches || {}).length;
+        const dirty = repo && repo.initialized && (repo.index.length || repo.workingTree.length);
+        statStatus.textContent   = !repo || !repo.initialized ? 'uninitialized' : dirty ? 'dirty' : 'clean';
+    }
+
+    function updateUI() {
+        renderGraph();
+        updateStatusBar();
+        updatePrompt();
+    }
+
+    // ── Banners ───────────────────────────────────────────────────────────────
+    function showError(msg)   { errorBanner.textContent = '❌ ' + msg; errorBanner.classList.add('visible'); successBanner.classList.remove('visible'); }
+    function showSuccess(msg) { successBanner.textContent = '✅ ' + msg; successBanner.classList.add('visible'); errorBanner.classList.remove('visible'); }
+    function hideAll()        { errorBanner.classList.remove('visible'); successBanner.classList.remove('visible'); }
+
+    let toastTimer;
+    function showToast(msg) {
+        toast.textContent = msg;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    // ── localStorage ─────────────────────────────────────────────────────────
+    function getSerializableRepo() {
+        if (!repo) return null;
+        return {
+            commits:   repo.commits,
+            branches:  repo.branches,
+            HEAD:      repo.HEAD,
+            tags:      repo.tags,
+            stash:     repo.stash,
+            index:     repo.index,
+            workingTree: repo.workingTree,
+            initialized: repo.initialized,
+            remotes:   repo.remotes,
+        };
+    }
+
+    function save() {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                repo: getSerializableRepo(),
+                seed: _hashSeed,
+                totalCmds,
+            }));
+        } catch { /* quota */ }
+    }
+
+    let saveTimer;
+    function debouncedSave() { clearTimeout(saveTimer); saveTimer = setTimeout(save, 800); }
+
+    (function restore() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return;
+            const s = JSON.parse(raw);
+            if (s.repo && s.repo.initialized) {
+                repo = Object.assign(newRepo(), s.repo);
+                _hashSeed = s.seed || 1;
+                totalCmds = s.totalCmds || 0;
+                cmdCountEl.textContent = `${totalCmds} command${totalCmds !== 1 ? 's' : ''}`;
+                updateUI();
+            }
+        } catch { /* ignore */ }
+    })();
+
+    // ── Mobile tabs ───────────────────────────────────────────────────────────
+    function setMobileTab(which) {
+        if (which === 'input') {
+            paneInput.classList.add('mob-visible');
+            paneOutput.classList.remove('mob-visible');
+            tabInput.classList.add('active');
+            tabOutput.classList.remove('active');
+        } else {
+            paneOutput.classList.add('mob-visible');
+            paneInput.classList.remove('mob-visible');
+            tabOutput.classList.add('active');
+            tabInput.classList.remove('active');
+        }
+    }
+
+    // ── Event listeners ───────────────────────────────────────────────────────
+    terminalInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+            const cmd = terminalInput.value;
+            terminalInput.value = '';
+            if (cmd.trim()) {
+                cmdHistory.unshift(cmd);
+                historyIndex = -1;
+            }
+            runCommand(cmd);
+        }
+        if (e.key === 'ArrowUp') {
+            historyIndex = Math.min(historyIndex + 1, cmdHistory.length - 1);
+            terminalInput.value = cmdHistory[historyIndex] || '';
+            e.preventDefault();
+        }
+        if (e.key === 'ArrowDown') {
+            historyIndex = Math.max(historyIndex - 1, -1);
+            terminalInput.value = historyIndex < 0 ? '' : (cmdHistory[historyIndex] || '');
+            e.preventDefault();
+        }
+    });
+
+    btnRun.addEventListener('click', () => {
+        const cmd = terminalInput.value;
+        terminalInput.value = '';
+        runCommand(cmd);
+        terminalInput.focus();
+    });
+
+    btnHelp.addEventListener('click', () => {
+        printOutputLines(helpOutput());
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    });
+
+    btnCopyLog.addEventListener('click', async () => {
+        const lines = Array.from(terminalOutput.querySelectorAll('.term-out,.term-cmd,.term-prompt'))
+            .map(el => el.textContent).join('\n');
+        try {
+            await navigator.clipboard.writeText(lines);
+            showToast('Log copied!');
+        } catch {
+            showToast('Copy failed.');
+        }
+    });
+
+    btnReset.addEventListener('click', () => {
+        repo = null;
+        _hashSeed = 1;
+        totalCmds = 0;
+        cmdCountEl.textContent = '0 commands';
+        clearTerminal();
+        clearCanvas();
+        hideAll();
+        updateStatusBar();
+        updatePrompt();
+        save();
+        showToast('Simulator reset.');
+    });
+
+    btnClearTerminal.addEventListener('click', clearTerminal);
+
+    scenarioSelect.addEventListener('change', () => {
+        const key = scenarioSelect.value;
+        if (!key) return;
+        const cmds = SCENARIOS[key];
+        if (!cmds) return;
+
+        // Reset first
+        repo = null;
+        _hashSeed = 1;
+        totalCmds = 0;
+        clearTerminal();
+        clearCanvas();
+
+        // Run all commands
+        cmds.forEach(cmd => runCommand(cmd));
+        scenarioSelect.value = '';
+        showToast(`Scenario "${key}" loaded.`);
+    });
+
+    tabInput.addEventListener('click',  () => setMobileTab('input'));
+    tabOutput.addEventListener('click', () => setMobileTab('output'));
+
+    // Focus terminal on click in terminal area
+    document.getElementById('terminalOutput').addEventListener('click', () => terminalInput.focus());
+
+    // Print welcome
+    printOutputLines([
+        { type: 'info', text: '🔀 Git Simulator — virtual Git environment' },
+        { type: 'log',  text: 'Type "git init" to start, or pick a scenario above.' },
+        { type: 'log',  text: 'Type "help" to see all supported commands.' },
+        { type: 'log',  text: '' },
+    ]);
+
+    // Initial graph
+    if (repo) {
+        updateUI();
+    } else {
+        clearCanvas();
+    }
+    updateStatusBar();
+    terminalInput.focus();
+    </script>
+</body>
+</html>
