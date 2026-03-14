@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+    <title>JSON Explorer — Ravionus Dev Tools</title>
+    <meta name="description" content="Parse, validate, and navigate JSON data structures with an interactive tree view. No server, no sign-up.">
+    <link rel="canonical" href="https://ravionus.com/playground/json-explorer/">
+    <meta property="og:title" content="JSON Explorer — Ravionus Dev Tools">
+    <meta property="og:description" content="Parse, validate, and navigate JSON data structures with an interactive tree view. No server, no sign-up.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ravionus.com/playground/json-explorer/">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none';">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0a0f;
+            --surface: #12121a;
+            --surface2: #0e0e16;
+            --border: #1e1e2e;
+            --border2: #2a2a3e;
+            --text: #e2e2f0;
+            --muted: #7878a0;
+            --purple: #a855f7;
+            --cyan: #22d3ee;
+            --green: #22c55e;
+            --red: #ef4444;
+            --orange: #f97316;
+            --blue: #60a5fa;
+            --accent-g: linear-gradient(135deg, #a855f7, #22d3ee);
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Nav ── */
+        nav {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 52px;
+            flex-shrink: 0;
+        }
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+        .breadcrumb a { color: var(--cyan); text-decoration: none; }
+        .breadcrumb a:hover { text-decoration: underline; }
+        .breadcrumb .sep { color: var(--border2); }
+        .breadcrumb .current { color: var(--text); font-weight: 600; }
+        .nav-links { display: flex; gap: 1.25rem; }
+        .nav-links a { font-size: 0.85rem; color: var(--muted); text-decoration: none; white-space: nowrap; }
+        .nav-links a:hover { color: var(--text); }
+
+        /* ── Page header ── */
+        .page-header {
+            padding: 2rem 1.5rem 1rem;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+        }
+        .page-header h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            background: var(--accent-g);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+        .page-header p { font-size: 0.95rem; color: var(--muted); max-width: 620px; line-height: 1.6; }
+
+        /* ── Main wrap ── */
+        .main-wrap {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 0 1.5rem 2rem;
+            gap: 0.75rem;
+        }
+
+        /* ── Toolbar ── */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .tb-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.45rem 1rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--border2);
+            background: var(--surface);
+            color: var(--text);
+            font-family: inherit;
+            transition: background 0.15s, border-color 0.15s;
+            white-space: nowrap;
+        }
+        .tb-btn:hover { background: var(--border); }
+        .tb-btn.primary { background: var(--purple); border-color: var(--purple); color: #fff; }
+        .tb-btn.primary:hover { background: #9333ea; border-color: #9333ea; }
+        .tb-btn.danger { color: var(--red); border-color: var(--red); }
+        .tb-btn.danger:hover { background: rgba(239,68,68,.12); }
+        .tb-btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+        .tb-btn:disabled { opacity: .45; cursor: default; pointer-events: none; }
+
+        .example-select {
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            color: var(--text);
+            font-size: 0.875rem;
+            padding: 0.45rem 0.75rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+        }
+        .example-select:focus { outline: 2px solid var(--cyan); outline-offset: 2px; }
+        .example-select option { background: var(--surface); }
+
+        .tb-sep { flex: 1; }
+
+        /* ── Search bar ── */
+        .search-bar {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        .search-input {
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            color: var(--text);
+            font-size: 0.875rem;
+            padding: 0.45rem 0.75rem;
+            border-radius: 6px;
+            font-family: var(--font-mono);
+            width: 220px;
+        }
+        .search-input::placeholder { color: var(--muted); }
+        .search-input:focus { outline: 2px solid var(--cyan); outline-offset: 2px; }
+        .search-count { font-size: 0.8rem; color: var(--muted); white-space: nowrap; }
+
+        /* ── Editor layout ── */
+        .editor-layout {
+            display: grid;
+            grid-template-columns: 1fr 4px 1fr;
+            min-height: 520px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--surface2);
+        }
+        .pane { display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+        .pane-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 0.75rem;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            flex-shrink: 0;
+            gap: 0.5rem;
+        }
+        .pane-header .ph-right { display: flex; gap: 0.4rem; align-items: center; }
+        .ph-btn {
+            background: none;
+            border: 1px solid var(--border2);
+            color: var(--muted);
+            padding: 0.2rem 0.55rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            font-family: inherit;
+            transition: color 0.15s, border-color 0.15s;
+            white-space: nowrap;
+        }
+        .ph-btn:hover { color: var(--text); border-color: var(--cyan); }
+        .ph-btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+        .pane-divider { background: var(--border); flex-shrink: 0; cursor: col-resize; }
+
+        /* ── Input pane ── */
+        #jsonInput {
+            flex: 1;
+            background: var(--surface2);
+            color: var(--text);
+            border: none;
+            padding: 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            line-height: 1.6;
+            resize: none;
+            outline: none;
+            tab-size: 2;
+        }
+
+        /* ── Tree pane ── */
+        .tree-pane { overflow: auto; padding: 0.75rem; }
+        .tree-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            gap: 0.75rem;
+            color: var(--muted);
+            font-size: 0.9rem;
+            text-align: center;
+            padding: 2rem;
+        }
+        .tree-empty .big-icon { font-size: 3rem; opacity: .4; }
+
+        /* ── Tree nodes ── */
+        .tree-node { font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.5; }
+        .tree-row {
+            display: flex;
+            align-items: baseline;
+            gap: 0.25rem;
+            padding: 0.1rem 0.25rem;
+            border-radius: 3px;
+            cursor: default;
+            user-select: text;
+        }
+        .tree-row:hover { background: rgba(255,255,255,.04); }
+        .tree-row.highlighted { background: rgba(168,85,247,.2); }
+
+        .tree-toggle {
+            background: none;
+            border: none;
+            color: var(--muted);
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            cursor: pointer;
+            padding: 0 0.1rem;
+            line-height: 1;
+            flex-shrink: 0;
+            width: 14px;
+            text-align: center;
+        }
+        .tree-toggle:focus-visible { outline: 2px solid var(--cyan); outline-offset: 1px; }
+        .tree-spacer { display: inline-block; width: 14px; flex-shrink: 0; }
+
+        .t-key   { color: var(--cyan); }
+        .t-colon { color: var(--muted); margin-right: 0.25rem; }
+        .t-str   { color: var(--green); }
+        .t-num   { color: var(--orange); }
+        .t-bool  { color: var(--purple); font-weight: 600; }
+        .t-null  { color: var(--muted); font-style: italic; }
+        .t-brace { color: var(--muted); }
+        .t-size  { color: var(--muted); font-size: 0.7rem; margin-left: 0.25rem; }
+        .t-path  { color: var(--muted); font-size: 0.7rem; margin-left: auto; padding-left: 1rem; opacity: 0; transition: opacity 0.1s; }
+        .tree-row:hover .t-path { opacity: 1; }
+
+        .tree-children { padding-left: 1.25rem; border-left: 1px solid var(--border); margin-left: 6px; }
+        .tree-children.collapsed { display: none; }
+
+        /* ── Banners ── */
+        .error-banner, .success-banner {
+            display: none;
+            padding: 0.6rem 1rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        .error-banner { background: rgba(239,68,68,.12); color: var(--red); border: 1px solid rgba(239,68,68,.3); }
+        .error-banner.visible { display: block; }
+        .success-banner { background: rgba(34,197,94,.10); color: var(--green); border: 1px solid rgba(34,197,94,.25); }
+        .success-banner.visible { display: block; }
+
+        /* ── Status bar ── */
+        .status-bar {
+            display: flex;
+            gap: 1.5rem;
+            padding: 0.45rem 0.25rem;
+            font-size: 0.78rem;
+            color: var(--muted);
+            flex-wrap: wrap;
+        }
+        .status-bar span strong { color: var(--text); font-weight: 600; }
+
+        /* ── Toast ── */
+        #toast {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            color: var(--text);
+            padding: 0.65rem 1.1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            opacity: 0;
+            transform: translateY(8px);
+            pointer-events: none;
+            transition: opacity 0.2s, transform 0.2s;
+            z-index: 1000;
+        }
+        #toast.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+        /* ── Mobile tabs ── */
+        .mobile-tabs { display: none; gap: 0.5rem; }
+        .mob-tab {
+            flex: 1;
+            padding: 0.5rem;
+            border-radius: 6px;
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            color: var(--muted);
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+        }
+        .mob-tab.active { background: var(--purple); border-color: var(--purple); color: #fff; }
+        .mob-tab:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+        @media (max-width: 700px) {
+            .mobile-tabs { display: flex; }
+            .editor-layout { grid-template-columns: 1fr; min-height: 360px; }
+            .pane-divider { display: none; }
+            .pane { display: none; }
+            .pane.mob-visible { display: flex; }
+            .page-header { padding: 1rem 1rem 0.5rem; }
+            .main-wrap { padding: 0 0.75rem 1.5rem; }
+            .search-input { width: 150px; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="breadcrumb">
+            <a href="../../">Ravionus</a>
+            <span class="sep">›</span>
+            <a href="../../playground/">Playgrounds</a>
+            <span class="sep">›</span>
+            <span class="current">JSON Explorer</span>
+        </div>
+        <div class="nav-links" role="navigation">
+            <a href="../../learn/">✨ Learn</a>
+            <a href="../../tools/">🛠️ Tools</a>
+            <a href="../../playground/">🧪 Playgrounds</a>
+        </div>
+    </nav>
+
+    <header class="page-header">
+        <h1>📊 JSON Explorer</h1>
+        <p>Paste any JSON to instantly validate, pretty-print, and explore its structure as an interactive tree. Click nodes to expand/collapse, search keys and values, and copy paths.</p>
+    </header>
+
+    <div class="main-wrap">
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <button id="btnParse"   class="tb-btn primary">▶ Parse</button>
+            <button id="btnFormat"  class="tb-btn">✨ Format</button>
+            <button id="btnMinify"  class="tb-btn">⚡ Minify</button>
+
+            <select id="exampleSelect" class="example-select" aria-label="Load JSON example">
+                <option value="">📂 Load example…</option>
+                <option value="person">Person object</option>
+                <option value="array">Array of items</option>
+                <option value="nested">Deeply nested</option>
+                <option value="api">API response</option>
+                <option value="config">Config file</option>
+            </select>
+
+            <div class="tb-sep"></div>
+
+            <div class="search-bar">
+                <input  id="searchInput"
+                        class="search-input"
+                        type="text"
+                        placeholder="Search keys / values…"
+                        aria-label="Search tree">
+                <span   id="searchCount" class="search-count"></span>
+            </div>
+
+            <button id="btnExpandAll"  class="tb-btn">⊕ Expand all</button>
+            <button id="btnCollapseAll" class="tb-btn">⊖ Collapse all</button>
+            <button id="btnCopy"   class="tb-btn">📋 Copy JSON</button>
+            <button id="btnClear"  class="tb-btn danger">✕ Clear</button>
+        </div>
+
+        <!-- Mobile tabs -->
+        <div class="mobile-tabs">
+            <button class="mob-tab active" id="tabInput">📥 Input</button>
+            <button class="mob-tab"        id="tabOutput">📤 Tree</button>
+        </div>
+
+        <!-- Editor layout -->
+        <div class="editor-layout">
+            <!-- Left: raw JSON input -->
+            <div class="pane mob-visible" id="paneInput">
+                <div class="pane-header">
+                    <span>JSON Input</span>
+                    <div class="ph-right">
+                        <span id="inputCharCount" style="font-size:0.72rem;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;">0 chars</span>
+                        <button class="ph-btn" id="btnPasteRaw">Paste</button>
+                    </div>
+                </div>
+                <textarea id="jsonInput"
+                    aria-label="JSON input"
+                    spellcheck="false"
+                    autocomplete="off"
+                    autocorrect="off"
+                    autocapitalize="off"
+                    placeholder='{"key": "value"}'></textarea>
+            </div>
+
+            <div class="pane-divider"></div>
+
+            <!-- Right: tree view -->
+            <div class="pane" id="paneOutput">
+                <div class="pane-header">
+                    <span>Tree View</span>
+                    <div class="ph-right">
+                        <span id="treeStats" style="font-size:0.72rem;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;"></span>
+                    </div>
+                </div>
+                <div class="tree-pane" id="treePane">
+                    <div class="tree-empty" id="treeEmpty">
+                        <span class="big-icon">📊</span>
+                        <span>Paste JSON on the left and click <strong>▶ Parse</strong></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Banners -->
+        <div class="error-banner"   id="errorBanner"   role="alert"></div>
+        <div class="success-banner" id="successBanner" aria-live="polite"></div>
+
+        <!-- Status bar -->
+        <div class="status-bar">
+            <span>Characters: <strong id="statChars">0</strong></span>
+            <span>Nodes: <strong id="statNodes">0</strong></span>
+            <span>Depth: <strong id="statDepth">0</strong></span>
+            <span>Type: <strong id="statType">—</strong></span>
+        </div>
+    </div>
+
+    <div id="toast" aria-live="polite"></div>
+
+    <script>
+    'use strict';
+
+    const STORAGE_KEY = 'ravionus_tool_json_explorer';
+
+    // ── DOM refs ──────────────────────────────────────────────────────────────
+    const jsonInput    = document.getElementById('jsonInput');
+    const treePane     = document.getElementById('treePane');
+    const treeEmpty    = document.getElementById('treeEmpty');
+    const btnParse     = document.getElementById('btnParse');
+    const btnFormat    = document.getElementById('btnFormat');
+    const btnMinify    = document.getElementById('btnMinify');
+    const btnCopy      = document.getElementById('btnCopy');
+    const btnClear     = document.getElementById('btnClear');
+    const btnPasteRaw  = document.getElementById('btnPasteRaw');
+    const btnExpandAll = document.getElementById('btnExpandAll');
+    const btnCollapseAll = document.getElementById('btnCollapseAll');
+    const exampleSelect  = document.getElementById('exampleSelect');
+    const searchInput    = document.getElementById('searchInput');
+    const searchCount    = document.getElementById('searchCount');
+    const errorBanner    = document.getElementById('errorBanner');
+    const successBanner  = document.getElementById('successBanner');
+    const inputCharCount = document.getElementById('inputCharCount');
+    const treeStats      = document.getElementById('treeStats');
+    const statChars      = document.getElementById('statChars');
+    const statNodes      = document.getElementById('statNodes');
+    const statDepth      = document.getElementById('statDepth');
+    const statType       = document.getElementById('statType');
+    const toast          = document.getElementById('toast');
+    const paneInput      = document.getElementById('paneInput');
+    const paneOutput     = document.getElementById('paneOutput');
+    const tabInput       = document.getElementById('tabInput');
+    const tabOutput      = document.getElementById('tabOutput');
+
+    // ── Examples ──────────────────────────────────────────────────────────────
+    const EXAMPLES = {
+        person: JSON.stringify({
+            name: "Alice Johnson",
+            age: 32,
+            email: "alice@example.com",
+            active: true,
+            address: {
+                street: "123 Main St",
+                city: "Springfield",
+                zip: "12345",
+                country: "US"
+            },
+            tags: ["developer", "open-source", "TypeScript"],
+            metadata: null
+        }, null, 2),
+
+        array: JSON.stringify([
+            { id: 1, name: "Widget A", price: 9.99, inStock: true },
+            { id: 2, name: "Widget B", price: 24.99, inStock: false },
+            { id: 3, name: "Widget C", price: 4.50, inStock: true },
+            { id: 4, name: "Widget D", price: 149.00, inStock: true }
+        ], null, 2),
+
+        nested: JSON.stringify({
+            level1: {
+                level2: {
+                    level3: {
+                        level4: {
+                            value: "deeply nested value",
+                            numbers: [1, 2, 3, [4, 5, [6]]],
+                            flag: true
+                        }
+                    },
+                    sibling: "sibling value"
+                },
+                array: [{ a: 1 }, { b: 2 }]
+            },
+            top: "top-level value"
+        }, null, 2),
+
+        api: JSON.stringify({
+            status: "ok",
+            code: 200,
+            data: {
+                users: [
+                    { id: "u1", username: "alice",   role: "admin",  lastLogin: "2024-01-15T10:30:00Z" },
+                    { id: "u2", username: "bob",     role: "user",   lastLogin: "2024-01-14T08:20:00Z" },
+                    { id: "u3", username: "charlie", role: "viewer", lastLogin: null }
+                ],
+                pagination: {
+                    page: 1,
+                    perPage: 20,
+                    total: 3,
+                    hasNext: false
+                }
+            },
+            errors: []
+        }, null, 2),
+
+        config: JSON.stringify({
+            app: {
+                name: "MyApp",
+                version: "2.1.0",
+                debug: false,
+                port: 3000
+            },
+            database: {
+                host: "localhost",
+                port: 5432,
+                name: "myapp_db",
+                ssl: true,
+                pool: { min: 2, max: 10, idleTimeout: 30000 }
+            },
+            features: {
+                darkMode: true,
+                betaSignups: false,
+                rateLimit: {
+                    enabled: true,
+                    maxRequests: 100,
+                    windowMs: 60000
+                }
+            },
+            allowedOrigins: ["https://myapp.com", "https://api.myapp.com"]
+        }, null, 2)
+    };
+
+    // ── State ─────────────────────────────────────────────────────────────────
+    let parsedData  = null;
+    let totalNodes  = 0;
+    let maxDepth    = 0;
+    let searchTermLC = '';
+
+    // ── Banners / Toast ───────────────────────────────────────────────────────
+    function showError(msg)    { errorBanner.textContent = '❌ ' + msg; errorBanner.classList.add('visible'); successBanner.classList.remove('visible'); }
+    function hideError()       { errorBanner.classList.remove('visible'); }
+    function showSuccess(msg)  { successBanner.textContent = '✅ ' + msg; successBanner.classList.add('visible'); errorBanner.classList.remove('visible'); }
+    function hideAll()         { errorBanner.classList.remove('visible'); successBanner.classList.remove('visible'); }
+
+    let toastTimer;
+    function showToast(msg) {
+        toast.textContent = msg;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    // ── Char count update ─────────────────────────────────────────────────────
+    function updateInputCount() {
+        const n = jsonInput.value.length;
+        inputCharCount.textContent = n.toLocaleString() + ' chars';
+        statChars.textContent = n.toLocaleString();
+    }
+
+    // ── Tree building ─────────────────────────────────────────────────────────
+    function typeOf(v) {
+        if (v === null) return 'null';
+        if (Array.isArray(v)) return 'array';
+        return typeof v;
+    }
+
+    function escapeHtml(s) {
+        return String(s)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    function countNodes(v, depth) {
+        totalNodes++;
+        if (depth > maxDepth) maxDepth = depth;
+        const t = typeOf(v);
+        if (t === 'object') {
+            for (const k of Object.keys(v)) countNodes(v[k], depth + 1);
+        } else if (t === 'array') {
+            for (const item of v) countNodes(item, depth + 1);
+        }
+    }
+
+    /**
+     * Render a JSON value into a DocumentFragment tree.
+     * @param {*} value   The JSON value
+     * @param {string|null} key  The object key (null for root/array items)
+     * @param {string} path  JSONPath string
+     * @param {number} depth Current depth
+     * @returns {HTMLElement} .tree-node element
+     */
+    function buildNode(value, key, path, depth) {
+        const t = typeOf(value);
+        const wrapper = document.createElement('div');
+        wrapper.className = 'tree-node';
+
+        const row = document.createElement('div');
+        row.className = 'tree-row';
+        row.dataset.path = path;
+
+        const isCollapsible = t === 'object' || t === 'array';
+
+        // Toggle button or spacer
+        if (isCollapsible) {
+            const btn = document.createElement('button');
+            btn.className = 'tree-toggle';
+            btn.textContent = '▾';
+            btn.setAttribute('aria-label', 'Toggle node');
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const ch = wrapper.querySelector('.tree-children');
+                const collapsed = ch.classList.toggle('collapsed');
+                btn.textContent = collapsed ? '▸' : '▾';
+            });
+            row.appendChild(btn);
+        } else {
+            const sp = document.createElement('span');
+            sp.className = 'tree-spacer';
+            row.appendChild(sp);
+        }
+
+        // Key label
+        if (key !== null) {
+            const keyEl = document.createElement('span');
+            keyEl.className = 't-key';
+            keyEl.textContent = JSON.stringify(key);
+            row.appendChild(keyEl);
+            const colon = document.createElement('span');
+            colon.className = 't-colon';
+            colon.textContent = ':';
+            row.appendChild(colon);
+        }
+
+        // Value (inline for primitives; opening brace for containers)
+        if (t === 'string') {
+            const el = document.createElement('span');
+            el.className = 't-str';
+            const display = value.length > 120 ? JSON.stringify(value.slice(0, 120)) + '…"' : JSON.stringify(value);
+            el.textContent = display;
+            row.appendChild(el);
+        } else if (t === 'number') {
+            const el = document.createElement('span');
+            el.className = 't-num';
+            el.textContent = value;
+            row.appendChild(el);
+        } else if (t === 'boolean') {
+            const el = document.createElement('span');
+            el.className = 't-bool';
+            el.textContent = value;
+            row.appendChild(el);
+        } else if (t === 'null') {
+            const el = document.createElement('span');
+            el.className = 't-null';
+            el.textContent = 'null';
+            row.appendChild(el);
+        } else if (t === 'object') {
+            const brace = document.createElement('span');
+            brace.className = 't-brace';
+            const keys = Object.keys(value);
+            brace.textContent = '{';
+            row.appendChild(brace);
+            const size = document.createElement('span');
+            size.className = 't-size';
+            size.textContent = `${keys.length} ${keys.length === 1 ? 'key' : 'keys'}`;
+            row.appendChild(size);
+        } else if (t === 'array') {
+            const brace = document.createElement('span');
+            brace.className = 't-brace';
+            brace.textContent = '[';
+            row.appendChild(brace);
+            const size = document.createElement('span');
+            size.className = 't-size';
+            size.textContent = `${value.length} ${value.length === 1 ? 'item' : 'items'}`;
+            row.appendChild(size);
+        }
+
+        // Copy path on click
+        const pathEl = document.createElement('span');
+        pathEl.className = 't-path';
+        pathEl.textContent = path;
+        row.appendChild(pathEl);
+
+        row.addEventListener('click', () => {
+            navigator.clipboard.writeText(path).then(
+                () => showToast(`Path copied: ${path}`),
+                () => {}
+            );
+        });
+
+        wrapper.appendChild(row);
+
+        // Children
+        if (isCollapsible) {
+            const children = document.createElement('div');
+            children.className = 'tree-children';
+
+            if (t === 'object') {
+                const keys = Object.keys(value);
+                for (const k of keys) {
+                    const childPath = path ? `${path}.${k}` : k;
+                    children.appendChild(buildNode(value[k], k, childPath, depth + 1));
+                }
+                // Closing brace row
+                const closingRow = document.createElement('div');
+                closingRow.className = 'tree-row';
+                const sp = document.createElement('span');
+                sp.className = 'tree-spacer';
+                closingRow.appendChild(sp);
+                const cb = document.createElement('span');
+                cb.className = 't-brace';
+                cb.textContent = '}';
+                closingRow.appendChild(cb);
+                children.appendChild(closingRow);
+            } else if (t === 'array') {
+                for (let i = 0; i < value.length; i++) {
+                    const childPath = `${path}[${i}]`;
+                    children.appendChild(buildNode(value[i], null, childPath, depth + 1));
+                }
+                const closingRow = document.createElement('div');
+                closingRow.className = 'tree-row';
+                const sp = document.createElement('span');
+                sp.className = 'tree-spacer';
+                closingRow.appendChild(sp);
+                const cb = document.createElement('span');
+                cb.className = 't-brace';
+                cb.textContent = ']';
+                closingRow.appendChild(cb);
+                children.appendChild(closingRow);
+            }
+
+            wrapper.appendChild(children);
+        }
+
+        return wrapper;
+    }
+
+    // ── Render tree ───────────────────────────────────────────────────────────
+    function renderTree(data) {
+        parsedData = data;
+        totalNodes = 0;
+        maxDepth   = 0;
+        countNodes(data, 0);
+
+        // Remove existing tree (keep empty placeholder in DOM but hide it)
+        treeEmpty.style.display = 'none';
+        // Remove old tree nodes
+        const old = treePane.querySelector('.tree-root');
+        if (old) old.remove();
+
+        const root = document.createElement('div');
+        root.className = 'tree-root';
+        root.appendChild(buildNode(data, null, '$', 0));
+        treePane.appendChild(root);
+
+        // Stats
+        statNodes.textContent = totalNodes.toLocaleString();
+        statDepth.textContent = maxDepth;
+        const t = typeOf(data);
+        statType.textContent = t === 'array'
+            ? `array (${data.length} items)`
+            : t === 'object'
+                ? `object (${Object.keys(data).length} keys)`
+                : t;
+        treeStats.textContent = `${totalNodes} nodes · depth ${maxDepth}`;
+
+        // Apply search highlight if active
+        if (searchTermLC) applySearch();
+    }
+
+    // ── Parse ─────────────────────────────────────────────────────────────────
+    function parseJSON() {
+        hideAll();
+        const raw = jsonInput.value.trim();
+        if (!raw) {
+            showError('Input is empty — paste some JSON first.');
+            return;
+        }
+        try {
+            const data = JSON.parse(raw);
+            renderTree(data);
+            showSuccess(`Valid JSON · ${totalNodes} nodes · max depth ${maxDepth}`);
+        } catch (e) {
+            // Provide a line/col hint
+            const msg = e.message || String(e);
+            showError('Invalid JSON: ' + msg);
+            // Clear tree
+            const old = treePane.querySelector('.tree-root');
+            if (old) old.remove();
+            treeEmpty.style.display = 'flex';
+            parsedData = null;
+        }
+    }
+
+    // ── Format / Minify ───────────────────────────────────────────────────────
+    function formatJSON() {
+        hideAll();
+        const raw = jsonInput.value.trim();
+        if (!raw) { showError('Input is empty.'); return; }
+        try {
+            const data = JSON.parse(raw);
+            jsonInput.value = JSON.stringify(data, null, 2);
+            updateInputCount();
+            debouncedSave();
+            showSuccess('Formatted!');
+        } catch (e) {
+            showError('Cannot format: ' + e.message);
+        }
+    }
+
+    function minifyJSON() {
+        hideAll();
+        const raw = jsonInput.value.trim();
+        if (!raw) { showError('Input is empty.'); return; }
+        try {
+            const data = JSON.parse(raw);
+            jsonInput.value = JSON.stringify(data);
+            updateInputCount();
+            debouncedSave();
+            showSuccess('Minified!');
+        } catch (e) {
+            showError('Cannot minify: ' + e.message);
+        }
+    }
+
+    // ── Search ────────────────────────────────────────────────────────────────
+    function applySearch() {
+        const term = searchInput.value.trim();
+        searchTermLC = term.toLowerCase();
+        const allRows = treePane.querySelectorAll('.tree-row');
+        let hits = 0;
+        allRows.forEach(row => {
+            row.classList.remove('highlighted');
+            if (!searchTermLC) return;
+            const text = row.textContent.toLowerCase();
+            if (text.includes(searchTermLC)) {
+                row.classList.add('highlighted');
+                hits++;
+                // Ensure ancestors are expanded
+                let parent = row.parentElement;
+                while (parent && parent !== treePane) {
+                    if (parent.classList.contains('tree-children')) {
+                        parent.classList.remove('collapsed');
+                        const toggle = parent.previousElementSibling
+                            && parent.previousElementSibling.querySelector('.tree-toggle');
+                        if (toggle) toggle.textContent = '▾';
+                    }
+                    parent = parent.parentElement;
+                }
+            }
+        });
+        searchCount.textContent = searchTermLC
+            ? `${hits} match${hits !== 1 ? 'es' : ''}`
+            : '';
+    }
+
+    let searchTimer;
+    function debouncedSearch() {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(applySearch, 250);
+    }
+
+    // ── Expand / Collapse all ─────────────────────────────────────────────────
+    function expandAll() {
+        treePane.querySelectorAll('.tree-children').forEach(ch => {
+            ch.classList.remove('collapsed');
+        });
+        treePane.querySelectorAll('.tree-toggle').forEach(btn => {
+            btn.textContent = '▾';
+        });
+    }
+
+    function collapseAll() {
+        // Collapse all children except the root's direct children
+        const roots = treePane.querySelectorAll('.tree-root > .tree-node > .tree-children');
+        treePane.querySelectorAll('.tree-children').forEach(ch => {
+            if (!Array.from(roots).includes(ch)) {
+                ch.classList.add('collapsed');
+            }
+        });
+        treePane.querySelectorAll('.tree-toggle').forEach(btn => {
+            // Only collapse non-root toggles
+            const ch = btn.closest('.tree-node');
+            const children = ch && ch.querySelector('.tree-children');
+            if (children && children.classList.contains('collapsed')) {
+                btn.textContent = '▸';
+            }
+        });
+    }
+
+    // ── localStorage ─────────────────────────────────────────────────────────
+    function save() {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({ input: jsonInput.value }));
+        } catch { /* quota */ }
+    }
+
+    let saveTimer;
+    function debouncedSave() { clearTimeout(saveTimer); saveTimer = setTimeout(save, 800); }
+
+    (function restore() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return;
+            const s = JSON.parse(raw);
+            if (s.input !== undefined) jsonInput.value = s.input;
+        } catch { /* ignore */ }
+        updateInputCount();
+    })();
+
+    // ── Mobile tabs ───────────────────────────────────────────────────────────
+    function setMobileTab(which) {
+        if (which === 'input') {
+            paneInput.classList.add('mob-visible');
+            paneOutput.classList.remove('mob-visible');
+            tabInput.classList.add('active');
+            tabOutput.classList.remove('active');
+        } else {
+            paneOutput.classList.add('mob-visible');
+            paneInput.classList.remove('mob-visible');
+            tabOutput.classList.add('active');
+            tabInput.classList.remove('active');
+        }
+    }
+
+    // ── Copy ─────────────────────────────────────────────────────────────────
+    async function copyJSON() {
+        const v = jsonInput.value;
+        if (!v.trim()) { showToast('Nothing to copy.'); return; }
+        try {
+            await navigator.clipboard.writeText(v);
+            showToast('JSON copied!');
+        } catch {
+            showToast('Copy failed — select text manually.');
+        }
+    }
+
+    // ── Paste ─────────────────────────────────────────────────────────────────
+    async function pasteFromClipboard() {
+        try {
+            const text = await navigator.clipboard.readText();
+            jsonInput.value = text;
+            updateInputCount();
+            debouncedSave();
+        } catch {
+            showToast('Paste not available — use Ctrl+V.');
+        }
+    }
+
+    // ── Event listeners ───────────────────────────────────────────────────────
+    btnParse.addEventListener('click',       parseJSON);
+    btnFormat.addEventListener('click',      formatJSON);
+    btnMinify.addEventListener('click',      minifyJSON);
+    btnCopy.addEventListener('click',        copyJSON);
+    btnPasteRaw.addEventListener('click',    pasteFromClipboard);
+    btnExpandAll.addEventListener('click',   expandAll);
+    btnCollapseAll.addEventListener('click', collapseAll);
+    searchInput.addEventListener('input',    debouncedSearch);
+    tabInput.addEventListener('click',       () => setMobileTab('input'));
+    tabOutput.addEventListener('click',      () => { setMobileTab('output'); });
+
+    btnClear.addEventListener('click', () => {
+        jsonInput.value = '';
+        const old = treePane.querySelector('.tree-root');
+        if (old) old.remove();
+        treeEmpty.style.display = 'flex';
+        parsedData = null;
+        hideAll();
+        updateInputCount();
+        searchInput.value = '';
+        searchCount.textContent = '';
+        searchTermLC = '';
+        statNodes.textContent = '0';
+        statDepth.textContent = '0';
+        statType.textContent  = '—';
+        treeStats.textContent = '';
+        save();
+    });
+
+    exampleSelect.addEventListener('change', () => {
+        const key = exampleSelect.value;
+        if (!key) return;
+        jsonInput.value = EXAMPLES[key] || '';
+        updateInputCount();
+        debouncedSave();
+        parseJSON();
+        exampleSelect.value = '';
+    });
+
+    jsonInput.addEventListener('input', () => {
+        updateInputCount();
+        debouncedSave();
+    });
+
+    jsonInput.addEventListener('keydown', e => {
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            const s = jsonInput.selectionStart;
+            const end = jsonInput.selectionEnd;
+            jsonInput.value = jsonInput.value.slice(0, s) + '  ' + jsonInput.value.slice(end);
+            jsonInput.selectionStart = jsonInput.selectionEnd = s + 2;
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            e.preventDefault();
+            parseJSON();
+        }
+    });
+
+    // Initial render if restored
+    if (jsonInput.value.trim()) {
+        parseJSON();
+    }
+    </script>
+</body>
+</html>
