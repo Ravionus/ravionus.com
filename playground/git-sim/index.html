@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1493,5 +1493,18 @@
     updateStatusBar();
     terminalInput.focus();
     </script>
+
+<script>
+/* nav-active */
+(function(){
+  var p = location.pathname;
+  document.querySelectorAll('.nav-links a').forEach(function(a){
+    if((p.includes('/tools/') && a.href.includes('/tools/')) ||
+       (p.includes('/playground/') && a.href.includes('/playground/')) ||
+       (p.includes('/learn/') && a.href.includes('/learn/')))
+      Object.assign(a.style,{color:'var(--cyan)',fontWeight:'700'});
+  });
+})();
+</script>
 </body>
 </html>

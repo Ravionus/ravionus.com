@@ -84,6 +84,20 @@ test.describe('Cron Expression Parser — smoke', () => {
         await expect(page.locator('#nextRunsCard')).toBeVisible();
     });
 
+    test('nav Tools link is highlighted as active section', async ({ page }) => {
+        await page.goto(BASE_URL);
+        // The nav-active script highlights the correct section link
+        const toolsLink = page.locator('.nav-links a[href*="/tools/"]');
+        await expect(toolsLink).toHaveCSS('font-weight', '700');
+    });
+
+    test('nav Playgrounds link is NOT highlighted on a tools page', async ({ page }) => {
+        await page.goto(BASE_URL);
+        const playgroundLink = page.locator('.nav-links a[href*="/playground/"]');
+        const fw = await playgroundLink.evaluate(el => el.style.fontWeight);
+        expect(fw).not.toBe('700');
+    });
+
     test('preset buttons are rendered', async ({ page }) => {
         await page.goto(BASE_URL);
         await expect(page.locator('.preset-btn').first()).toBeVisible();
@@ -291,11 +305,11 @@ test.describe('Cron Expression Parser — next run times', () => {
         times.forEach(t => expect(t).toMatch(/\d+:\d{2}\s*(AM|PM)/i));
     });
 
-    test('0 * * * * — all times end in :00', async ({ page }) => {
+    test('0 * * * * — all times end in :00 or midnight/noon', async ({ page }) => {
         await fillCron(page, '0 * * * *');
         await expect(page.locator('#nextRunsList .run-item')).toHaveCount(5);
         const times = await page.locator('.run-item-time').allTextContents();
-        times.forEach(t => expect(t).toMatch(/:00\s*(AM|PM)/i));
+        times.forEach(t => expect(t).toMatch(/:00\s*(AM|PM)|midnight|noon/i));
     });
 
     test('*/5 * * * * — all minutes are multiples of 5', async ({ page }) => {
