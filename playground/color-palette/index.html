@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+    <title>Color Palette Generator — Ravionus Dev Tools</title>
+    <meta name="description" content="Generate beautiful, harmonious color palettes from any base color. Export as CSS variables, hex arrays, or PNG. WCAG contrast checking included. No server, no sign-up.">
+    <link rel="canonical" href="https://ravionus.com/playground/color-palette/">
+    <meta property="og:title" content="Color Palette Generator — Ravionus Dev Tools">
+    <meta property="og:description" content="Generate beautiful, harmonious color palettes from any base color. Export as CSS variables, hex arrays, or PNG. WCAG contrast checking included. No server, no sign-up.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ravionus.com/playground/color-palette/">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none';">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0a0f;
+            --surface: #12121a;
+            --surface2: #0e0e16;
+            --border: #1e1e2e;
+            --border2: #2a2a3e;
+            --text: #e2e2f0;
+            --muted: #7878a0;
+            --purple: #a855f7;
+            --cyan: #22d3ee;
+            --green: #22c55e;
+            --red: #ef4444;
+            --orange: #f97316;
+            --yellow: #eab308;
+            --accent-g: linear-gradient(135deg, #a855f7, #22d3ee);
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Nav ── */
+        nav {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 52px;
+            flex-shrink: 0;
+        }
+        .breadcrumb { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: var(--muted); }
+        .breadcrumb a { color: var(--cyan); text-decoration: none; }
+        .breadcrumb a:hover { text-decoration: underline; }
+        .breadcrumb .sep { color: var(--border2); }
+        .breadcrumb .current { color: var(--text); font-weight: 600; }
+        .nav-links { display: flex; gap: 1.25rem; }
+        .nav-links a { font-size: 0.85rem; color: var(--muted); text-decoration: none; white-space: nowrap; }
+        .nav-links a:hover { color: var(--text); }
+
+        /* ── Page header ── */
+        .page-header { padding: 2rem 1.5rem 1rem; max-width: 1400px; width: 100%; margin: 0 auto; }
+        .page-header h1 {
+            font-size: 1.75rem; font-weight: 800;
+            background: var(--accent-g);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+        .page-header p { font-size: 0.95rem; color: var(--muted); max-width: 680px; line-height: 1.6; }
+
+        /* ── Main wrap ── */
+        .main-wrap {
+            flex: 1; display: flex; flex-direction: column;
+            max-width: 1400px; width: 100%; margin: 0 auto;
+            padding: 0 1.5rem 2rem; gap: 0.75rem;
+        }
+
+        /* ── Toolbar ── */
+        .toolbar { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+        .tb-btn {
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            padding: 0.45rem 1rem; border-radius: 6px; font-size: 0.875rem; font-weight: 600;
+            cursor: pointer; border: 1px solid var(--border2); background: var(--surface);
+            color: var(--text); font-family: inherit; transition: background 0.15s, border-color 0.15s;
+            white-space: nowrap;
+        }
+        .tb-btn:hover { background: var(--border); }
+        .tb-btn.primary { background: var(--purple); border-color: var(--purple); color: #fff; }
+        .tb-btn.primary:hover { background: #9333ea; border-color: #9333ea; }
+        .tb-btn.danger { color: var(--red); border-color: var(--red); }
+        .tb-btn.danger:hover { background: rgba(239,68,68,.12); }
+        .tb-btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+        .tb-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .tb-sep { flex: 1; }
+
+        /* ── Editor layout ── */
+        .editor-layout {
+            display: grid; grid-template-columns: 280px 4px 1fr;
+            min-height: 520px; border: 1px solid var(--border); border-radius: 8px;
+            overflow: hidden; background: var(--surface2);
+        }
+        .pane { display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+        .pane-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.5rem 0.75rem; background: var(--surface);
+            border-bottom: 1px solid var(--border); font-size: 0.8rem; font-weight: 600;
+            color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em;
+            flex-shrink: 0; gap: 0.5rem;
+        }
+        .pane-divider { background: var(--border); flex-shrink: 0; }
+
+        /* ── Settings pane ── */
+        .settings-scroll { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 1rem; }
+        .setting-group { display: flex; flex-direction: column; gap: 0.4rem; }
+        .setting-label { font-size: 0.78rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+        .setting-control { display: flex; align-items: center; gap: 0.5rem; }
+
+        input[type="color"] {
+            width: 44px; height: 36px; padding: 2px; border: 1px solid var(--border2);
+            border-radius: 6px; background: var(--surface); cursor: pointer;
+        }
+        input[type="color"]:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+        .hex-input {
+            flex: 1; background: var(--surface); border: 1px solid var(--border2);
+            color: var(--text); font-family: var(--font-mono); font-size: 0.875rem;
+            padding: 0.45rem 0.6rem; border-radius: 6px;
+        }
+        .hex-input:focus { outline: 2px solid var(--cyan); outline-offset: -1px; border-color: transparent; }
+
+        select.setting-select {
+            width: 100%; background: var(--surface); border: 1px solid var(--border2);
+            color: var(--text); font-size: 0.875rem; padding: 0.5rem 0.65rem;
+            border-radius: 6px; cursor: pointer; font-family: inherit;
+        }
+        select.setting-select:focus { outline: 2px solid var(--cyan); outline-offset: 2px; }
+        select.setting-select option { background: var(--surface); }
+
+        .count-btns { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+        .count-btn {
+            width: 34px; height: 34px; border-radius: 6px; border: 1px solid var(--border2);
+            background: var(--surface); color: var(--muted); font-size: 0.875rem; font-weight: 700;
+            cursor: pointer; font-family: inherit; transition: all 0.15s; display: flex; align-items: center; justify-content: center;
+        }
+        .count-btn:hover { color: var(--text); border-color: var(--cyan); }
+        .count-btn.active { background: var(--purple); border-color: var(--purple); color: #fff; }
+        .count-btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+        .toggle-row { display: flex; align-items: center; justify-content: space-between; }
+        .toggle-label { font-size: 0.875rem; color: var(--text); }
+        .toggle {
+            width: 40px; height: 22px; background: var(--border2); border-radius: 11px;
+            position: relative; cursor: pointer; border: none; outline: none; transition: background 0.2s;
+        }
+        .toggle.on { background: var(--purple); }
+        .toggle::after {
+            content: ''; position: absolute; width: 16px; height: 16px; border-radius: 50%;
+            background: #fff; top: 3px; left: 3px; transition: left 0.2s;
+        }
+        .toggle.on::after { left: 21px; }
+        .toggle:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+        .setting-divider { height: 1px; background: var(--border); margin: 0.25rem 0; }
+
+        /* ── Palette pane ── */
+        .palette-scroll { flex: 1; overflow-y: auto; padding: 1rem; }
+        #paletteGrid {
+            display: flex; flex-direction: column; gap: 0.75rem;
+        }
+
+        /* ── Swatch ── */
+        .swatch {
+            border-radius: 8px; overflow: hidden; border: 1px solid var(--border);
+            display: flex; flex-direction: column; transition: border-color 0.15s;
+        }
+        .swatch:hover { border-color: var(--border2); }
+        .swatch.locked { border-color: var(--cyan); }
+
+        .swatch-color {
+            height: 80px; width: 100%; position: relative; cursor: pointer;
+            transition: filter 0.15s;
+        }
+        .swatch-color:hover { filter: brightness(1.08); }
+
+        .swatch-lock {
+            position: absolute; top: 6px; right: 8px;
+            background: rgba(0,0,0,0.45); border: none; border-radius: 4px;
+            color: #fff; font-size: 0.75rem; padding: 0.2rem 0.35rem;
+            cursor: pointer; line-height: 1.2;
+        }
+        .swatch-lock:hover { background: rgba(0,0,0,0.7); }
+        .swatch-lock:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+        .swatch-info {
+            background: var(--surface); padding: 0.6rem 0.75rem;
+            display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem;
+        }
+        .swatch-values { flex: 1; display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+        .swatch-hex {
+            font-family: var(--font-mono); font-size: 0.9rem; font-weight: 600;
+            color: var(--text); cursor: pointer; width: fit-content;
+            border-bottom: 1px dotted transparent; transition: border-color 0.15s;
+            user-select: none;
+        }
+        .swatch-hex:hover { border-color: var(--cyan); color: var(--cyan); }
+        .swatch-rgb { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); }
+        .swatch-hsl { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); }
+
+        .wcag-badges { display: flex; flex-direction: column; gap: 0.2rem; align-items: flex-end; }
+        .wcag-badge {
+            font-size: 0.65rem; font-weight: 700; padding: 0.15rem 0.4rem;
+            border-radius: 4px; white-space: nowrap; font-family: var(--font-mono);
+        }
+        .wcag-badge.pass  { background: rgba(34,197,94,.15); color: var(--green); border: 1px solid rgba(34,197,94,.3); }
+        .wcag-badge.fail  { background: rgba(239,68,68,.10); color: var(--red);   border: 1px solid rgba(239,68,68,.25); }
+        .wcag-badge.warn  { background: rgba(234,179,8,.10); color: var(--yellow);border: 1px solid rgba(234,179,8,.25); }
+
+        /* Large swatch layout for fewer colors */
+        #paletteGrid.large .swatch-color { height: 120px; }
+
+        /* ── Banners ── */
+        .error-banner, .success-banner { display: none; padding: 0.6rem 1rem; border-radius: 6px; font-size: 0.875rem; font-weight: 500; }
+        .error-banner   { background: rgba(239,68,68,.12); color: var(--red);   border: 1px solid rgba(239,68,68,.3); }
+        .error-banner.visible { display: block; }
+        .success-banner { background: rgba(34,197,94,.10); color: var(--green); border: 1px solid rgba(34,197,94,.25); }
+        .success-banner.visible { display: block; }
+
+        /* ── Status bar ── */
+        .status-bar { display: flex; gap: 1.5rem; padding: 0.45rem 0.25rem; font-size: 0.78rem; color: var(--muted); flex-wrap: wrap; }
+        .status-bar span strong { color: var(--text); font-weight: 600; }
+
+        /* ── Toast ── */
+        #toast {
+            position: fixed; bottom: 1.5rem; right: 1.5rem;
+            background: var(--surface); border: 1px solid var(--border2);
+            color: var(--text); padding: 0.65rem 1.1rem; border-radius: 8px;
+            font-size: 0.875rem; font-weight: 500; opacity: 0; transform: translateY(8px);
+            pointer-events: none; transition: opacity 0.2s, transform 0.2s; z-index: 1000;
+        }
+        #toast.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+        /* ── Mobile tabs ── */
+        .mobile-tabs { display: none; gap: 0.5rem; }
+        .mob-tab {
+            flex: 1; padding: 0.5rem; border-radius: 6px;
+            background: var(--surface); border: 1px solid var(--border2);
+            color: var(--muted); font-size: 0.875rem; font-weight: 600;
+            cursor: pointer; font-family: inherit;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+        }
+        .mob-tab.active { background: var(--purple); border-color: var(--purple); color: #fff; }
+        .mob-tab:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+        @media (max-width: 700px) {
+            .mobile-tabs { display: flex; }
+            .editor-layout { grid-template-columns: 1fr; min-height: 400px; }
+            .pane-divider { display: none; }
+            .pane { display: none; }
+            .pane.mob-visible { display: flex; }
+            .page-header { padding: 1rem 1rem 0.5rem; }
+            .main-wrap { padding: 0 0.75rem 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="breadcrumb">
+            <a href="../../">Ravionus</a>
+            <span class="sep">›</span>
+            <a href="../../playground/">Playgrounds</a>
+            <span class="sep">›</span>
+            <span class="current">Color Palette Generator</span>
+        </div>
+        <div class="nav-links" role="navigation">
+            <a href="../../learn/">✨ Learn</a>
+            <a href="../../tools/">🛠️ Tools</a>
+            <a href="../../playground/">🧪 Playgrounds</a>
+        </div>
+    </nav>
+
+    <header class="page-header">
+        <h1>🖍️ Color Palette Generator</h1>
+        <p>Generate beautiful, harmonious color palettes from any base color. Choose a harmony rule, lock favorite swatches, verify WCAG contrast ratios, and export as CSS variables, hex arrays, or a PNG image.</p>
+    </header>
+
+    <div class="main-wrap">
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <button id="btnGenerate" class="tb-btn primary">🎲 Generate</button>
+
+            <div class="tb-sep"></div>
+
+            <button id="btnCopyCSS" class="tb-btn">📋 CSS Vars</button>
+            <button id="btnCopyHex" class="tb-btn">📋 Hex Array</button>
+            <button id="btnCopyJSON" class="tb-btn">📋 JSON</button>
+            <button id="btnDownload" class="tb-btn">⬇ PNG</button>
+            <button id="btnReset" class="tb-btn danger">✕ Reset</button>
+        </div>
+
+        <!-- Mobile tabs -->
+        <div class="mobile-tabs">
+            <button class="mob-tab active" id="tabInput">⚙️ Settings</button>
+            <button class="mob-tab"        id="tabOutput">🎨 Palette</button>
+        </div>
+
+        <!-- Editor layout -->
+        <div class="editor-layout">
+            <!-- Left: Settings -->
+            <div class="pane mob-visible" id="paneInput">
+                <div class="pane-header">Settings</div>
+                <div class="settings-scroll">
+
+                    <div class="setting-group">
+                        <div class="setting-label">Base Color</div>
+                        <div class="setting-control">
+                            <input type="color" id="colorPicker" value="#a855f7" aria-label="Base color picker">
+                            <input type="text"  id="hexInput"    class="hex-input" value="#a855f7" aria-label="Base color hex value" maxlength="7" spellcheck="false">
+                        </div>
+                    </div>
+
+                    <div class="setting-group">
+                        <div class="setting-label">Harmony</div>
+                        <select id="harmonySelect" class="setting-select" aria-label="Color harmony mode">
+                            <option value="complementary">Complementary</option>
+                            <option value="analogous">Analogous</option>
+                            <option value="triadic">Triadic</option>
+                            <option value="split-complementary">Split-Complementary</option>
+                            <option value="tetradic">Tetradic</option>
+                            <option value="monochromatic" selected>Monochromatic</option>
+                            <option value="random">Random</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-group">
+                        <div class="setting-label">Number of Colors</div>
+                        <div class="count-btns" id="countBtns" role="group" aria-label="Number of colors">
+                            <button class="count-btn" data-n="2" aria-label="2 colors">2</button>
+                            <button class="count-btn" data-n="3" aria-label="3 colors">3</button>
+                            <button class="count-btn" data-n="4" aria-label="4 colors">4</button>
+                            <button class="count-btn active" data-n="5" aria-label="5 colors">5</button>
+                            <button class="count-btn" data-n="6" aria-label="6 colors">6</button>
+                            <button class="count-btn" data-n="7" aria-label="7 colors">7</button>
+                            <button class="count-btn" data-n="8" aria-label="8 colors">8</button>
+                        </div>
+                    </div>
+
+                    <div class="setting-divider"></div>
+
+                    <div class="setting-group">
+                        <div class="toggle-row">
+                            <span class="toggle-label">Show WCAG contrast</span>
+                            <button class="toggle on" id="toggleWcag" role="switch" aria-checked="true" aria-label="Show WCAG contrast badges"></button>
+                        </div>
+                    </div>
+
+                    <div class="setting-group">
+                        <div class="toggle-row">
+                            <span class="toggle-label">Large swatches</span>
+                            <button class="toggle" id="toggleLarge" role="switch" aria-checked="false" aria-label="Use large swatches"></button>
+                        </div>
+                    </div>
+
+                    <div class="setting-divider"></div>
+
+                    <div class="setting-group">
+                        <div class="setting-label">Sort</div>
+                        <select id="sortSelect" class="setting-select" aria-label="Sort palette by">
+                            <option value="none">None (generated order)</option>
+                            <option value="hue">Hue</option>
+                            <option value="luminance">Luminance</option>
+                            <option value="saturation">Saturation</option>
+                        </select>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="pane-divider"></div>
+
+            <!-- Right: Palette -->
+            <div class="pane" id="paneOutput">
+                <div class="pane-header">
+                    <span>Palette</span>
+                    <span id="paletteInfo" style="font-size:0.72rem;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;"></span>
+                </div>
+                <div class="palette-scroll">
+                    <div id="paletteGrid" aria-label="Color palette swatches"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Banners -->
+        <div class="error-banner"   id="errorBanner"   role="alert"></div>
+        <div class="success-banner" id="successBanner" aria-live="polite"></div>
+
+        <!-- Status bar -->
+        <div class="status-bar">
+            <span>Colors: <strong id="statCount">5</strong></span>
+            <span>Harmony: <strong id="statHarmony">Monochromatic</strong></span>
+            <span>Locked: <strong id="statLocked">0</strong></span>
+            <span>Base: <strong id="statBase">#a855f7</strong></span>
+        </div>
+    </div>
+
+    <div id="toast" aria-live="polite"></div>
+
+    <script>
+    'use strict';
+
+    const STORAGE_KEY = 'ravionus_tool_color_palette';
+
+    // ── DOM refs ──────────────────────────────────────────────────────────────
+    const colorPicker   = document.getElementById('colorPicker');
+    const hexInput      = document.getElementById('hexInput');
+    const harmonySelect = document.getElementById('harmonySelect');
+    const countBtns     = document.getElementById('countBtns');
+    const toggleWcag    = document.getElementById('toggleWcag');
+    const toggleLarge   = document.getElementById('toggleLarge');
+    const sortSelect    = document.getElementById('sortSelect');
+    const paletteGrid   = document.getElementById('paletteGrid');
+    const paletteInfo   = document.getElementById('paletteInfo');
+    const btnGenerate   = document.getElementById('btnGenerate');
+    const btnCopyCSS    = document.getElementById('btnCopyCSS');
+    const btnCopyHex    = document.getElementById('btnCopyHex');
+    const btnCopyJSON   = document.getElementById('btnCopyJSON');
+    const btnDownload   = document.getElementById('btnDownload');
+    const btnReset      = document.getElementById('btnReset');
+    const errorBanner   = document.getElementById('errorBanner');
+    const successBanner = document.getElementById('successBanner');
+    const statCount     = document.getElementById('statCount');
+    const statHarmony   = document.getElementById('statHarmony');
+    const statLocked    = document.getElementById('statLocked');
+    const statBase      = document.getElementById('statBase');
+    const paneInput     = document.getElementById('paneInput');
+    const paneOutput    = document.getElementById('paneOutput');
+    const tabInput      = document.getElementById('tabInput');
+    const tabOutput     = document.getElementById('tabOutput');
+    const toast         = document.getElementById('toast');
+
+    // ── App State ─────────────────────────────────────────────────────────────
+    let palette = [];   // [{ hex, r, g, b, h, s, l, locked }]
+    let baseHex = '#a855f7';
+    let colorCount = 5;
+    let showWcag = true;
+    let largeSwatch = false;
+    let sortMode = 'none';
+
+    // ── Color Math ────────────────────────────────────────────────────────────
+    function hexToRgb(hex) {
+        const h = hex.replace('#', '');
+        if (h.length === 3) {
+            return { r: parseInt(h[0]+h[0],16), g: parseInt(h[1]+h[1],16), b: parseInt(h[2]+h[2],16) };
+        }
+        return { r: parseInt(h.slice(0,2),16), g: parseInt(h.slice(2,4),16), b: parseInt(h.slice(4,6),16) };
+    }
+
+    function rgbToHex(r, g, b) {
+        return '#' + [r,g,b].map(x => Math.round(Math.max(0,Math.min(255,x))).toString(16).padStart(2,'0')).join('');
+    }
+
+    function rgbToHsl(r, g, b) {
+        r /= 255; g /= 255; b /= 255;
+        const max = Math.max(r,g,b), min = Math.min(r,g,b);
+        let h, s, l = (max+min)/2;
+        if (max === min) { h = s = 0; }
+        else {
+            const d = max - min;
+            s = l > 0.5 ? d/(2-max-min) : d/(max+min);
+            switch(max) {
+                case r: h = ((g-b)/d + (g<b?6:0))/6; break;
+                case g: h = ((b-r)/d + 2)/6; break;
+                case b: h = ((r-g)/d + 4)/6; break;
+            }
+        }
+        return { h: Math.round(h*360), s: Math.round(s*100), l: Math.round(l*100) };
+    }
+
+    function hslToRgb(h, s, l) {
+        h = ((h % 360) + 360) % 360;
+        s /= 100; l /= 100;
+        const c = (1 - Math.abs(2*l-1)) * s;
+        const x = c * (1 - Math.abs((h/60)%2 - 1));
+        const m = l - c/2;
+        let r=0, g=0, b=0;
+        if      (h<60)  { r=c; g=x; b=0; }
+        else if (h<120) { r=x; g=c; b=0; }
+        else if (h<180) { r=0; g=c; b=x; }
+        else if (h<240) { r=0; g=x; b=c; }
+        else if (h<300) { r=x; g=0; b=c; }
+        else            { r=c; g=0; b=x; }
+        return { r: Math.round((r+m)*255), g: Math.round((g+m)*255), b: Math.round((b+m)*255) };
+    }
+
+    function hslToHex(h, s, l) {
+        const { r, g, b } = hslToRgb(h, s, l);
+        return rgbToHex(r, g, b);
+    }
+
+    // WCAG 2.1 relative luminance
+    function relativeLuminance(r, g, b) {
+        const lin = v => { v /= 255; return v <= 0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055, 2.4); };
+        return 0.2126*lin(r) + 0.7152*lin(g) + 0.0722*lin(b);
+    }
+
+    function contrastRatio(l1, l2) {
+        const lighter = Math.max(l1, l2), darker = Math.min(l1, l2);
+        return (lighter + 0.05) / (darker + 0.05);
+    }
+
+    function wcagLevel(contrast) {
+        if (contrast >= 7)   return { label: 'AAA', cls: 'pass' };
+        if (contrast >= 4.5) return { label: 'AA',  cls: 'pass' };
+        if (contrast >= 3)   return { label: 'AA LG', cls: 'warn' };
+        return { label: 'Fail', cls: 'fail' };
+    }
+
+    // ── Palette Generation ────────────────────────────────────────────────────
+    function buildColor(hex) {
+        const { r, g, b } = hexToRgb(hex);
+        const { h, s, l } = rgbToHsl(r, g, b);
+        return { hex: hex.toLowerCase(), r, g, b, h, s, l, locked: false };
+    }
+
+    function spreadHues(baseH, count) {
+        // Evenly spread hues with slight lightness variation
+        return Array.from({ length: count }, (_, i) => {
+            const h = (baseH + i * (360 / count) + 360) % 360;
+            const l = 35 + (i * 30 / Math.max(count-1,1));
+            return hslToHex(h, 65, Math.min(l, 65));
+        });
+    }
+
+    function generatePalette(harmony, base, n) {
+        const { h, s, l } = base;
+        let hues = [];
+
+        switch (harmony) {
+            case 'complementary':
+                hues = [h, h+180];
+                break;
+            case 'analogous':
+                hues = Array.from({length: n}, (_, i) => h + (i - Math.floor(n/2)) * 30);
+                break;
+            case 'triadic':
+                hues = [h, h+120, h+240];
+                break;
+            case 'split-complementary':
+                hues = [h, h+150, h+210];
+                break;
+            case 'tetradic':
+                hues = [h, h+90, h+180, h+270];
+                break;
+            case 'monochromatic':
+                hues = Array.from({length: n}, () => h);
+                break;
+            case 'random':
+                hues = Array.from({length: n}, () => Math.floor(Math.random()*360));
+                break;
+            default:
+                hues = [h];
+        }
+
+        // Expand hues to exactly n colors
+        const result = [];
+        for (let i = 0; i < n; i++) {
+            const hue = ((hues[i % hues.length] % 360) + 360) % 360;
+            let sat = s, lit = l;
+
+            if (harmony === 'monochromatic') {
+                // Vary lightness and saturation
+                lit = 20 + (i / (n-1||1)) * 60;
+                sat = Math.max(20, s - i * 5);
+            } else if (harmony === 'complementary' || harmony === 'triadic' || harmony === 'tetradic' || harmony === 'split-complementary') {
+                // Vary lightness slightly for variety
+                lit = 35 + ((i % 3) * 12);
+                if (lit > 70) lit = 70;
+                sat = 60 + ((i % 2) * 15);
+                if (sat > 85) sat = 85;
+            } else if (harmony === 'analogous') {
+                lit = 40 + ((i % 3) * 10);
+                sat = 65;
+            } else if (harmony === 'random') {
+                sat = 55 + Math.floor(Math.random()*30);
+                lit = 40 + Math.floor(Math.random()*25);
+            }
+
+            result.push(hslToHex(hue, sat, lit));
+        }
+        return result;
+    }
+
+    function applySort(colors, mode) {
+        if (mode === 'none') return colors;
+        return [...colors].sort((a, b) => {
+            if (mode === 'hue') return a.h - b.h;
+            if (mode === 'saturation') return b.s - a.s;
+            if (mode === 'luminance') return relativeLuminance(b.r,b.g,b.b) - relativeLuminance(a.r,a.g,a.b);
+            return 0;
+        });
+    }
+
+    // ── Render ────────────────────────────────────────────────────────────────
+    function renderPalette() {
+        const lumWhite = 1.0;
+        const lumBlack = 0.0;
+        const sorted = applySort(palette, sortMode);
+
+        paletteGrid.innerHTML = '';
+        paletteGrid.className = largeSwatch ? 'large' : '';
+
+        sorted.forEach((color, idx) => {
+            const srcIdx = palette.indexOf(color);
+            const lum = relativeLuminance(color.r, color.g, color.b);
+            const ctrWhite = contrastRatio(lum, lumWhite);
+            const ctrBlack = contrastRatio(lum, lumBlack);
+            const wcagW = wcagLevel(ctrWhite);
+            const wcagB = wcagLevel(ctrBlack);
+
+            const swatch = document.createElement('div');
+            swatch.className = 'swatch' + (color.locked ? ' locked' : '');
+            swatch.setAttribute('data-index', srcIdx);
+
+            const colorBlock = document.createElement('div');
+            colorBlock.className = 'swatch-color';
+            colorBlock.style.background = color.hex;
+
+            const lockBtn = document.createElement('button');
+            lockBtn.className = 'swatch-lock';
+            lockBtn.textContent = color.locked ? '🔒' : '🔓';
+            lockBtn.title = color.locked ? 'Unlock color' : 'Lock color';
+            lockBtn.setAttribute('aria-label', color.locked ? `Unlock ${color.hex}` : `Lock ${color.hex}`);
+            lockBtn.addEventListener('click', e => {
+                e.stopPropagation();
+                palette[srcIdx].locked = !palette[srcIdx].locked;
+                renderPalette();
+                updateStatusBar();
+                debouncedSave();
+            });
+            colorBlock.appendChild(lockBtn);
+
+            const info = document.createElement('div');
+            info.className = 'swatch-info';
+
+            const vals = document.createElement('div');
+            vals.className = 'swatch-values';
+
+            const hexEl = document.createElement('div');
+            hexEl.className = 'swatch-hex';
+            hexEl.textContent = color.hex;
+            hexEl.title = 'Click to copy';
+            hexEl.addEventListener('click', () => copyText(color.hex, `Copied ${color.hex}`));
+
+            const rgbEl = document.createElement('div');
+            rgbEl.className = 'swatch-rgb';
+            rgbEl.textContent = `rgb(${color.r}, ${color.g}, ${color.b})`;
+
+            const hslEl = document.createElement('div');
+            hslEl.className = 'swatch-hsl';
+            hslEl.textContent = `hsl(${color.h}, ${color.s}%, ${color.l}%)`;
+
+            vals.appendChild(hexEl);
+            vals.appendChild(rgbEl);
+            vals.appendChild(hslEl);
+
+            info.appendChild(vals);
+
+            if (showWcag) {
+                const badges = document.createElement('div');
+                badges.className = 'wcag-badges';
+
+                const bw = document.createElement('span');
+                bw.className = `wcag-badge ${wcagW.cls}`;
+                bw.textContent = `W: ${wcagW.label}`;
+                bw.title = `Contrast vs white: ${ctrWhite.toFixed(2)}:1`;
+
+                const bb = document.createElement('span');
+                bb.className = `wcag-badge ${wcagB.cls}`;
+                bb.textContent = `B: ${wcagB.label}`;
+                bb.title = `Contrast vs black: ${ctrBlack.toFixed(2)}:1`;
+
+                badges.appendChild(bw);
+                badges.appendChild(bb);
+                info.appendChild(badges);
+            }
+
+            swatch.appendChild(colorBlock);
+            swatch.appendChild(info);
+            paletteGrid.appendChild(swatch);
+        });
+
+        const harmony = harmonySelect.value;
+        paletteInfo.textContent = `${palette.length} color${palette.length !== 1 ? 's' : ''} · ${harmony}`;
+        updateStatusBar();
+    }
+
+    function updateStatusBar() {
+        statCount.textContent   = palette.length;
+        statHarmony.textContent = harmonySelect.options[harmonySelect.selectedIndex]?.text || harmonySelect.value;
+        statLocked.textContent  = palette.filter(c => c.locked).length;
+        statBase.textContent    = baseHex;
+    }
+
+    // ── Generate ──────────────────────────────────────────────────────────────
+    function generate() {
+        const base = buildColor(baseHex);
+        const harmony = harmonySelect.value;
+
+        // Preserve locked colors by index
+        const locked = palette.filter(c => c.locked);
+        const lockedIndices = new Set(
+            palette.map((c,i) => c.locked ? i : -1).filter(i => i >= 0)
+        );
+
+        const newHexes = generatePalette(harmony, base, colorCount);
+        const newPalette = newHexes.map((hex, i) => {
+            if (lockedIndices.has(i) && palette[i]) {
+                return { ...palette[i] };
+            }
+            return buildColor(hex);
+        });
+
+        palette = newPalette;
+        renderPalette();
+        debouncedSave();
+    }
+
+    // ── Exports ───────────────────────────────────────────────────────────────
+    function buildCSSVars() {
+        return palette.map((c, i) => `  --color-${i+1}: ${c.hex};`).join('\n');
+    }
+
+    function buildHexArray() {
+        return JSON.stringify(palette.map(c => c.hex));
+    }
+
+    function buildJSON() {
+        return JSON.stringify(palette.map(c => ({
+            hex: c.hex,
+            rgb: { r: c.r, g: c.g, b: c.b },
+            hsl: { h: c.h, s: c.s, l: c.l },
+        })), null, 2);
+    }
+
+    function downloadPNG() {
+        const W = 120, H = 200;
+        const canvas = document.createElement('canvas');
+        canvas.width  = W * palette.length;
+        canvas.height = H;
+        const ctx = canvas.getContext('2d');
+        palette.forEach((c, i) => {
+            ctx.fillStyle = c.hex;
+            ctx.fillRect(i * W, 0, W, H);
+            // Hex label
+            const lum = relativeLuminance(c.r, c.g, c.b);
+            ctx.fillStyle = lum > 0.35 ? '#111' : '#fff';
+            ctx.font = 'bold 13px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText(c.hex, i*W + W/2, H - 12);
+        });
+        const link = document.createElement('a');
+        link.download = 'palette.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    }
+
+    // ── Clipboard ─────────────────────────────────────────────────────────────
+    async function copyText(text, msg) {
+        try {
+            await navigator.clipboard.writeText(text);
+            showToast(msg || 'Copied!');
+        } catch {
+            // Fallback: textarea copy
+            try {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                showToast(msg || 'Copied!');
+            } catch {
+                showToast('Copy failed.');
+            }
+        }
+    }
+
+    // ── Banners & Toast ───────────────────────────────────────────────────────
+    let toastTimer;
+    function showToast(msg) {
+        toast.textContent = msg;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    // ── Hex input validation ──────────────────────────────────────────────────
+    function isValidHex(hex) {
+        return /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(hex);
+    }
+
+    function normaliseHex(hex) {
+        if (!hex.startsWith('#')) hex = '#' + hex;
+        if (/^#[0-9a-f]{3}$/i.test(hex)) {
+            hex = '#' + hex[1]+hex[1]+hex[2]+hex[2]+hex[3]+hex[3];
+        }
+        return hex.toLowerCase();
+    }
+
+    // ── localStorage ─────────────────────────────────────────────────────────
+    function save() {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                baseHex,
+                harmony: harmonySelect.value,
+                colorCount,
+                showWcag,
+                largeSwatch,
+                sortMode,
+                palette: palette.map(c => ({ hex: c.hex, locked: c.locked })),
+            }));
+        } catch { /* quota */ }
+    }
+
+    let saveTimer;
+    function debouncedSave() { clearTimeout(saveTimer); saveTimer = setTimeout(save, 800); }
+
+    (function restore() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) { generate(); return; }
+            const s = JSON.parse(raw);
+            if (s.baseHex && isValidHex(s.baseHex)) {
+                baseHex = s.baseHex;
+                colorPicker.value = baseHex;
+                hexInput.value = baseHex;
+            }
+            if (s.harmony) {
+                harmonySelect.value = s.harmony;
+            }
+            if (typeof s.colorCount === 'number' && s.colorCount >= 2 && s.colorCount <= 8) {
+                colorCount = s.colorCount;
+                updateCountBtns();
+            }
+            if (typeof s.showWcag === 'boolean') {
+                showWcag = s.showWcag;
+                toggleWcag.classList.toggle('on', showWcag);
+                toggleWcag.setAttribute('aria-checked', String(showWcag));
+            }
+            if (typeof s.largeSwatch === 'boolean') {
+                largeSwatch = s.largeSwatch;
+                toggleLarge.classList.toggle('on', largeSwatch);
+                toggleLarge.setAttribute('aria-checked', String(largeSwatch));
+            }
+            if (s.sortMode) {
+                sortMode = s.sortMode;
+                sortSelect.value = sortMode;
+            }
+            if (Array.isArray(s.palette) && s.palette.length) {
+                palette = s.palette.map(p => {
+                    const c = buildColor(p.hex || '#000000');
+                    c.locked = !!p.locked;
+                    return c;
+                });
+                renderPalette();
+                return; // skip initial generate
+            }
+        } catch { /* ignore */ }
+        generate();
+    })();
+
+    // ── Event Listeners ───────────────────────────────────────────────────────
+    colorPicker.addEventListener('input', () => {
+        baseHex = colorPicker.value.toLowerCase();
+        hexInput.value = baseHex;
+        debouncedSave();
+    });
+
+    colorPicker.addEventListener('change', () => {
+        baseHex = colorPicker.value.toLowerCase();
+        hexInput.value = baseHex;
+        generate();
+    });
+
+    hexInput.addEventListener('input', () => {
+        let v = hexInput.value.trim();
+        if (!v.startsWith('#')) v = '#' + v;
+        if (isValidHex(v)) {
+            baseHex = normaliseHex(v);
+            colorPicker.value = baseHex;
+        }
+        debouncedSave();
+    });
+
+    hexInput.addEventListener('blur', () => {
+        let v = hexInput.value.trim();
+        if (!v.startsWith('#')) v = '#' + v;
+        if (isValidHex(v)) {
+            baseHex = normaliseHex(v);
+            colorPicker.value = baseHex;
+            hexInput.value = baseHex;
+            generate();
+        } else {
+            hexInput.value = baseHex;
+        }
+    });
+
+    hexInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') hexInput.blur();
+    });
+
+    harmonySelect.addEventListener('change', () => {
+        generate();
+        debouncedSave();
+    });
+
+    sortSelect.addEventListener('change', () => {
+        sortMode = sortSelect.value;
+        renderPalette();
+        debouncedSave();
+    });
+
+    countBtns.addEventListener('click', e => {
+        const btn = e.target.closest('.count-btn');
+        if (!btn) return;
+        colorCount = parseInt(btn.dataset.n, 10);
+        updateCountBtns();
+        generate();
+        debouncedSave();
+    });
+
+    function updateCountBtns() {
+        countBtns.querySelectorAll('.count-btn').forEach(b => {
+            b.classList.toggle('active', parseInt(b.dataset.n,10) === colorCount);
+        });
+    }
+
+    toggleWcag.addEventListener('click', () => {
+        showWcag = !showWcag;
+        toggleWcag.classList.toggle('on', showWcag);
+        toggleWcag.setAttribute('aria-checked', String(showWcag));
+        renderPalette();
+        debouncedSave();
+    });
+
+    toggleLarge.addEventListener('click', () => {
+        largeSwatch = !largeSwatch;
+        toggleLarge.classList.toggle('on', largeSwatch);
+        toggleLarge.setAttribute('aria-checked', String(largeSwatch));
+        renderPalette();
+        debouncedSave();
+    });
+
+    btnGenerate.addEventListener('click', generate);
+
+    btnCopyCSS.addEventListener('click', () => {
+        if (!palette.length) return;
+        copyText(':root {\n' + buildCSSVars() + '\n}', 'CSS variables copied!');
+    });
+
+    btnCopyHex.addEventListener('click', () => {
+        if (!palette.length) return;
+        copyText(buildHexArray(), 'Hex array copied!');
+    });
+
+    btnCopyJSON.addEventListener('click', () => {
+        if (!palette.length) return;
+        copyText(buildJSON(), 'JSON copied!');
+    });
+
+    btnDownload.addEventListener('click', () => {
+        if (!palette.length) return;
+        downloadPNG();
+        showToast('PNG downloaded!');
+    });
+
+    btnReset.addEventListener('click', () => {
+        baseHex = '#a855f7';
+        colorPicker.value = baseHex;
+        hexInput.value = baseHex;
+        harmonySelect.value = 'monochromatic';
+        colorCount = 5;
+        showWcag = true;
+        largeSwatch = false;
+        sortMode = 'none';
+        sortSelect.value = 'none';
+        toggleWcag.classList.add('on');
+        toggleWcag.setAttribute('aria-checked', 'true');
+        toggleLarge.classList.remove('on');
+        toggleLarge.setAttribute('aria-checked', 'false');
+        updateCountBtns();
+        palette = [];
+        generate();
+        debouncedSave();
+        showToast('Reset to defaults.');
+    });
+
+    // Mobile tabs
+    tabInput.addEventListener('click',  () => setMobileTab('input'));
+    tabOutput.addEventListener('click', () => setMobileTab('output'));
+
+    function setMobileTab(which) {
+        if (which === 'input') {
+            paneInput.classList.add('mob-visible');
+            paneOutput.classList.remove('mob-visible');
+            tabInput.classList.add('active');
+            tabOutput.classList.remove('active');
+        } else {
+            paneOutput.classList.add('mob-visible');
+            paneInput.classList.remove('mob-visible');
+            tabOutput.classList.add('active');
+            tabInput.classList.remove('active');
+        }
+    }
+    </script>
+</body>
+</html>
